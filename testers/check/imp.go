@@ -1,0 +1,131 @@
+package check
+
+import (
+	"goToolbox/collections"
+	"goToolbox/testers"
+	"goToolbox/utils"
+)
+
+type trialHandle[T any] func(b *testee, actual T)
+
+type checkImp[T any] struct {
+	b     *testee
+	trial trialHandle[T]
+}
+
+func newCheck[T any](t testers.Tester, trial trialHandle[T]) *checkImp[T] {
+	return &checkImp[T]{
+		b:     newTestee(t),
+		trial: trial,
+	}
+}
+
+func newPred[T any](t testers.Tester, p collections.Predicate[T], action string) *checkImp[T] {
+	return newCheck(t, func(b *testee, actual T) {
+		if !p(actual) {
+			b.Should(action)
+		}
+	})
+}
+
+func newLen[T any](t testers.Tester, p collections.Predicate[int], action string) *checkImp[T] {
+	return newCheck(t, func(b *testee, actual T) {
+		if length, ok := utils.Length(actual); !ok {
+			b.Should(`be a type that has length`)
+		} else if !p(length) {
+			b.With(`Actual Length`, length).
+				Should(action)
+		}
+	})
+}
+
+func (c *checkImp[T]) copyAndAdd(handle func(c2 *checkImp[T])) *checkImp[T] {
+	if c == nil {
+		return nil
+	}
+
+	c2 := &checkImp[T]{
+		b:     c.b.Copy(),
+		trial: c.trial,
+	}
+	handle(c2)
+	return c2
+}
+
+func (c *checkImp[T]) With(key string, args ...any) testers.Check[T] {
+	return c.copyAndAdd(func(c2 *checkImp[T]) {
+		c2.b.With(key, args...)
+	})
+}
+
+func (c *checkImp[T]) Withf(key, format string, args ...any) testers.Check[T] {
+	return c.copyAndAdd(func(c2 *checkImp[T]) {
+		c2.b.Withf(key, format, args...)
+	})
+}
+
+func (c *checkImp[T]) Name(name string) testers.Check[T] {
+	return c.With(`Name`, name)
+}
+
+func (c *checkImp[T]) Required() testers.Check[T] {
+	return c.copyAndAdd(func(c2 *checkImp[T]) {
+		c2.b.Required()
+	})
+}
+
+func (c *checkImp[T]) Require(actual T) testers.Check[T] {
+	return c.Required().Assert(actual)
+}
+
+func (c *checkImp[T]) Assert(actual T) (pc testers.Check[T]) {
+	if c == nil {
+		return c
+	}
+
+	defer handlePanic(c.b.t, &pc)
+
+	b2 := c.b.Copy().
+		With(`Actual Value`, actual).
+		Withf(`Actual Type`, `%T`, actual)
+	c.trial(b2, actual)
+	b2.Finish()
+	return c
+}
+
+func (c *checkImp[T]) Panic(handle func()) (pc testers.Check[T]) {
+	if c == nil {
+		return nil
+	}
+
+	defer handlePanic(c.b.t, &pc)
+
+	recovered := func() (r any) {
+		defer func() { r = recover() }()
+		handle()
+		return nil
+	}()
+
+	b2 := c.b.Copy()
+	if recovered == nil {
+		b2.Should(`panic from given function`).
+			Finish()
+		return c
+	}
+
+	actual, ok := recovered.(T)
+	if !ok {
+		b2.With(`Panicked Value`, recovered).
+			Withf(`Panicked Type`, `%T`, recovered).
+			Should(`be a panic of the expected type`).
+			Finish()
+		return c
+	}
+
+	b2 = c.b.Copy().
+		With(`Panicked Value`, actual).
+		Withf(`Panicked Type`, `%T`, actual)
+	c.trial(b2, actual)
+	b2.Finish()
+	return c
+}

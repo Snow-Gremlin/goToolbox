@@ -1,0 +1,1033 @@
+package check
+
+import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
+	"testing"
+
+	"goToolbox/differs/data"
+	"goToolbox/differs/diff"
+	"goToolbox/terrors/terror"
+	"goToolbox/utils"
+)
+
+func Test_Check_Require(t *testing.T) {
+	pt := newTester(t)
+	fVal := 12.0
+	Equal(pt, 12.0).Require(fVal)
+	pt.Check()
+
+	Equal(pt, `World`).Require(`Hello`)
+	pt.Check(`Must be equal:`,
+		`\tActual Type:    string`,
+		`\tActual Value:   Hello`,
+		`\tExpected Type:  string`,
+		`\tExpected Value: World`,
+		`FAIL NOW`)
+
+	Equal(pt, (error)(nil)).Require(nil)
+	pt.Check()
+}
+
+func Test_Check_Required_Assert(t *testing.T) {
+	pt := newTester(t)
+	fVal := 12.0
+	Equal(pt, 12.0).Required().Assert(fVal)
+	pt.Check()
+
+	Equal(pt, `World`).Required().Assert(`Hello`)
+	pt.Check(`Must be equal:`,
+		`\tActual Type:    string`,
+		`\tActual Value:   Hello`,
+		`\tExpected Type:  string`,
+		`\tExpected Value: World`,
+		`FAIL NOW`)
+
+	Equal(pt, (error)(nil)).Required().Assert(nil)
+	pt.Check()
+}
+
+func Test_Check_Panic(t *testing.T) {
+	pt := newTester(t)
+	Equal(pt, 12.0).Panic(func() {
+		panic(12.0)
+	})
+	pt.Check()
+
+	Equal(pt, 12.0).Panic(func() {
+		panic(12.25)
+	})
+	pt.Check(`Should be equal:`,
+		`\tExpected Type:  float64`,
+		`\tExpected Value: 12`,
+		`\tPanicked Type:  float64`,
+		`\tPanicked Value: 12\.25`)
+
+	Equal(pt, 12.0).Panic(func() {
+		panic(errors.New(`you smell something?`))
+	})
+	pt.Check(`Should be a panic of the expected type:`,
+		`\tExpected Type:  float64`,
+		`\tExpected Value: 12`,
+		`\tPanicked Type:  \*errors\.errorString`,
+		`\tPanicked Value: you smell something\?`)
+
+	Equal(pt, 12.0).Panic(func() {})
+	pt.Check(`Should panic from given function:`,
+		`\tExpected Type:  float64`,
+		`\tExpected Value: 12`)
+
+	MatchError(pt, `({`).Panic(func() {}) // nil check
+	pt.Check(`Must provide a valid regular expression pattern:`,
+		`\tPattern: \(\{`,
+		`FAIL NOW`)
+}
+
+func Test_Check_With(t *testing.T) {
+	pt := newTester(t)
+	Equal(pt, 13).Name(`Pickle`).
+		With(`Cakes`, "- Chocolate\n", "- Lemon\n", `- Vanilla`).
+		Assert(12)
+	pt.Check(`Should be equal:`,
+		`\tActual Type:    int`,
+		`\tActual Value:   12`,
+		`\tCakes:          - Chocolate`,
+		`\t                - Lemon`,
+		`\t                - Vanilla`,
+		`\tExpected Type:  int`,
+		`\tExpected Value: 13`,
+		`\tName:           Pickle`)
+}
+
+func Test_Check_Withf(t *testing.T) {
+	pt := newTester(t)
+	Equal(pt, 13).Name(`Pickle`).
+		Withf(`Cakes`, "- Chocolate\n- %s\n- Vanilla", `Lemon`).
+		Assert(12)
+	pt.Check(`Should be equal:`,
+		`\tActual Type:    int`,
+		`\tActual Value:   12`,
+		`\tCakes:          - Chocolate`,
+		`\t                - Lemon`,
+		`\t                - Vanilla`,
+		`\tExpected Type:  int`,
+		`\tExpected Value: 13`,
+		`\tName:           Pickle`)
+}
+
+func Test_Check_MaxLines(t *testing.T) {
+	pt := newTester(t)
+	lines := make([]string, 200)
+	for i := range lines {
+		lines[i] = fmt.Sprintf(`%d`, i)
+	}
+	Equal(pt, 13).
+		With(`Long Output`, strings.Join(lines, "\n")).
+		Assert(12)
+
+	actual := pt.buf.String()
+	expPattern := `^\n` +
+		`Should be equal:\n` +
+		`\tActual Type:    int\n` +
+		`\tActual Value:   12\n` +
+		`\tExpected Type:  int\n` +
+		`\tExpected Value: 13\n` +
+		`\tLong Output:    0\n` +
+		`\t                1\n` +
+		`\t                2\n` +
+		`(?:\t                \d+\n)+` +
+		`\t                93\n` +
+		`\t                94\n` +
+		`\t                95\n` +
+		`\t                ...\n` +
+		`\t                197\n` +
+		`\t                198\n` +
+		`\t                199\n$`
+	matched, err := regexp.MatchString(expPattern, actual)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !matched {
+		t.Errorf("failed to match expected regular expression:\n%q\n", actual)
+	}
+}
+
+func Test_Check_Helper(t *testing.T) {
+	pt := &pseudoTesterWithHelper{
+		pseudoTester: *newTester(t),
+	}
+	Equal(pt, 13).Assert(12)
+	pt.Check(`Helper`,
+		`Should be equal:`,
+		`\tActual Type:    int`,
+		`\tActual Value:   12`,
+		`\tExpected Type:  int`,
+		`\tExpected Value: 13`)
+}
+
+func Test_Check_Nil(t *testing.T) {
+	pt := newTester(t)
+	i := 0
+	Nil(pt).Assert(i)
+	pt.Check(`Should be a nil-able type:`,
+		`\tActual Type:  int`,
+		`\tActual Value: 0`)
+
+	pi := &i
+	Nil(pt).Assert(pi)
+	pt.Check(`Should be nil:`,
+		`\tActual Type:  \*int`,
+		`\tActual Value: 0x[0-9a-f]+`)
+
+	pi = nil
+	Nil(pt).Assert(pi)
+	pt.Check()
+}
+
+func Test_Check_NotNil(t *testing.T) {
+	pt := newTester(t)
+	i := 0
+	NotNil(pt).Assert(i)
+	pt.Check(`Should be a nil-able type:`,
+		`\tActual Type:  int`,
+		`\tActual Value: 0`)
+
+	pi := &i
+	NotNil(pt).Assert(pi)
+	pt.Check()
+
+	pi = nil
+	NotNil(pt).Assert(pi)
+	pt.Check(`Should not be nil:`,
+		`\tActual Type:  \*int`,
+		`\tActual Value: <nil>`)
+}
+
+func Test_Check_Zero(t *testing.T) {
+	pt := newTester(t)
+	Zero(pt).Assert(12)
+	pt.Check(`Should be a zero value:`,
+		`\tActual Type:  int`,
+		`\tActual Value: 12`)
+
+	Zero(pt).Assert(0)
+	Zero(pt).Assert(``)
+	Zero(pt).Assert(0.0)
+	Zero(pt).Assert(nil)
+	Zero(pt).Assert(struct{ a int }{})
+	pt.Check()
+}
+
+func Test_Check_NotZero(t *testing.T) {
+	pt := newTester(t)
+	NotZero(pt).Assert(0)
+	pt.Check(`Should not be a zero value:`,
+		`\tActual Type:  int`,
+		`\tActual Value: 0`)
+
+	v := 12
+	NotZero(pt).Assert(32)
+	NotZero(pt).Assert(`Zero`)
+	NotZero(pt).Assert(0.001)
+	NotZero(pt).Assert(&v)
+	NotZero(pt).Assert(struct{ a int }{a: 56})
+	pt.Check()
+}
+
+func Test_Check_True(t *testing.T) {
+	pt := newTester(t)
+	True(pt).Assert(false)
+	pt.Check(`Should be true:`,
+		`\tActual Type:  bool`,
+		`\tActual Value: false`)
+
+	True(pt).Assert(true)
+	pt.Check()
+}
+
+func Test_Check_False(t *testing.T) {
+	pt := newTester(t)
+	False(pt).Assert(false)
+	pt.Check()
+
+	False(pt).Assert(true)
+	pt.Check(`Should be false:`,
+		`\tActual Type:  bool`,
+		`\tActual Value: true`)
+}
+
+func Test_Check_Type(t *testing.T) {
+	pt := newTester(t)
+	v := 12
+	Type[float64](pt).Assert(v)
+	pt.Check(`Should be the expected type:`,
+		`\tActual Type:   int`,
+		`\tActual Value:  12`,
+		`\tExpected Type: float64`)
+
+	Type[int](pt).Assert(v)
+	Type[*int](pt).Assert(&v)
+	pt.Check()
+}
+
+func Test_Check_Match(t *testing.T) {
+	pt := newTester(t)
+	Match(pt, ``).Assert(`Cat`)
+	pt.Check(`Must provide a non-empty regular expression`,
+		`FAIL NOW`)
+
+	Match(pt, `(()!`).Assert(`Cat`)
+	pt.Check(`Must provide a valid regular expression pattern:`,
+		`\tPattern: \(\(\)!`,
+		`FAIL NOW`)
+
+	Match(pt, `0x[0-9A-Z]{4}`).Assert(`Cat`)
+	pt.Check(`Should match the given regular expression pattern:`,
+		`\tActual Type:  string`,
+		`\tActual Value: Cat`,
+		`\tPattern:      0x\[0-9A-Z\]\{4\}`)
+
+	Match(pt, `0x[0-9A-Z]{4}`).Assert(`0xF4B2`)
+	pt.Check()
+}
+
+func Test_Check_String(t *testing.T) {
+	pt := newTester(t)
+	ps := pseudoStringer{text: `Lumpy`}
+	String(pt, `cat`).Assert(ps)
+	pt.Check(`Should have string be equal:`,
+		`\tActual Type:     check.pseudoStringer`,
+		`\tActual Value:    Lumpy`,
+		`\tExpected String: cat`)
+
+	String(pt, `Lumpy`).Assert(ps)
+	pt.Check()
+}
+
+func Test_Check_Equal(t *testing.T) {
+	pt := newTester(t)
+	iVal := 12
+	Equal(pt, 12).Assert(iVal)
+	pt.Check()
+
+	Equal(pt, 13).Assert(iVal)
+	pt.Check(`Should be equal:`,
+		`\tActual Type:    int`,
+		`\tActual Value:   12`,
+		`\tExpected Type:  int`,
+		`\tExpected Value: 13`)
+
+	u64Val := uint64(12)
+	Equal[uint64](pt, 12).Assert(u64Val)
+	pt.Check()
+}
+
+func Test_Check_NotEqual(t *testing.T) {
+	pt := newTester(t)
+	NotEqual(pt, 12).Assert(12)
+	pt.Check(`Should not be equal:`,
+		`\tActual Type:      int`,
+		`\tActual Value:     12`,
+		`\tUnexpected Type:  int`,
+		`\tUnexpected Value: 12`)
+
+	NotEqual(pt, 13).Assert(12)
+	pt.Check()
+}
+
+func Test_Check_GreaterThan(t *testing.T) {
+	pt := newTester(t)
+	GreaterThan(pt, 4).Assert(6)
+	GreaterThan(pt, 4).Assert(5)
+	pt.Check()
+
+	GreaterThan(pt, 4).Assert(4)
+	pt.Check(`Should be greater than the expected value:`,
+		`\tActual Type:   int`,
+		`\tActual Value:  4`,
+		`\tMinimum Type:  int`,
+		`\tMinimum Value: 4`)
+}
+
+func Test_Check_GreaterEq(t *testing.T) {
+	pt := newTester(t)
+	GreaterEq(pt, 4).Assert(5)
+	GreaterEq(pt, 4).Assert(4)
+	pt.Check()
+
+	GreaterEq(pt, 4).Assert(3)
+	pt.Check(`Should be greater than or equal to the expected value:`,
+		`\tActual Type:   int`,
+		`\tActual Value:  3`,
+		`\tMinimum Type:  int`,
+		`\tMinimum Value: 4`)
+}
+
+func Test_Check_LessThan(t *testing.T) {
+	pt := newTester(t)
+	LessThan(pt, 4).Assert(2)
+	LessThan(pt, 4).Assert(3)
+	pt.Check()
+
+	LessThan(pt, 4).Assert(4)
+	pt.Check(`Should be less than the expected value:`,
+		`\tActual Type:   int`,
+		`\tActual Value:  4`,
+		`\tMaximum Type:  int`,
+		`\tMaximum Value: 4`)
+}
+
+func Test_Check_LessEq(t *testing.T) {
+	pt := newTester(t)
+	LessEq(pt, 4).Assert(3)
+	LessEq(pt, 4).Assert(4)
+	pt.Check()
+
+	LessEq(pt, 4).Assert(5)
+	pt.Check(`Should be less than or equal to the expected value:`,
+		`\tActual Type:   int`,
+		`\tActual Value:  5`,
+		`\tMaximum Type:  int`,
+		`\tMaximum Value: 4`)
+}
+
+func Test_Check_InRange(t *testing.T) {
+	pt := newTester(t)
+	InRange(pt, 0, 10).Assert(0)
+	InRange(pt, 0, 10).Assert(1)
+	InRange(pt, 0, 10).Assert(9)
+	InRange(pt, 0, 10).Assert(10)
+	pt.Check()
+
+	InRange(pt, 0, 10).Assert(11)
+	pt.Check(`Should be between or equal to the given maximum and minimum:`,
+		`\tActual Type:   int`,
+		`\tActual Value:  11`,
+		`\tMaximum Value: 10`,
+		`\tMinimum Value: 0`,
+		`\tRange Type:    int`)
+
+	InRange(pt, 0, 10).Assert(-1)
+	pt.Check(`Should be between or equal to the given maximum and minimum:`,
+		`\tActual Type:   int`,
+		`\tActual Value:  -1`,
+		`\tMaximum Value: 10`,
+		`\tMinimum Value: 0`,
+		`\tRange Type:    int`)
+}
+
+func Test_Check_Epsilon(t *testing.T) {
+	pt := newTester(t)
+	Epsilon(pt, 4.0, -1.0).Assert(3.995)
+	pt.Check(`Must provide an epsilon greater than zero:`,
+		`\tEpsilon Type:  float64`,
+		`\tEpsilon Value: -1`,
+		`FAIL NOW`)
+
+	Epsilon(pt, 4.0, 0.01).Assert(3.995)
+	Epsilon(pt, 4.0, 0.01).Assert(4.00)
+	Epsilon(pt, 4.0, 0.01).Assert(4.005)
+	pt.Check()
+
+	Epsilon(pt, 4.0, 0.01).Assert(4.02)
+	pt.Check(`Should be within the epsilon of the expected value:`,
+		`\tActual Type:    float64`,
+		`\tActual Value:   4\.02`,
+		`\tEpsilon:        0\.01`,
+		`\tExpected Type:  float64`,
+		`\tExpected Value: 4`)
+
+	Epsilon(pt, 4.02, 0.01).Assert(4.0)
+	pt.Check(`Should be within the epsilon of the expected value:`,
+		`\tActual Type:    float64`,
+		`\tActual Value:   4`,
+		`\tEpsilon:        0\.01`,
+		`\tExpected Type:  float64`,
+		`\tExpected Value: 4\.02`)
+}
+
+func Test_Check_Is(t *testing.T) {
+	pt := newTester(t)
+	Is(pt, leapYear).Name(`Is leap year?`).Assert(1900)
+	Is(pt, leapYear).Name(`Is leap year?`).Assert(1996)
+	Is(pt, leapYear).Name(`Is leap year?`).Assert(2000)
+	Is(pt, leapYear).Name(`Is leap year?`).Assert(2024)
+	Is(pt, leapYear).Name(`Is leap year?`).Assert(2025)
+	pt.Check(`Should be accepted by the given predicate:`,
+		`\tActual Type:  int`,
+		`\tActual Value: 1900`,
+		`\tName:         Is leap year\?`,
+		``,
+		`Should be accepted by the given predicate:`,
+		`\tActual Type:  int`,
+		`\tActual Value: 2025`,
+		`\tName:         Is leap year\?`)
+}
+
+func Test_Check_IsNot(t *testing.T) {
+	pt := newTester(t)
+	IsNot(pt, leapYear).Name(`Is not leap year?`).Assert(1900)
+	IsNot(pt, leapYear).Name(`Is not leap year?`).Assert(1996)
+	IsNot(pt, leapYear).Name(`Is not leap year?`).Assert(2000)
+	IsNot(pt, leapYear).Name(`Is not leap year?`).Assert(2024)
+	IsNot(pt, leapYear).Name(`Is not leap year?`).Assert(2025)
+	pt.Check(`Should not be accepted by the given predicate:`,
+		`\tActual Type:  int`,
+		`\tActual Value: 1996`,
+		`\tName:         Is not leap year\?`,
+		``,
+		`Should not be accepted by the given predicate:`,
+		`\tActual Type:  int`,
+		`\tActual Value: 2000`,
+		`\tName:         Is not leap year\?`,
+		``,
+		`Should not be accepted by the given predicate:`,
+		`\tActual Type:  int`,
+		`\tActual Value: 2024`,
+		`\tName:         Is not leap year\?`)
+}
+
+func Test_Check_StartWith(t *testing.T) {
+	pt := newTester(t)
+	StartsWith(pt, 12).Assert([]int{1, 2, 3, 4, 5})
+	pt.Check(`Should start with the given prefix:`,
+		`\tActual Type:     \[\]int`,
+		`\tActual Value:    \[1 2 3 4 5\]`,
+		`\tExpected Prefix: 12`,
+		`\tExpected Type:   int`)
+
+	StartsWith(pt, []int{1, 2, 3}).Assert(12)
+	pt.Check(`Should start with the given prefix:`,
+		`\tActual Type:     int`,
+		`\tActual Value:    12`,
+		`\tExpected Prefix: \[1 2 3\]`,
+		`\tExpected Type:   \[\]int`)
+
+	StartsWith(pt, []int{1, 4, 3}).Assert([]int{1, 2, 3, 4, 5})
+	pt.Check(`Should start with the given prefix:`,
+		`\tActual Type:     \[\]int`,
+		`\tActual Value:    \[1 2 3 4 5\]`,
+		`\tExpected Prefix: \[1 4 3\]`,
+		`\tExpected Type:   \[\]int`)
+
+	StartsWith(pt, 1).Assert([]int{1, 2, 3, 4, 5})
+	pt.Check()
+
+	StartsWith(pt, []int{1, 2, 3}).Assert([]int{1, 2, 3, 4, 5})
+	pt.Check()
+
+	StartsWith(pt, `World`).Assert(`Hello World`)
+	pt.Check(`Should start with the given prefix:`,
+		`\tActual Type:     string`,
+		`\tActual Value:    Hello World`,
+		`\tExpected Prefix: World`,
+		`\tExpected Type:   string`)
+
+	StartsWith(pt, `He`).Assert(`Hello World`)
+	pt.Check()
+
+	StartsWith(pt, []int{}).Assert([]int{1, 2, 3, 4, 5})
+	pt.Check(`Must have at least one expected prefix value:`,
+		`\tExpected Type: \[\]int`,
+		`FAIL NOW`)
+}
+
+func Test_Check_EndsWith(t *testing.T) {
+	pt := newTester(t)
+	EndsWith(pt, 12).Assert([]int{1, 2, 3, 4, 5})
+	pt.Check(`Should end with the given suffix:`,
+		`\tActual Type:     \[\]int`,
+		`\tActual Value:    \[1 2 3 4 5\]`,
+		`\tExpected Suffix: 12`,
+		`\tExpected Type:   int`)
+
+	EndsWith(pt, []int{1, 2, 3}).Assert(12)
+	pt.Check(`Should end with the given suffix:`,
+		`\tActual Type:     int`,
+		`\tActual Value:    12`,
+		`\tExpected Suffix: \[1 2 3\]`,
+		`\tExpected Type:   \[\]int`)
+
+	EndsWith(pt, []int{3, 2, 5}).Assert([]int{1, 2, 3, 4, 5})
+	pt.Check(`Should end with the given suffix:`,
+		`\tActual Type:     \[\]int`,
+		`\tActual Value:    \[1 2 3 4 5\]`,
+		`\tExpected Suffix: \[3 2 5\]`,
+		`\tExpected Type:   \[\]int`)
+
+	EndsWith(pt, []int{3, 4, 5}).Assert([]int{1, 2, 3, 4, 5})
+	pt.Check()
+
+	EndsWith(pt, ``).Assert(`Hello World`)
+	pt.Check(`Must have at least one expected suffix value:`,
+		`\tExpected Type: string`,
+		`FAIL NOW`)
+}
+
+func Test_Check_Empty(t *testing.T) {
+	pt := newTester(t)
+	Empty(pt).Assert(12)
+	pt.Check(`Should be a type that has length:`,
+		`\tActual Type:  int`,
+		`\tActual Value: 12`)
+
+	s := []int{1, 2, 3, 4, 5}
+	Empty(pt).Assert(s)
+	pt.Check(`Should be empty:`,
+		`\tActual Length: 5`,
+		`\tActual Type:   \[\]int`,
+		`\tActual Value:  \[1 2 3 4 5\]`)
+
+	Empty(pt).Assert(s[:0])
+	pt.Check()
+}
+
+func Test_Check_NotEmpty(t *testing.T) {
+	pt := newTester(t)
+	NotEmpty(pt).Assert(12)
+	pt.Check(`Should be a type that has length:`,
+		`\tActual Type:  int`,
+		`\tActual Value: 12`)
+
+	s := []int{1, 2, 3, 4, 5}
+	NotEmpty(pt).Assert(s)
+	pt.Check()
+
+	NotEmpty(pt).Assert(s[:0])
+	pt.Check(`Should not be empty:`,
+		`\tActual Length: 0`,
+		`\tActual Type:   \[\]int`,
+		`\tActual Value:  \[\]`)
+}
+
+func Test_Check_Length(t *testing.T) {
+	pt := newTester(t)
+	Length(pt, 5).Assert(errors.New(`Oops`))
+	pt.Check(`Should be a type that has length:`,
+		`\tActual Type:     \*errors\..+`,
+		`\tActual Value:    Oops`,
+		`\tExpected Length: 5`)
+
+	m1 := map[string]int{`cat`: 5, `dog`: 9}
+	Length(pt, 2).Assert(m1)
+	pt.Check()
+
+	m2 := map[string]int{`cat`: 5}
+	Length(pt, 2).Assert(m2)
+	pt.Check(`Should be the expected length:`,
+		`\tActual Length:   1`,
+		`\tActual Type:     map\[string\]int`,
+		`\tActual Value:    map\[cat:5\]`,
+		`\tExpected Length: 2`)
+
+	obj1 := lenObj{len: 14}
+	Length(pt, 14).Assert(obj1)
+	pt.Check()
+
+	obj2 := lengthObj{length: 27}
+	Length(pt, 27).Assert(obj2)
+	pt.Check()
+
+	obj3 := countObj{count: 336}
+	Length(pt, 336).Assert(obj3)
+	pt.Check()
+
+	obj4 := badCountObj{}
+	Length(pt, 336).Assert(obj4)
+	pt.Check(`Error: Vanjie`,
+		`FAIL NOW`)
+}
+
+func Test_Check_ShorterThan(t *testing.T) {
+	pt := newTester(t)
+	ShorterThan(pt, 15).Assert(12)
+	pt.Check(`Should be a type that has length:`,
+		`\tActual Type:    int`,
+		`\tActual Value:   12`,
+		`\tMaximum Length: 15`)
+
+	s := `Hello World`
+	ShorterThan(pt, 15).Assert(s)
+	pt.Check()
+
+	ShorterThan(pt, 8).Assert(s)
+	pt.Check(`Should be shorter than the expected length:`,
+		`\tActual Length:  11`,
+		`\tActual Type:    string`,
+		`\tActual Value:   Hello World`,
+		`\tMaximum Length: 8`)
+}
+
+func Test_Check_LongerThan(t *testing.T) {
+	pt := newTester(t)
+	LongerThan(pt, 15).Assert(12)
+	pt.Check(`Should be a type that has length:`,
+		`\tActual Type:    int`,
+		`\tActual Value:   12`,
+		`\tMinimum Length: 15`)
+
+	s := `Hello World`
+	LongerThan(pt, 15).Assert(s)
+	pt.Check(`Should be longer than the expected length:`,
+		`\tActual Length:  11`,
+		`\tActual Type:    string`,
+		`\tActual Value:   Hello World`,
+		`\tMinimum Length: 15`)
+
+	LongerThan(pt, 8).Assert(s)
+	pt.Check()
+}
+
+func Test_Check_NoError(t *testing.T) {
+	pt := newTester(t)
+	NoError(pt).Assert(errors.New(`Science!`))
+	pt.Check(`Should be no error:`,
+		`\tActual Type:  \*errors.+`,
+		`\tActual Value: Science!`)
+
+	NoError(pt).Assert(nil)
+	pt.Check()
+}
+
+func Test_Check_MatchError(t *testing.T) {
+	pt := newTester(t)
+
+	// Check that failure returns a Check that doesn't cause a nil dereference.
+	MatchError(pt, ``).With(`A`, `B`).Required().Assert(nil)
+	pt.Check(`Must provide a non-empty regular expression`,
+		`FAIL NOW`)
+
+	MatchError(pt, `[[))`).With(`A`, `B`).Required().Assert(nil)
+	pt.Check(`Must provide a valid regular expression pattern:`,
+		`\tPattern: \[\[\)\)`,
+		`FAIL NOW`)
+
+	MatchError(pt, `[[))`).Withf(`A`, `B`).Required().Assert(nil)
+	pt.Check(`Must provide a valid regular expression pattern:`,
+		`\tPattern: \[\[\)\)`,
+		`FAIL NOW`)
+
+	MatchError(pt, `.*`).Assert(nil)
+	pt.Check(`Should not be a nil error:`,
+		`\tActual Type:  \<nil\>`,
+		`\tActual Value: \<nil\>`)
+
+	MatchError(pt, `^[a-z]+$`).Assert(errors.New(`Maths!`))
+	pt.Check(`Should have error sting match the given regular expression pattern:`,
+		`\tActual Type:  \*errors.+`,
+		`\tActual Value: Maths!`,
+		`\tPattern:      \^\[a-z\]\+\$`)
+
+	MatchError(pt, `^M[a-z]+s!$`).Assert(errors.New(`Maths!`))
+	pt.Check()
+}
+
+func Test_Check_ErrorHas(t *testing.T) {
+	pt := newTester(t)
+	_, err := strconv.Atoi(`apple`)
+	ErrorHas[*json.UnsupportedTypeError](pt).Assert(err)
+	pt.Check(`Should have an error of the target type in the error tree:`,
+		`\tActual Type:  \*strconv\.NumError`,
+		`\tActual Value: strconv\.Atoi: parsing "apple": invalid syntax`,
+		`\tTarget Type:  \*json\.UnsupportedTypeError`)
+
+	ErrorHas[*strconv.NumError](pt).Assert(err)
+	ErrorHas[*strconv.NumError](pt).Assert(fmt.Errorf(`=>%w`, err))
+	pt.Check()
+}
+
+func Test_Check_Implements(t *testing.T) {
+	pt := newTester(t)
+	v := 3.14
+	Implements[float64](pt).Assert(v)
+	pt.Check(`Must provide an interface type:`,
+		`\tType: float64`,
+		`FAIL NOW`)
+
+	Implements[error](pt).Assert(v)
+	pt.Check(`Should implement the target type:`,
+		`\tActual Type:  float64`,
+		`\tActual Value: 3.14`,
+		`\tTarget Type:  error`)
+
+	_, err := strconv.Atoi(`apple`)
+	Implements[error](pt).Assert(err)
+	pt.Check()
+
+	Implements[utils.Stringer](pt).Assert(err)
+	pt.Check(`Should implement the target type:`,
+		`\tActual Type:  \*strconv\.NumError`,
+		`\tActual Value: strconv\.Atoi: parsing "apple": invalid syntax`,
+		`\tTarget Type:  utils\.Stringer`)
+}
+
+func Test_Check_ConvertibleTo(t *testing.T) {
+	pt := newTester(t)
+	var v1 float64 = 3.14
+	ConvertibleTo[float64](pt).Assert(v1)
+	pt.Check()
+
+	var v2 int = 13
+	ConvertibleTo[float64](pt).Assert(v2)
+	pt.Check()
+
+	var v3 string = `Hello`
+	ConvertibleTo[float64](pt).Assert(v3)
+	pt.Check(`Should be convertible to the target type:`,
+		`\tActual Type:  string`,
+		`\tActual Value: Hello`,
+		`\tTarget Type:  float64`)
+
+	type tt string
+	var v4 tt = `Hello`
+	ConvertibleTo[string](pt).Assert(v4)
+	pt.Check()
+}
+
+func Test_Check_Same(t *testing.T) {
+	pt := newTester(t)
+	v1 := 3.14
+	p1 := &v1
+	Same(pt, p1).Assert(&v1)
+	pt.Check()
+
+	v2 := 3.14
+	p2 := &v2
+	Same(pt, p1).Assert(p2)
+	pt.Check(`Should be the same:`,
+		`\tActual Type:    \*float64`,
+		`\tActual Value:   0x[0-9a-f]+`,
+		`\tExpected Type:  \*float64`,
+		`\tExpected Value: 0x[0-9a-f]+`)
+
+	Same(pt, v2).Assert(v1)
+	pt.Check()
+
+	Same(pt, any(3.0)).Assert(3)
+	pt.Check(`Should be the same:`,
+		`\tActual Type:    int`,
+		`\tActual Value:   3`,
+		`\tExpected Type:  float64`,
+		`\tExpected Value: 3`)
+}
+
+func Test_Check_NotSame(t *testing.T) {
+	pt := newTester(t)
+	NotSame(pt, 3).Assert(3)
+	pt.Check(`Should not be the same:`,
+		`\tActual Type:    int`,
+		`\tActual Value:   3`,
+		`\tExpected Type:  int`,
+		`\tExpected Value: 3`)
+
+	NotSame(pt, any(4)).Assert(4.0)
+	NotSame(pt, 4).Assert(5)
+}
+
+/*
+func Test_Check_HasElems(t *testing.T) {
+	pt := newTester(t)
+	s := []int{1, 2, 3, 4, 5}
+	HasElems[[]int](pt).Assert(s)
+	pt.Check(`Must provide at least one expected element:`,
+		`\tType: \[\]int`,
+		`goroutine \d+ \[running\]:`,
+		`goToolbox/testers/check\.Test_Check_HasElems\(0x[0-9a-f]+\)`,
+		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`,
+		`FAIL NOW`)
+
+	HasElems[[]int](pt, 4).Assert(s)
+	pt.Check()
+
+	HasElems[[]int](pt, 7).Assert(s)
+	pt.Check(`Should have the expected element:`,
+		`\tActual:   \[1 2 3 4 5\]`,
+		`\tExpected: 7`,
+		`\tType:     \[\]int`,
+		`goroutine \d+ \[running\]:`,
+		`goToolbox/testers/check\.Test_Check_HasElems\(0x[0-9a-f]+\)`,
+		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`)
+
+	HasElems[[]int](pt, 3, 4, 2).Assert(s)
+	pt.Check()
+
+	HasElems[[]int](pt, 3, 7, 1, 9).Assert(s)
+	pt.Check(`Should have all the expected elements:`,
+		`\tActual:   \[1 2 3 4 5\]`,
+		`\tExpected: \[3 7 1 9\]`,
+		`\tMissing:  \[7 9\]`,
+		`\tType:     \[\]int`,
+		`goroutine \d+ \[running\]:`,
+		`goToolbox/testers/check\.Test_Check_HasElems\(0x[0-9a-f]+\)`,
+		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`)
+}
+
+func Test_Check_HasKeys(t *testing.T) {
+	pt := newTester(t)
+	m := map[string]int{`One`: 1, `Two`: 2, `Three`: 3, `Four`: 4, `Five`: 5}
+	HasKeys[map[string]int](pt).Assert(m)
+	pt.Check(`Must provide at least one expected key:`,
+		`\tType: \[\]string`,
+		`goroutine \d+ \[running\]:`,
+		`goToolbox/testers/check\.Test_Check_HasKeys\(0x[0-9a-f]+\)`,
+		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`,
+		`FAIL NOW`)
+
+	HasKeys[map[string]int](pt, `Four`).Assert(m)
+	pt.Check()
+
+	HasKeys[map[string]int](pt, `Cat`).Assert(m)
+	pt.Check(`Should have the expected key:`,
+		`\tActual:   map\[Five:5 Four:4 One:1 Three:3 Two:2\]`,
+		`\tExpected: Cat`,
+		`\tType:     map\[string\]int`,
+		`goroutine \d+ \[running\]:`,
+		`goToolbox/testers/check\.Test_Check_HasKeys\(0x[0-9a-f]+\)`,
+		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`)
+
+	HasKeys[map[string]int](pt, `Three`, `Four`, `Two`).Assert(m)
+	pt.Check()
+
+	HasKeys[map[string]int](pt, `Three`, `Cat`, `One`, `Apple`).Assert(m)
+	pt.Check(`Should have all the expected keys:`,
+		`\tActual:   map\[Five:5 Four:4 One:1 Three:3 Two:2\]`,
+		`\tExpected: \[Three Cat One Apple\]`,
+		`\tMissing:  \[Cat Apple\]`,
+		`\tType:     map\[string\]int`,
+		`goroutine \d+ \[running\]:`,
+		`goToolbox/testers/check\.Test_Check_HasKeys\(0x[0-9a-f]+\)`,
+		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`)
+}
+
+func Test_Check_HasValues(t *testing.T) {
+	pt := newTester(t)
+	m := map[string]int{`One`: 1, `Two`: 2, `Three`: 3, `Four`: 4, `Five`: 5}
+	HasValues[map[string]int](pt).Assert(m)
+	pt.Check(`Must provide at least one expected value:`,
+		`\tType: \[\]int`,
+		`goroutine \d+ \[running\]:`,
+		`goToolbox/testers/check\.Test_Check_HasValues\(0x[0-9a-f]+\)`,
+		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`,
+		`FAIL NOW`)
+
+	HasValues[map[string]int](pt, 4).Assert(m)
+	pt.Check()
+
+	HasValues[map[string]int](pt, 8).Assert(m)
+	pt.Check(`Should have the expected value:`,
+		`\tActual:   map\[Five:5 Four:4 One:1 Three:3 Two:2\]`,
+		`\tExpected: 8`,
+		`\tType:     map\[string\]int`,
+		`goroutine \d+ \[running\]:`,
+		`goToolbox/testers/check\.Test_Check_HasValues\(0x[0-9a-f]+\)`,
+		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`)
+
+	HasValues[map[string]int](pt, 3, 4, 2).Assert(m)
+	pt.Check()
+
+	HasValues[map[string]int](pt, 3, 8, 1, 12).Assert(m)
+	pt.Check(`Should have all the expected values:`,
+		`\tActual:   map\[Five:5 Four:4 One:1 Three:3 Two:2\]`,
+		`\tExpected: \[3 8 1 12\]`,
+		`\tMissing:  \[8 12\]`,
+		`\tType:     map\[string\]int`,
+		`goroutine \d+ \[running\]:`,
+		`goToolbox/testers/check\.Test_Check_HasValues\(0x[0-9a-f]+\)`,
+		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`)
+}
+*/
+
+type pseudoTester struct {
+	t   *testing.T
+	buf *bytes.Buffer
+}
+
+func newTester(t *testing.T) *pseudoTester {
+	return &pseudoTester{
+		t:   t,
+		buf: &bytes.Buffer{},
+	}
+}
+
+func (p pseudoTester) Error(msg ...any) {
+	if _, err := p.buf.WriteString(fmt.Sprint(msg...)); err != nil {
+		panic(err)
+	}
+}
+
+func (p pseudoTester) FailNow() {
+	if _, err := p.buf.WriteString("FAIL NOW\n"); err != nil {
+		panic(err)
+	}
+}
+
+func (p pseudoTester) Check(patterns ...string) {
+	actual := p.buf.String()
+	if len(actual) <= 0 && len(patterns) <= 0 {
+		return
+	}
+
+	p.t.Helper()
+
+	actual, ok := strings.CutPrefix(actual, "\n")
+	if !ok {
+		p.t.Errorf("\nExpected a new line prefix but didn't have one.\n\t%q", actual)
+	}
+	actual, ok = strings.CutSuffix(actual, "\n")
+	if !ok {
+		p.t.Errorf("\nExpected a new line suffix but didn't have one.\n\t%q", actual)
+	}
+	lines := strings.Split(actual, "\n")
+
+	for i, pattern := range patterns {
+		if !strings.HasPrefix(pattern, `^`) {
+			pattern = `^` + pattern
+		}
+		if !strings.HasSuffix(pattern, `$`) {
+			pattern = pattern + `$`
+		}
+		patterns[i] = pattern
+	}
+
+	results := diff.Default().Diff(data.Regex(patterns, lines))
+	if results.HasDiff() {
+		delta := strings.Join(diff.PlusMinus(results, patterns, lines), "\n\t")
+		p.t.Helper()
+		p.t.Errorf("\nUnexpected Results:\n\t%s\nGotten:\n\t%s\n",
+			delta, strings.Join(lines, "\n\t"))
+	}
+	p.buf.Reset()
+}
+
+type pseudoTesterWithHelper struct {
+	pseudoTester
+}
+
+func (p pseudoTesterWithHelper) Helper() {
+	if _, err := p.buf.WriteString("\nHelper"); err != nil {
+		panic(err)
+	}
+}
+
+func leapYear(year int) bool {
+	return year%400 == 0 || (year%4 == 0 && year%100 != 0)
+}
+
+type (
+	pseudoStringer struct{ text string }
+	lenObj         struct{ len int }
+	lengthObj      struct{ length int }
+	countObj       struct{ count int }
+	badCountObj    struct{}
+)
+
+func (ps pseudoStringer) String() string { return ps.text }
+func (n lenObj) Len() int                { return n.len }
+func (n lengthObj) Length() int          { return n.length }
+func (n countObj) Count() int            { return n.count }
+func (n badCountObj) Count() int         { panic(terror.New(`Vanjie`)) }
