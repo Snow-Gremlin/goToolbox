@@ -3,6 +3,7 @@ package set
 import (
 	"goToolbox/collections"
 	"goToolbox/internal/optional"
+	"goToolbox/internal/simpleSet"
 )
 
 // New creates a new set with unsorted values.
@@ -15,13 +16,13 @@ import (
 // The capacity may be omitted, in which case a small starting size is allocated.
 func New[T comparable](capacity ...int) collections.Set[T] {
 	return &setImp[T]{
-		m: make(map[T]struct{}, optional.Capacity(capacity)),
+		m: simpleSet.Cap[T](optional.Capacity(capacity)),
 	}
 }
 
 func With[T comparable](values ...T) collections.Set[T] {
 	s := &setImp[T]{
-		m: make(map[T]struct{}),
+		m: simpleSet.New[T](),
 	}
 	s.Add(values...)
 	return s

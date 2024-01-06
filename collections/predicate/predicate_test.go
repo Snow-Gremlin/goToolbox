@@ -9,17 +9,6 @@ import (
 	"goToolbox/utils"
 )
 
-func checkPred[T any](t *testing.T, p collections.Predicate[T], input T, exp bool) {
-	t.Helper()
-	actual := p(input)
-	if !utils.Equal(actual, exp) {
-		t.Errorf("\nUnexpected result from predicate:\n"+
-			"\tInput:   %v\n"+
-			"\tActual:   %t\n"+
-			"\tExpected: %t", input, actual, exp)
-	}
-}
-
 func Test_Predicate_IsNil(t *testing.T) {
 	p1 := IsNil[*int]()
 	checkPred(t, p1, nil, true)
@@ -147,6 +136,15 @@ func Test_Predicate_Matches(t *testing.T) {
 	checkPred(t, p, `It is me`, true)
 	checkPred(t, p, `It...is...me`, true)
 	checkPred(t, p, `It was me`, false)
+
+	checkPanic(t, func() {
+		Matches(``)
+	}, `may not used an empty pattern string`)
+
+	checkPanic(t, func() {
+		Matches(`:)`)
+	}, `invalid regular expression pattern {pattern: :)}: `+
+		`error parsing regexp: unexpected ): `+"`:)`")
 }
 
 func Test_Predicate_Eq(t *testing.T) {
@@ -261,4 +259,30 @@ func Test_Predicate_OnlyOne(t *testing.T) {
 	checkPred(t, p, 9, true)
 	checkPred(t, p, 10, false)
 	checkPred(t, p, 11, false)
+}
+
+func checkPred[T any](t *testing.T, p collections.Predicate[T], input T, exp bool) {
+	t.Helper()
+	actual := p(input)
+	if !utils.Equal(actual, exp) {
+		t.Errorf("\nUnexpected result from predicate:\n"+
+			"\tInput:    %v\n"+
+			"\tActual:   %t\n"+
+			"\tExpected: %t", input, actual, exp)
+	}
+}
+
+func checkPanic(t *testing.T, handle func(), exp string) {
+	t.Helper()
+	actual := func() (r string) {
+		defer func() { r = utils.String(recover()) }()
+		handle()
+		return ``
+	}()
+
+	if !utils.Equal(actual, exp) {
+		t.Errorf("\nUnexpected panic string from predicate creation:\n"+
+			"\tActual:   %s\n"+
+			"\tExpected: %s", actual, exp)
+	}
 }

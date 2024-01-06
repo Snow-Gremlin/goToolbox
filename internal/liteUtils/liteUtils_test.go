@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -150,6 +152,17 @@ func Test_LiteUtils_String(t *testing.T) {
 	checkString(t, `map[A:1 B:2 C:3 D:4]`, v1)
 }
 
+func Test_LiteUtils_Strings(t *testing.T) {
+	actual := strings.Join(Strings([]int{1, 3, 4}), `|`)
+	exp := `1|3|4`
+	if actual != exp {
+		t.Errorf("\n"+
+			"Unexpected value from Strings:\n"+
+			"\tActual:   %s\n"+
+			"\tExpected: %s\n", actual, exp)
+	}
+}
+
 type pseudoEquatable struct{ success bool }
 
 func (pe *pseudoEquatable) Equals(other any) bool { return pe.success }
@@ -235,4 +248,42 @@ func Test_LiteUtils_Equal(t *testing.T) {
 	checkEqual(t, e10, e10, true)
 	checkEqual(t, e10, nil, false)
 	checkEqual(t, nil, e10, false)
+}
+
+func Test_LiteUtils_Keys(t *testing.T) {
+	e1, e2, e3, e4 := 12, 34, 56, 78
+	m1 := map[*int]string{&e1: `e1`, &e2: `e2`, &e3: `e3`, &e4: `e4`}
+	keys := Keys(m1)
+	parts := make([]string, len(keys))
+	for i, key := range keys {
+		parts[i] = m1[key]
+	}
+	slices.Sort(parts)
+	result := strings.Join(parts, `, `)
+
+	exp := `e1, e2, e3, e4`
+	if result != exp {
+		t.Errorf("\n"+
+			"Unexpected value from Keys:\n"+
+			"\tActual:   %s\n"+
+			"\tExpected: %s\n", result, exp)
+	}
+}
+
+func Test_LiteUtils_Values(t *testing.T) {
+	e1, e2, e3, e4 := 12, 34, 56, 78
+	m1 := map[*int]string{&e1: `e1`, &e2: `e2`, &e3: `e3`, &e4: `e4`}
+	values := Values(m1)
+
+	parts := Strings(values)
+	slices.Sort(parts)
+	result := strings.Join(parts, `, `)
+
+	exp := `e1, e2, e3, e4`
+	if result != exp {
+		t.Errorf("\n"+
+			"Unexpected value from Values:\n"+
+			"\tActual:   %s\n"+
+			"\tExpected: %s\n", result, exp)
+	}
 }

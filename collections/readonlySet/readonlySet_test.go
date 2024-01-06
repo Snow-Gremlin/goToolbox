@@ -8,24 +8,29 @@ import (
 	"goToolbox/collections"
 	"goToolbox/collections/enumerator"
 	"goToolbox/collections/list"
+	"goToolbox/internal/simpleSet"
 	"goToolbox/testers/check"
 	"goToolbox/utils"
 )
 
 type pseudoSetImp struct {
-	m map[int]bool
+	m simpleSet.Set[int]
+}
+
+func newPseudoImp(values ...int) *pseudoSetImp {
+	return &pseudoSetImp{simpleSet.With(values...)}
 }
 
 func (s *pseudoSetImp) Enumerate() collections.Enumerator[int] {
-	return enumerator.Enumerate(utils.Keys(s.m)...)
+	return enumerator.Enumerate(s.m.ToSlice()...)
 }
 
 func (s *pseudoSetImp) Empty() bool {
-	return len(s.m) <= 0
+	return s.m.Count() <= 0
 }
 
 func (s *pseudoSetImp) Count() int {
-	return len(s.m)
+	return s.m.Count()
 }
 
 func (s *pseudoSetImp) ToSlice() []int {
@@ -41,8 +46,7 @@ func (s *pseudoSetImp) ToList() collections.List[int] {
 }
 
 func (s *pseudoSetImp) Contains(key int) bool {
-	_, ok := s.m[key]
-	return ok
+	return s.m.Has(key)
 }
 
 func (s *pseudoSetImp) String() string {
@@ -65,13 +69,7 @@ func (s *pseudoSetImp) Equals(other any) bool {
 }
 
 func Test_ReadonlySet(t *testing.T) {
-	s0 := &pseudoSetImp{
-		m: map[int]bool{
-			1: true,
-			2: true,
-			3: true,
-		},
-	}
+	s0 := newPseudoImp(1, 2, 3)
 	s1 := New(s0)
 	check.Length(t, 3).Assert(s1)
 	check.String(t, `1, 2, 3`).Assert(s1)
@@ -98,7 +96,7 @@ func Test_ReadonlySet(t *testing.T) {
 	check.Equal(t, s3).Assert(s1)
 	check.String(t, `1, 2, 3`).Assert(s3)
 
-	s2.m[5] = true
+	s2.m.Set(5)
 	check.String(t, `1, 2, 3, 5`).Assert(s3)
 	check.NotEqual(t, s3).Assert(s1)
 }

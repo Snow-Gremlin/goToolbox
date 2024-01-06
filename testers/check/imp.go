@@ -64,6 +64,12 @@ func (c *checkImp[T]) Withf(key, format string, args ...any) testers.Check[T] {
 	})
 }
 
+func (c *checkImp[T]) WithType(key string, valueForType any) testers.Check[T] {
+	return c.copyAndAdd(func(c2 *checkImp[T]) {
+		c2.b.WithType(key, valueForType)
+	})
+}
+
 func (c *checkImp[T]) Name(name string) testers.Check[T] {
 	return c.With(`Name`, name)
 }
@@ -84,6 +90,7 @@ func (c *checkImp[T]) Assert(actual T) (pc testers.Check[T]) {
 	}
 
 	defer handlePanic(c.b.t, &pc)
+	getHelper(c.b.t)()
 
 	b2 := c.b.Copy().
 		With(`Actual Value`, actual).
@@ -99,6 +106,7 @@ func (c *checkImp[T]) Panic(handle func()) (pc testers.Check[T]) {
 	}
 
 	defer handlePanic(c.b.t, &pc)
+	getHelper(c.b.t)()
 
 	recovered := func() (r any) {
 		defer func() { r = recover() }()

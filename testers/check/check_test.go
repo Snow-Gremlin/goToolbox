@@ -829,42 +829,35 @@ func Test_Check_NotSame(t *testing.T) {
 	NotSame(pt, 4).Assert(5)
 }
 
-/*
 func Test_Check_HasElems(t *testing.T) {
 	pt := newTester(t)
 	s := []int{1, 2, 3, 4, 5}
-	HasElems[[]int](pt).Assert(s)
+	HasElems(pt, []int{}).Assert(s)
 	pt.Check(`Must provide at least one expected element:`,
-		`\tType: \[\]int`,
-		`goroutine \d+ \[running\]:`,
-		`goToolbox/testers/check\.Test_Check_HasElems\(0x[0-9a-f]+\)`,
-		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`,
+		`\tExpected Type: \[\]int`,
 		`FAIL NOW`)
 
-	HasElems[[]int](pt, 4).Assert(s)
+	HasElems(pt, 4).Assert(s)
 	pt.Check()
 
-	HasElems[[]int](pt, 7).Assert(s)
-	pt.Check(`Should have the expected element:`,
-		`\tActual:   \[1 2 3 4 5\]`,
-		`\tExpected: 7`,
-		`\tType:     \[\]int`,
-		`goroutine \d+ \[running\]:`,
-		`goToolbox/testers/check\.Test_Check_HasElems\(0x[0-9a-f]+\)`,
-		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`)
+	HasElems(pt, 7).Assert(s)
+	pt.Check(`Should have the expected elements:`,
+		`\tActual Type:       \[\]int`,
+		`\tActual Value:      \[1 2 3 4 5\]`,
+		`\tExpected Elements: 7`,
+		`\tExpected Type:     int`,
+		`\tMissing Elements:  \[7\]`)
 
-	HasElems[[]int](pt, 3, 4, 2).Assert(s)
+	HasElems(pt, []int{3, 4, 2}).Assert(s)
 	pt.Check()
 
-	HasElems[[]int](pt, 3, 7, 1, 9).Assert(s)
-	pt.Check(`Should have all the expected elements:`,
-		`\tActual:   \[1 2 3 4 5\]`,
-		`\tExpected: \[3 7 1 9\]`,
-		`\tMissing:  \[7 9\]`,
-		`\tType:     \[\]int`,
-		`goroutine \d+ \[running\]:`,
-		`goToolbox/testers/check\.Test_Check_HasElems\(0x[0-9a-f]+\)`,
-		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`)
+	HasElems(pt, []int{3, 7, 1, 9}).Assert(s)
+	pt.Check(`Should have the expected elements:`,
+		`\tActual Type:       \[\]int`,
+		`\tActual Value:      \[1 2 3 4 5\]`,
+		`\tExpected Elements: \[3 7 1 9\]`,
+		`\tExpected Type:     \[\]int`,
+		`\tMissing Elements:  \[7 9\]`)
 }
 
 func Test_Check_HasKeys(t *testing.T) {
@@ -872,36 +865,30 @@ func Test_Check_HasKeys(t *testing.T) {
 	m := map[string]int{`One`: 1, `Two`: 2, `Three`: 3, `Four`: 4, `Five`: 5}
 	HasKeys[map[string]int](pt).Assert(m)
 	pt.Check(`Must provide at least one expected key:`,
-		`\tType: \[\]string`,
-		`goroutine \d+ \[running\]:`,
-		`goToolbox/testers/check\.Test_Check_HasKeys\(0x[0-9a-f]+\)`,
-		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`,
+		`\tExpected Type: \[\]string`,
 		`FAIL NOW`)
 
 	HasKeys[map[string]int](pt, `Four`).Assert(m)
 	pt.Check()
 
 	HasKeys[map[string]int](pt, `Cat`).Assert(m)
-	pt.Check(`Should have the expected key:`,
-		`\tActual:   map\[Five:5 Four:4 One:1 Three:3 Two:2\]`,
-		`\tExpected: Cat`,
-		`\tType:     map\[string\]int`,
-		`goroutine \d+ \[running\]:`,
-		`goToolbox/testers/check\.Test_Check_HasKeys\(0x[0-9a-f]+\)`,
-		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`)
+	pt.Check(`Should have the expected keys:`,
+		`\tActual Type:   map\[string\]int`,
+		`\tActual Value:  map\[Five:5 Four:4 One:1 Three:3 Two:2\]`,
+		`\tExpected Keys: \[Cat\]`,
+		`\tExpected Type: \[\]string`,
+		`\tMissing Keys:  \[Cat\]`)
 
 	HasKeys[map[string]int](pt, `Three`, `Four`, `Two`).Assert(m)
 	pt.Check()
 
 	HasKeys[map[string]int](pt, `Three`, `Cat`, `One`, `Apple`).Assert(m)
-	pt.Check(`Should have all the expected keys:`,
-		`\tActual:   map\[Five:5 Four:4 One:1 Three:3 Two:2\]`,
-		`\tExpected: \[Three Cat One Apple\]`,
-		`\tMissing:  \[Cat Apple\]`,
-		`\tType:     map\[string\]int`,
-		`goroutine \d+ \[running\]:`,
-		`goToolbox/testers/check\.Test_Check_HasKeys\(0x[0-9a-f]+\)`,
-		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`)
+	pt.Check(`Should have the expected keys:`,
+		`\tActual Type:   map\[string\]int`,
+		`\tActual Value:  map\[Five:5 Four:4 One:1 Three:3 Two:2\]`,
+		`\tExpected Keys: \[Three Cat One Apple\]`,
+		`\tExpected Type: \[\]string`,
+		`\tMissing Keys:  \[Cat Apple\]`)
 }
 
 func Test_Check_HasValues(t *testing.T) {
@@ -909,38 +896,97 @@ func Test_Check_HasValues(t *testing.T) {
 	m := map[string]int{`One`: 1, `Two`: 2, `Three`: 3, `Four`: 4, `Five`: 5}
 	HasValues[map[string]int](pt).Assert(m)
 	pt.Check(`Must provide at least one expected value:`,
-		`\tType: \[\]int`,
-		`goroutine \d+ \[running\]:`,
-		`goToolbox/testers/check\.Test_Check_HasValues\(0x[0-9a-f]+\)`,
-		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`,
+		`\tExpected Type: \[\]int`,
 		`FAIL NOW`)
 
 	HasValues[map[string]int](pt, 4).Assert(m)
 	pt.Check()
 
 	HasValues[map[string]int](pt, 8).Assert(m)
-	pt.Check(`Should have the expected value:`,
-		`\tActual:   map\[Five:5 Four:4 One:1 Three:3 Two:2\]`,
-		`\tExpected: 8`,
-		`\tType:     map\[string\]int`,
-		`goroutine \d+ \[running\]:`,
-		`goToolbox/testers/check\.Test_Check_HasValues\(0x[0-9a-f]+\)`,
-		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`)
+	pt.Check(`Should have the expected values:`,
+		`\tActual Type:     map\[string\]int`,
+		`\tActual Value:    map\[Five:5 Four:4 One:1 Three:3 Two:2\]`,
+		`\tExpected Type:   \[\]int`,
+		`\tExpected Values: \[8\]`,
+		`\tMissing Values:  \[8\]`)
 
 	HasValues[map[string]int](pt, 3, 4, 2).Assert(m)
 	pt.Check()
 
 	HasValues[map[string]int](pt, 3, 8, 1, 12).Assert(m)
-	pt.Check(`Should have all the expected values:`,
-		`\tActual:   map\[Five:5 Four:4 One:1 Three:3 Two:2\]`,
-		`\tExpected: \[3 8 1 12\]`,
-		`\tMissing:  \[8 12\]`,
-		`\tType:     map\[string\]int`,
-		`goroutine \d+ \[running\]:`,
-		`goToolbox/testers/check\.Test_Check_HasValues\(0x[0-9a-f]+\)`,
-		`\t.+check_test\.go:\d+ \+0x[0-9a-f]+`)
+	pt.Check(`Should have the expected values:`,
+		`\tActual Type:     map\[string\]int`,
+		`\tActual Value:    map\[Five:5 Four:4 One:1 Three:3 Two:2\]`,
+		`\tExpected Type:   \[\]int`,
+		`\tExpected Values: \[3 8 1 12\]`,
+		`\tMissing Values:  \[8 12\]`)
 }
-*/
+
+func Test_Check_EqualElems(t *testing.T) {
+	pt := newTester(t)
+	s := []int{1, 2, 3, 4, 5}
+	EqualElems(pt, []int{}).Assert(s)
+	pt.Check(`Should have the expected elements:`,
+		`\tActual Type:       \[\]int`,
+		`\tActual Value:      \[1 2 3 4 5\]`,
+		`\tExpected Elements: \[\]`,
+		`\tExpected Type:     \[\]int`,
+		`\tExtra Elements:    \[1 2 3 4 5\]`)
+
+	EqualElems(pt, 4).Assert(s)
+	pt.Check(`Should have the expected elements:`,
+		`\tActual Type:       \[\]int`,
+		`\tActual Value:      \[1 2 3 4 5\]`,
+		`\tExpected Elements: 4`,
+		`\tExpected Type:     int`,
+		`\tExtra Elements:    \[1 2 3 5\]`)
+
+	EqualElems(pt, []int{2, 3, 4, 5, 6}).Assert(s)
+	pt.Check(`Should have the expected elements:`,
+		`\tActual Type:       \[\]int`,
+		`\tActual Value:      \[1 2 3 4 5\]`,
+		`\tExpected Elements: \[2 3 4 5 6\]`,
+		`\tExpected Type:     \[\]int`,
+		`\tExtra Elements:    \[1\]`,
+		`\tMissing Elements:  \[6\]`)
+
+	EqualElems(pt, []int{5, 3, 1, 4, 2}).Assert(s)
+	pt.Check()
+}
+
+func Test_Check_SameElems(t *testing.T) {
+	pt := newTester(t)
+	s := []int{1, 2, 2, 3, 4, 5, 5, 5}
+	SameElems(pt, []int{}).Assert(s)
+	pt.Check(`Should have the expected elements:`,
+		`\tActual Type:       \[\]int`,
+		`\tActual Value:      \[1 2 2 3 4 5 5 5\]`,
+		`\tExpected Elements: \[\]`,
+		`\tExpected Type:     \[\]int`,
+		`\tExtra Elements:    1, 2\(x2\), 3, 4, 5\(x3\)`)
+
+	SameElems(pt, []int{1, 2, 2, 2, 3, 3, 4, 5}).Assert(s)
+	pt.Check(`Should have the expected elements:`,
+		`\tActual Type:       \[\]int`,
+		`\tActual Value:      \[1 2 2 3 4 5 5 5\]`,
+		`\tExpected Elements: \[1 2 2 2 3 3 4 5\]`,
+		`\tExpected Type:     \[\]int`,
+		`\tExtra Elements:    5\(x2\)`,
+		`\tMissing Elements:  2, 3`)
+
+	SameElems(pt, []int{1, 2, 2, 3, 4, 5, 5, 5}).Assert(s)
+	pt.Check()
+
+	SameElems(pt, `abcdefghijklmnopqrstuvwxyz `).
+		Assert(`the quick brown fox jumps over the lazy dog`)
+	pt.Check(`Should have the expected elements:`,
+		`\tActual Type:       \[\]int`,
+		`\tActual Value:      \[1 2 2 3 4 5 5 5\]`,
+		`\tExpected Elements: \[1 2 2 2 3 3 4 5\]`,
+		`\tExpected Type:     \[\]int`,
+		`\tExtra Elements:    5 \(x2\)`,
+		`\tMissing Elements:  2, 3`)
+}
 
 type pseudoTester struct {
 	t   *testing.T

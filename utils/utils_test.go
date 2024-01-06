@@ -315,6 +315,11 @@ func Test_Utils_EpsilonComparer(t *testing.T) {
 	checkComparer(t, cmp, -0.01, 0.0, 0)
 	checkComparer(t, cmp, -0.02, 0.0, -1)
 	checkComparer(t, cmp, -1.0, 0.0, -1)
+
+	cmp = EpsilonComparer(-1.0) // defaults to ordered comparer, epsilon = 0
+	checkComparer(t, cmp, 0.0, 0.0, 0)
+	checkComparer(t, cmp, 1.0, 1.0, 0)
+	checkComparer(t, cmp, -1.0, -1.0, 0)
 }
 
 func Test_Utils_DefaultComparer(t *testing.T) {
@@ -557,15 +562,4 @@ func Test_Utils_Equal(t *testing.T) {
 	checkEqual(t, e10, e10, true)
 	checkEqual(t, e10, nil, false)
 	checkEqual(t, nil, e10, false)
-}
-
-func Test_Utils_SimpleSet(t *testing.T) {
-	m := SimpleSet(1, 4, 8, 4)
-	actual := strings.Join(Strings(SortedKeys(m)), `|`)
-	exp := `1|4|8`
-	if actual != exp {
-		t.Errorf("\nSimpleSet did not have expected keys:\n"+
-			"\tExpected: %s\n"+
-			"\tActual:   %s\n", exp, actual)
-	}
 }

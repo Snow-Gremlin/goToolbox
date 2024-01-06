@@ -198,6 +198,14 @@ func Unique[T comparable](e collections.Enumerator[T]) collections.Enumerator[T]
 	})
 }
 
+// DuplicateCounts creates a map with the given enumerator values as the keys
+// and number of duplicates of those values as the map's value.
+func DuplicateCounts[T comparable](e collections.Enumerator[T]) map[T]int {
+	counters := map[T]int{}
+	e.Foreach(func(value T) { counters[value]++ })
+	return counters
+}
+
 // Zip merges two enumerators together while both enumerators have values
 // and returns an enumerator with a combined value of two values from both enumerators.
 func Zip[TFirst, TSecond, TOut any](firsts collections.Enumerator[TFirst], seconds collections.Enumerator[TSecond], combiner collections.Combiner[TFirst, TSecond, TOut]) collections.Enumerator[TOut] {
@@ -259,5 +267,15 @@ func Union[T comparable](left, right collections.Enumerator[T]) collections.Enum
 func Intersection[T comparable](left, right collections.Enumerator[T]) collections.Enumerator[T] {
 	return New(func() collections.Iterator[T] {
 		return iterator.Intersection(left.Iterate(), right.Iterate())
+	})
+}
+
+// Subtract creates an enumerator that contains the all the values from
+// the right enumerators but not in the left enumerator.
+// This will subtract the left set from the right set.
+// Only returns values which exists in only the right enumerator.
+func Subtract[T comparable](left, right collections.Enumerator[T]) collections.Enumerator[T] {
+	return New(func() collections.Iterator[T] {
+		return iterator.Subtract(left.Iterate(), right.Iterate())
 	})
 }

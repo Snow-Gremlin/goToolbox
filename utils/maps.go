@@ -1,19 +1,14 @@
 package utils
 
 import (
+	"goToolbox/internal/liteUtils"
 	"goToolbox/terrors/terror"
 	"slices"
 )
 
 // Keys gets all the keys for the given map in random order.
 func Keys[TKey comparable, TValue any, TMap ~map[TKey]TValue](m TMap) []TKey {
-	keys := make([]TKey, len(m))
-	index := 0
-	for key := range m {
-		keys[index] = key
-		index++
-	}
-	return keys
+	return liteUtils.Keys(m)
 }
 
 // SortedKeys gets all the keys from the given map in sorted order.
@@ -44,22 +39,5 @@ func SortedKeys[TKey comparable, TValue any, TMap ~map[TKey]TValue](m TMap, comp
 
 // Values gets all the values for the given map in random order.
 func Values[TKey comparable, TValue any, TMap ~map[TKey]TValue](m TMap) []TValue {
-	values := make([]TValue, len(m))
-	index := 0
-	for _, value := range m {
-		values[index] = value
-		index++
-	}
-	return values
-}
-
-// SimpleSet creates a map with the given values as the keys in the map.
-//
-// The values are empty, so to test if values exist use `_, exists := s[value]`.
-func SimpleSet[T comparable](values ...T) map[T]struct{} {
-	m := make(map[T]struct{}, len(values))
-	for _, key := range values {
-		m[key] = struct{}{}
-	}
-	return m
+	return liteUtils.Values(m)
 }

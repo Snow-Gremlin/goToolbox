@@ -318,19 +318,33 @@ func Test_Enumerator_Unique(t *testing.T) {
 	checkLength(t, 3, e)
 }
 
-func Test_Enumerator_IntersectionAndUnion(t *testing.T) {
+func Test_Enumerator_DuplicateCounts(t *testing.T) {
+	e := Enumerate(`cat`, `cat`, `wolf`, `cat`, `mouse`, `wolf`, `cat`)
+	d := DuplicateCounts(e)
+	keys := utils.SortedKeys(d)
+	checkEqual(t, []string{`cat`, `mouse`, `wolf`}, keys)
+	checkEqual(t, 4, d[`cat`])
+	checkEqual(t, 2, d[`wolf`])
+	checkEqual(t, 1, d[`mouse`])
+}
+
+func Test_Enumerator_Intersection_Union_Subtract(t *testing.T) {
 	e1 := Enumerate(1, 3, 5, 7, 9)
 	e2 := Enumerate(2, 4, 6, 8)
 	checkEqual(t, []int{}, Intersection(e1, e2).ToSlice())
 	checkEqual(t, []int{}, Intersection(e2, e1).ToSlice())
 	checkEqual(t, []int{1, 3, 5, 7, 9, 2, 4, 6, 8}, Union(e1, e2).ToSlice())
 	checkEqual(t, []int{2, 4, 6, 8, 1, 3, 5, 7, 9}, Union(e2, e1).ToSlice())
+	checkEqual(t, []int{2, 4, 6, 8}, Subtract(e1, e2).ToSlice())
+	checkEqual(t, []int{1, 3, 5, 7, 9}, Subtract(e2, e1).ToSlice())
 
 	e2 = Enumerate(1, 2, 3, 4, 5)
 	checkEqual(t, []int{1, 3, 5}, Intersection(e1, e2).ToSlice())
 	checkEqual(t, []int{1, 3, 5}, Intersection(e2, e1).ToSlice())
 	checkEqual(t, []int{1, 3, 5, 7, 9, 2, 4}, Union(e1, e2).ToSlice())
 	checkEqual(t, []int{1, 2, 3, 4, 5, 7, 9}, Union(e2, e1).ToSlice())
+	checkEqual(t, []int{2, 4}, Subtract(e1, e2).ToSlice())
+	checkEqual(t, []int{7, 9}, Subtract(e2, e1).ToSlice())
 }
 
 func Test_Enumerator_Zip(t *testing.T) {

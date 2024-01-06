@@ -608,10 +608,26 @@ func Test_Iterator_Intersection(t *testing.T) {
 	checkZero(t, count2)
 	checkEqual(t, true, it3.Next())
 	checkEqual(t, 7, it3.Current())
-	checkEqual(t, 9, count1) // iterator 1 only read after first call of Next.
+	checkEqual(t, 1, count1) // iterator 1 only read as much as needed
 	checkEqual(t, 1, count2)
 
 	checkIt(t, it3, 6, 9, 1, 7, 9, 9) // order and duplicates from it2
+}
+
+func Test_Iterator_Subtract(t *testing.T) {
+	count1, count2 := 0, 0
+	it1 := watcher(&count1, Iterate(7, 8, 6, 1, 1, 8, 9, 4))
+	it2 := watcher(&count2, Iterate(7, 5, 6, 9, 3, 1, 7, 9, 5, 9))
+	it3 := Subtract(it1, it2)
+
+	checkZero(t, count1)
+	checkZero(t, count2)
+	checkEqual(t, true, it3.Next())
+	checkEqual(t, 5, it3.Current())
+	checkEqual(t, 9, count1) // iterator 1 reads whole thing trying to find another 5
+	checkEqual(t, 2, count2)
+
+	checkIt(t, it3, 3, 5) // order and duplicates from it2
 }
 
 func Test_Iterator_Zip(t *testing.T) {

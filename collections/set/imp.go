@@ -1,7 +1,6 @@
 package set
 
 import (
-	"maps"
 	"slices"
 	"strings"
 
@@ -10,11 +9,12 @@ import (
 	"goToolbox/collections/iterator"
 	"goToolbox/collections/list"
 	"goToolbox/collections/readonlySet"
+	"goToolbox/internal/simpleSet"
 	"goToolbox/utils"
 )
 
 type setImp[T comparable] struct {
-	m map[T]struct{}
+	m simpleSet.Set[T]
 }
 
 func (s *setImp[T]) Enumerate() collections.Enumerator[T] {
@@ -25,12 +25,12 @@ func (s *setImp[T]) Enumerate() collections.Enumerator[T] {
 	// the set may just cause the enumeration to be unstable
 	// but doesn't require it to be stopped.
 	return enumerator.New(func() collections.Iterator[T] {
-		keys := utils.Keys(s.m)
-		index, count := -1, len(keys)-1
+		values := s.m.ToSlice()
+		index, count := -1, len(values)-1
 		return iterator.New(func() (T, bool) {
 			if index < count {
 				index++
-				return keys[index], true
+				return values[index], true
 			}
 			return utils.Zero[T](), false
 		})
@@ -38,24 +38,24 @@ func (s *setImp[T]) Enumerate() collections.Enumerator[T] {
 }
 
 func (s *setImp[T]) Empty() bool {
-	return len(s.m) <= 0
+	return s.m.Count() <= 0
 }
 
 func (s *setImp[T]) Count() int {
-	return len(s.m)
+	return s.m.Count()
 }
 
 func (s *setImp[T]) ToSlice() []T {
-	return utils.Keys(s.m)
+	return s.m.ToSlice()
 }
 
 func (s *setImp[T]) CopyToSlice(s2 []T) {
 	index, room := 0, len(s2)
-	for key := range s.m {
+	for value := range s.m {
 		if index >= room {
 			break
 		}
-		s2[index] = key
+		s2[index] = value
 		index++
 	}
 }
@@ -64,13 +64,12 @@ func (q *setImp[T]) ToList() collections.List[T] {
 	return list.From(q.Enumerate())
 }
 
-func (s *setImp[T]) Contains(key T) bool {
-	_, ok := s.m[key]
-	return ok
+func (s *setImp[T]) Contains(value T) bool {
+	return s.m.Has(value)
 }
 
 func (s *setImp[T]) String() string {
-	parts := utils.Strings(utils.Keys(s.m))
+	parts := utils.Strings(s.m.ToSlice())
 	slices.Sort(parts)
 	return strings.Join(parts, `, `)
 }
@@ -93,10 +92,7 @@ func (s *setImp[T]) Equals(other any) bool {
 func (s *setImp[T]) Add(values ...T) bool {
 	added := false
 	for _, key := range values {
-		if _, ok := s.m[key]; !ok {
-			s.m[key] = struct{}{}
-			added = true
-		}
+		added = s.m.SetTest(key) || added
 	}
 	return added
 }
@@ -108,11 +104,7 @@ func (s *setImp[T]) AddFrom(e collections.Enumerator[T]) bool {
 	added := false
 	it := e.Iterate()
 	for it.Next() {
-		key := it.Current()
-		if _, ok := s.m[key]; !ok {
-			s.m[key] = struct{}{}
-			added = true
-		}
+		added = s.m.SetTest(it.Current()) || added
 	}
 	return added
 }
@@ -120,28 +112,22 @@ func (s *setImp[T]) AddFrom(e collections.Enumerator[T]) bool {
 func (s *setImp[T]) Remove(values ...T) bool {
 	removed := false
 	for _, key := range values {
-		if _, ok := s.m[key]; ok {
-			delete(s.m, key)
-			removed = true
-		}
-
+		removed = s.m.RemoveTest(key) || removed
 	}
 	return removed
 }
 
-func (s *setImp[T]) RemoveIf(handle collections.Predicate[T]) bool {
-	priorCount := s.Count()
-	maps.DeleteFunc(s.m, func(key T, _ struct{}) bool { return handle(key) })
-	return s.Count() != priorCount
+func (s *setImp[T]) RemoveIf(predicate collections.Predicate[T]) bool {
+	return s.m.RemoveIf(predicate)
 }
 
 func (s *setImp[T]) Clear() {
-	s.m = make(map[T]struct{})
+	s.m = simpleSet.New[T]()
 }
 
 func (s *setImp[T]) Clone() collections.Set[T] {
 	return &setImp[T]{
-		m: maps.Clone(s.m),
+		m: s.m.Clone(),
 	}
 }
 

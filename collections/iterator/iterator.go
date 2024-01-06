@@ -8,6 +8,7 @@ import (
 	"goToolbox/collections/predicate"
 	"goToolbox/collections/tuple2"
 	"goToolbox/internal/optional"
+	"goToolbox/internal/simpleSet"
 	"goToolbox/terrors/terror"
 	"goToolbox/utils"
 )
@@ -416,7 +417,10 @@ func Concat[T any](its []collections.Iterator[T]) collections.Iterator[T] {
 
 // Select changes one iterator type into another by converting each value.
 // Typically this is used to select one value out of a value.
-func Select[TIn, TOut any](it collections.Iterator[TIn], selector collections.Selector[TIn, TOut]) collections.Iterator[TOut] {
+func Select[TIn, TOut any](
+	it collections.Iterator[TIn],
+	selector collections.Selector[TIn, TOut],
+) collections.Iterator[TOut] {
 	return New(func() (TOut, bool) {
 		if it.Next() {
 			return selector(it.Current()), true
@@ -468,7 +472,10 @@ func Cast[TIn, TOut any](it collections.Iterator[TIn]) collections.Iterator[TOut
 
 // Expand creates an iterator which iterates all the values from all the iterators
 // selected from the values in the given iterator.
-func Expand[TIn, TOut any, TEnum collections.Iterable[TOut]](it collections.Iterator[TIn], expander collections.Selector[TIn, TEnum]) collections.Iterator[TOut] {
+func Expand[TIn, TOut any, TEnum collections.Iterable[TOut]](
+	it collections.Iterator[TIn],
+	expander collections.Selector[TIn, TEnum],
+) collections.Iterator[TOut] {
 	var current collections.Iterator[TOut]
 	return New(func() (TOut, bool) {
 		for {
@@ -528,7 +535,11 @@ func Merge[T any](it collections.Iterator[T], merger collections.Reducer[T, T]) 
 // The given stride is how far to advance the window, it must be [1..size].
 // The same slice is reused for the window so modifying it could cause problems and
 // it should be copied if the window is kept.
-func SlidingWindow[TIn, TOut any](it collections.Iterator[TIn], size, stride int, window collections.Window[TIn, TOut]) collections.Iterator[TOut] {
+func SlidingWindow[TIn, TOut any](
+	it collections.Iterator[TIn],
+	size, stride int,
+	window collections.Window[TIn, TOut],
+) collections.Iterator[TOut] {
 	if size <= 0 {
 		panic(terror.New(`the given window size must be greater than zero`).
 			With(`size`, size))
@@ -605,26 +616,14 @@ func Sum[T utils.NumConstraint](it collections.Iterator[T]) (T, int) {
 // IsUnique determines if there are only unique items in the iterator.
 // Returns false if there are duplicate values in the iterator.
 func IsUnique[T comparable](it collections.Iterator[T]) bool {
-	touched := make(map[T]struct{})
-	return All(it, func(value T) bool {
-		if _, has := touched[value]; has {
-			return false
-		}
-		touched[value] = struct{}{}
-		return true
-	})
+	touched := simpleSet.New[T]()
+	return All(it, touched.SetTest)
 }
 
 // Unique creates an iterator that returns only the unique items in the iterator.
 func Unique[T comparable](it collections.Iterator[T]) collections.Iterator[T] {
-	touched := make(map[T]struct{})
-	return Where(it, func(value T) bool {
-		if _, has := touched[value]; has {
-			return false
-		}
-		touched[value] = struct{}{}
-		return true
-	})
+	touched := simpleSet.New[T]()
+	return Where(it, touched.SetTest)
 }
 
 // Intersection creates an iterator that returns only the values which exists in both iterators.
@@ -632,23 +631,62 @@ func Unique[T comparable](it collections.Iterator[T]) collections.Iterator[T] {
 // The right iterator takes precedence over the result such that it
 // determines the order and if there are repeats in the result.
 func Intersection[T comparable](left, right collections.Iterator[T]) collections.Iterator[T] {
-	var inLeft map[T]struct{}
+	inLeft := simpleSet.New[T]()
 	return Where(right, func(value T) bool {
-		if inLeft == nil {
-			inLeft = make(map[T]struct{})
-			for left.Next() {
-				inLeft[left.Current()] = struct{}{}
-			}
+		if inLeft.Has(value) {
+			return true
 		}
 
-		_, has := inLeft[value]
-		return has
+		if left != nil {
+			for left.Next() {
+				cur := left.Current()
+				inLeft.Set(cur)
+				if value == cur {
+					return true
+				}
+			}
+			left = nil
+		}
+
+		return false
+	})
+}
+
+// Subtract creates an iterator that returns only the values which exists
+// in the right iterator but not in the left.
+// This will subtract the left set from the right set.
+//
+// The right iterator takes precedence over the result such that it
+// determines the order and if there are repeats in the result.
+func Subtract[T comparable](left, right collections.Iterator[T]) collections.Iterator[T] {
+	inLeft := simpleSet.New[T]()
+	return Where(right, func(value T) bool {
+		if inLeft.Has(value) {
+			return false
+		}
+
+		if left != nil {
+			for left.Next() {
+				cur := left.Current()
+				inLeft.Set(cur)
+				if value == cur {
+					return false
+				}
+			}
+			left = nil
+		}
+
+		return true
 	})
 }
 
 // Zip merges two iterators together while both iterators have values
 // and returns an iterator with a tuple containing values from both iterators.
-func Zip[TFirst, TSecond, TOut any](firsts collections.Iterator[TFirst], seconds collections.Iterator[TSecond], combiner collections.Combiner[TFirst, TSecond, TOut]) collections.Iterator[TOut] {
+func Zip[TFirst, TSecond, TOut any](
+	firsts collections.Iterator[TFirst],
+	seconds collections.Iterator[TSecond],
+	combiner collections.Combiner[TFirst, TSecond, TOut],
+) collections.Iterator[TOut] {
 	zipping := true
 	return New(func() (TOut, bool) {
 		if zipping && firsts.Next() && seconds.Next() {

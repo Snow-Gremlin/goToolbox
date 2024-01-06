@@ -5,6 +5,7 @@ import (
 
 	"goToolbox/collections"
 	"goToolbox/internal/optional"
+	"goToolbox/internal/simpleSet"
 	"goToolbox/terrors/terror"
 	"goToolbox/utils"
 )
@@ -87,7 +88,7 @@ func InMap[TKey comparable, TValue any, M ~map[TKey]TValue](m M) collections.Pre
 //
 // This will create a map for fast lookup.
 func In[T comparable](values ...T) collections.Predicate[T] {
-	return InMap(utils.SimpleSet(values...))
+	return InMap(simpleSet.With(values...))
 }
 
 // AsString is a predicate which calls the given predicate with

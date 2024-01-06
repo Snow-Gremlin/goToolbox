@@ -47,6 +47,9 @@ This also contains ideas which need to be investigated.
       determine if an integer or floating point value is a multiple of
       some value.
 
+- [ ] Add format hints, like `Hex()`, `Bin()`, etc to `Check`.
+      These give hints to how to format the expected and actual values.
+
 ## New Enumerator Functions
 
 - [ ] `GroupBy(e Enumerator[T], Selector[T, TKey]) Enumerator[Tuple[TKey, []T]`:

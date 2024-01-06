@@ -1,6 +1,9 @@
 package collections
 
 // Set is a collection of values in random order which has no repeat values.
+//
+// For sets, the `ToSlice`, `ToList`, and `Enumerate` methods do not guarantee
+// any specific order and must be considered returning values in random order.
 type Set[T comparable] interface {
 	ReadonlySet[T]
 

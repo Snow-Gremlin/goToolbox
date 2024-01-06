@@ -11,6 +11,11 @@ type Check[T any] interface {
 	// The new check with the additional context is returned.
 	Withf(key, format string, args ...any) Check[T]
 
+	// WithType adds the type of the given value as context
+	// to the check being performed.
+	// The new check with the additional context is returned.
+	WithType(key string, valueForType any) Check[T]
+
 	// Name adds context with the key "name" to the check being performed.
 	// This is a quick way to add unique information to a check.
 	// The new check with the additional context is returned.

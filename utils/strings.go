@@ -32,9 +32,5 @@ func String[T any](value T) string {
 
 // Strings gets the strings for all the given values in the slice.
 func Strings[T any, S ~[]T](s S) []string {
-	result := make([]string, len(s))
-	for i, v := range s {
-		result[i] = String(v)
-	}
-	return result
+	return liteUtils.Strings(s)
 }

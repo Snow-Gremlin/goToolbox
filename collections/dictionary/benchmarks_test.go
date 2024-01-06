@@ -9,11 +9,12 @@ import (
 
 	"goToolbox/collections"
 	"goToolbox/collections/predicate"
+	"goToolbox/internal/simpleSet"
 	"goToolbox/testers/check"
 	"goToolbox/utils"
 )
 
-func removeIf_StackStore[T comparable](test map[T]struct{}, p collections.Predicate[T]) bool {
+func removeIf_StackStore[T comparable](test simpleSet.Set[T], p collections.Predicate[T]) bool {
 	type node struct {
 		key  T
 		next *node
@@ -39,7 +40,7 @@ func removeIf_StackStore[T comparable](test map[T]struct{}, p collections.Predic
 	return true
 }
 
-func removeIf_SliceStore[T comparable](test map[T]struct{}, p collections.Predicate[T]) bool {
+func removeIf_SliceStore[T comparable](test simpleSet.Set[T], p collections.Predicate[T]) bool {
 	remove := []T{}
 	for key := range test {
 		if p(key) {
@@ -55,23 +56,27 @@ func removeIf_SliceStore[T comparable](test map[T]struct{}, p collections.Predic
 	return true
 }
 
-func removeIf_NoStore[T comparable](test map[T]struct{}, p collections.Predicate[T]) bool {
+func removeIf_NoStore[T comparable](test simpleSet.Set[T], p collections.Predicate[T]) bool {
 	count := len(test)
 	maps.DeleteFunc(test, func(key T, _ struct{}) bool { return p(key) })
 	return len(test) != count
 }
 
+func removeIf_NoStoreOrCount[T comparable](test simpleSet.Set[T], p collections.Predicate[T]) bool {
+	return test.RemoveIf(p)
+}
+
 func removeIf_Comparison(b *testing.B, count int, removePercent float64) {
 	maximum := math.MaxInt16
-	src := make(map[int]struct{}, count)
+	src := simpleSet.Cap[int](count)
 	for i := 0; i < count; i++ {
 		key := int(rand.Int31n(int32(maximum)))
-		src[key] = struct{}{}
+		src.Set(key)
 	}
 
 	threshold := int(removePercent * float64(maximum))
 	p := predicate.LessThan(threshold)
-	var test1, test2, test3 map[int]struct{}
+	var test1, test2, test3, test4 simpleSet.Set[int]
 
 	b.Run(`Stack Store`, func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -94,11 +99,20 @@ func removeIf_Comparison(b *testing.B, count int, removePercent float64) {
 		}
 	})
 
+	b.Run(`No Store Or Count`, func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			test4 = maps.Clone(src)
+			removeIf_NoStoreOrCount(test4, p)
+		}
+	})
+
 	keys1 := utils.SortedKeys(test1)
 	keys2 := utils.SortedKeys(test2)
 	keys3 := utils.SortedKeys(test3)
+	keys4 := utils.SortedKeys(test4)
 	check.Equal(b, keys1).Assert(keys2)
 	check.Equal(b, keys1).Assert(keys3)
+	check.Equal(b, keys1).Assert(keys4)
 	fmt.Printf("Final size = %d (%.02f%% is about %.02f)\n", len(keys1),
 		float64(len(keys1))/float64(count)*100.0, (1.0-removePercent)*100.0)
 }

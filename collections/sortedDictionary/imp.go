@@ -12,6 +12,7 @@ import (
 	"goToolbox/collections/iterator"
 	"goToolbox/collections/readonlyDictionary"
 	"goToolbox/collections/tuple2"
+	"goToolbox/internal/simpleSet"
 	"goToolbox/utils"
 )
 
@@ -27,11 +28,8 @@ func (m *sortedImp[TKey, TValue]) insertKey(key TKey) {
 	}
 }
 
-func (m *sortedImp[TKey, TValue]) removeKeys(keyToRemove map[TKey]struct{}) {
-	newKeys := slices.DeleteFunc(m.keys, func(k TKey) bool {
-		_, ok := keyToRemove[k]
-		return ok
-	})
+func (m *sortedImp[TKey, TValue]) removeKeys(keyToRemove simpleSet.Set[TKey]) {
+	newKeys := slices.DeleteFunc(m.keys, keyToRemove.Has)
 	zero := utils.Zero[TKey]()
 	for i, count := len(newKeys), len(m.keys); i < count; i++ {
 		m.keys[i] = zero
@@ -107,14 +105,14 @@ func (m *sortedImp[TKey, TValue]) ToMap() map[TKey]TValue {
 }
 
 func (m *sortedImp[TKey, TValue]) Remove(keys ...TKey) bool {
-	removed := map[TKey]struct{}{}
+	removed := simpleSet.New[TKey]()
 	for _, key := range keys {
 		if _, exists := m.data[key]; exists {
 			delete(m.data, key)
-			removed[key] = struct{}{}
+			removed.Set(key)
 		}
 	}
-	if len(removed) > 0 {
+	if removed.Count() > 0 {
 		m.removeKeys(removed)
 		return true
 	}
@@ -125,14 +123,14 @@ func (m *sortedImp[TKey, TValue]) RemoveIf(p collections.Predicate[TKey]) bool {
 	if utils.IsNil(p) {
 		return false
 	}
-	removed := map[TKey]struct{}{}
+	removed := simpleSet.New[TKey]()
 	for _, key := range m.keys {
 		if p(key) {
 			delete(m.data, key)
-			removed[key] = struct{}{}
+			removed.Set(key)
 		}
 	}
-	if len(removed) > 0 {
+	if removed.Count() > 0 {
 		m.removeKeys(removed)
 		return true
 	}
