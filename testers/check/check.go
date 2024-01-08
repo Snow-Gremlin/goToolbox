@@ -147,11 +147,11 @@ func Equal[T any](t testers.Tester, expected T) (c testers.Check[T]) {
 	defer handlePanic(t, &c)
 	getHelper(t)()
 	return newPred(t, predicate.Eq(expected), `be equal`).
-		With(`Expected Value`, expected).
+		WithValue(`Expected Value`, expected).
 		WithType(`Expected Type`, expected)
 }
 
-// NotEqual creates a chec k that the given expected value
+// NotEqual creates a check that the given expected value
 // is not equal to an actual value.
 //
 // This uses `utils.Equal` for the comparison.
@@ -161,7 +161,7 @@ func NotEqual[T any](t testers.Tester, unexpected T) (c testers.Check[T]) {
 	defer handlePanic(t, &c)
 	getHelper(t)()
 	return newPred(t, predicate.NotEq(unexpected), `not be equal`).
-		With(`Unexpected Value`, unexpected).
+		WithValue(`Unexpected Value`, unexpected).
 		WithType(`Unexpected Type`, unexpected)
 }
 
@@ -174,7 +174,7 @@ func GreaterThan[T any](t testers.Tester, expected T, comparer ...utils.Comparer
 	getHelper(t)()
 	return newPred(t, predicate.GreaterThan(expected, comparer...),
 		`be greater than the expected value`).
-		With(`Minimum Value`, expected).
+		WithValue(`Minimum Value`, expected).
 		WithType(`Minimum Type`, expected)
 }
 
@@ -187,7 +187,7 @@ func GreaterEq[T any](t testers.Tester, expected T, comparer ...utils.Comparer[T
 	getHelper(t)()
 	return newPred(t, predicate.GreaterEq(expected, comparer...),
 		`be greater than or equal to the expected value`).
-		With(`Minimum Value`, expected).
+		WithValue(`Minimum Value`, expected).
 		WithType(`Minimum Type`, expected)
 }
 
@@ -200,7 +200,7 @@ func LessThan[T any](t testers.Tester, expected T, comparer ...utils.Comparer[T]
 	getHelper(t)()
 	return newPred(t, predicate.LessThan(expected, comparer...),
 		`be less than the expected value`).
-		With(`Maximum Value`, expected).
+		WithValue(`Maximum Value`, expected).
 		WithType(`Maximum Type`, expected)
 }
 
@@ -213,7 +213,7 @@ func LessEq[T any](t testers.Tester, expected T, comparer ...utils.Comparer[T]) 
 	getHelper(t)()
 	return newPred(t, predicate.LessEq(expected, comparer...),
 		`be less than or equal to the expected value`).
-		With(`Maximum Value`, expected).
+		WithValue(`Maximum Value`, expected).
 		WithType(`Maximum Type`, expected)
 }
 
@@ -226,8 +226,8 @@ func InRange[T any](t testers.Tester, min, max T, comparer ...utils.Comparer[T])
 	getHelper(t)()
 	return newPred(t, predicate.InRange(min, max, comparer...),
 		`be between or equal to the given maximum and minimum`).
-		With(`Minimum Value`, min).
-		With(`Maximum Value`, max).
+		WithValue(`Minimum Value`, min).
+		WithValue(`Maximum Value`, max).
 		WithType(`Range Type`, max)
 }
 
@@ -244,16 +244,16 @@ func Epsilon[T utils.FloatingConstraint](t testers.Tester, expected, epsilon T) 
 	defer handlePanic(t, &c)
 	getHelper(t)()
 	if epsilon <= 0 {
-		newTestee(t).With(`Epsilon Value`, epsilon).
+		newTestee(t).WithValue(`Epsilon Value`, epsilon).
 			WithType(`Epsilon Type`, epsilon).
 			SetupMust(`provide an epsilon greater than zero`)
 		return (*checkImp[T])(nil)
 	}
 	return newPred(t, predicate.EpsilonEq(expected, epsilon),
 		`be within the epsilon of the expected value`).
-		With(`Expected Value`, expected).
+		WithValue(`Expected Value`, expected).
 		WithType(`Expected Type`, expected).
-		With(`Epsilon`, epsilon)
+		WithValue(`Epsilon`, epsilon)
 }
 
 // Is creates a check that the actual value causes the given predicate to return true.
@@ -291,7 +291,7 @@ func StartsWith(t testers.Tester, expected any) (c testers.Check[any]) {
 
 	return newCheck(t, func(b *testee, actual any) {
 		if actV := readonlyVariantList.Wrap(actual); !actV.StartsWith(expV) {
-			b.With(`Expected Prefix`, expected).
+			b.WithValue(`Expected Prefix`, expected).
 				WithType(`Expected Type`, expected).
 				Should(`start with the given prefix`)
 		}
@@ -315,7 +315,7 @@ func EndsWith(t testers.Tester, expected any) (c testers.Check[any]) {
 
 	return newCheck(t, func(b *testee, actual any) {
 		if actV := readonlyVariantList.Wrap(actual); !actV.EndsWith(expV) {
-			b.With(`Expected Suffix`, expected).
+			b.WithValue(`Expected Suffix`, expected).
 				WithType(`Expected Type`, expected).
 				Should(`end with the given suffix`)
 		}
@@ -490,7 +490,7 @@ func Same[T comparable](t testers.Tester, expected T) (c testers.Check[T]) {
 	return newPred(t, func(actual T) bool {
 		return actual == expected
 	}, `be the same`).
-		With(`Expected Value`, expected).
+		WithValue(`Expected Value`, expected).
 		WithType(`Expected Type`, expected)
 }
 
@@ -505,7 +505,7 @@ func NotSame[T comparable](t testers.Tester, expected T) (c testers.Check[T]) {
 	return newPred(t, func(actual T) bool {
 		return actual != expected
 	}, `not be the same`).
-		With(`Expected Value`, expected).
+		WithValue(`Expected Value`, expected).
 		WithType(`Expected Type`, expected)
 }
 
@@ -533,12 +533,13 @@ func HasElems(t testers.Tester, expected any) (c testers.Check[any]) {
 		actV := readonlyVariantList.Wrap(actual)
 		missing := enumerator.Subtract(actV.Enumerate(), expV.Enumerate()).ToSlice()
 		if len(missing) > 0 {
-			b.With(`Expected Elements`, expected).
+			b.setTextHint(actual).
+				WithValue(`Expected Elements`, expected).
 				WithType(`Expected Type`, expected).
 				With(`Missing Elements`, missing).
 				Should(`have the expected elements`)
 		}
-	})
+	}).setTextHint(expected)
 }
 
 // HasKeys creates a check that the actual map contains all of the given expected keys.
@@ -563,7 +564,7 @@ func HasKeys[M ~map[TKey]TValue, TKey comparable, TValue any](t testers.Tester, 
 			}
 		}
 		if len(missing) > 0 {
-			b.With(`Expected Keys`, expected).
+			b.WithValue(`Expected Keys`, expected).
 				WithType(`Expected Type`, expected).
 				With(`Missing Keys`, missing).
 				Should(`have the expected keys`)
@@ -592,7 +593,7 @@ func HasValues[M ~map[TKey]TValue, TKey, TValue comparable](t testers.Tester, ex
 		actV := enumerator.Enumerate(utils.Values(actual)...)
 		missing := enumerator.Subtract(actV, expV).ToSlice()
 		if len(missing) > 0 {
-			b.With(`Expected Values`, expected).
+			b.WithValue(`Expected Values`, expected).
 				WithType(`Expected Type`, expected).
 				With(`Missing Values`, missing).
 				Should(`have the expected values`)
@@ -620,17 +621,18 @@ func EqualElems(t testers.Tester, expected any) (c testers.Check[any]) {
 		missing := enumerator.Subtract(actV.Enumerate(), expV.Enumerate()).ToSlice()
 		extra := enumerator.Subtract(expV.Enumerate(), actV.Enumerate()).ToSlice()
 		if len(missing) > 0 || len(extra) > 0 {
-			b.With(`Expected Elements`, expected).
+			b.setTextHint(actual).
+				WithValue(`Expected Elements`, expected).
 				WithType(`Expected Type`, expected).
 				Should(`have the expected elements`)
 			if len(missing) > 0 {
-				b.With(`Missing Elements`, missing)
+				b.With(`Missing Elements`, b.formatUniqueValues(missing))
 			}
 			if len(extra) > 0 {
-				b.With(`Extra Elements`, extra)
+				b.With(`Extra Elements`, b.formatUniqueValues(extra))
 			}
 		}
-	})
+	}).setTextHint(expected)
 }
 
 // SameElems creates a check that the actual slice contains all of the given
@@ -656,6 +658,7 @@ func SameElems(t testers.Tester, expected any) (c testers.Check[any]) {
 		actV.Backwards().Foreach(func(value any) {
 			expCopy[value]--
 		})
+		b.setTextHint(actual)
 
 		missing := []string{}
 		extra := []string{}
@@ -665,12 +668,10 @@ func SameElems(t testers.Tester, expected any) (c testers.Check[any]) {
 				continue
 			}
 			isWrong = true
-
-			str := utils.String(key)
+			str := b.formatValue(key)
 			if count := abs(diff); count > 1 {
 				str += fmt.Sprintf(`(x%d)`, count)
 			}
-
 			if diff > 0 {
 				missing = append(missing, str)
 			} else {
@@ -679,17 +680,17 @@ func SameElems(t testers.Tester, expected any) (c testers.Check[any]) {
 		}
 
 		if isWrong {
-			b.With(`Expected Elements`, expected).
+			b.WithValue(`Expected Elements`, expected).
 				WithType(`Expected Type`, expected).
 				Should(`have the expected elements`)
 			if len(missing) > 0 {
 				sort.Strings(missing)
-				b.With(`Missing Elements`, strings.Join(missing, `, `))
+				b.With(`Missing Elements`, `[`+strings.Join(missing, ` `)+`]`)
 			}
 			if len(extra) > 0 {
 				sort.Strings(extra)
-				b.With(`Extra Elements`, strings.Join(extra, `, `))
+				b.With(`Extra Elements`, `[`+strings.Join(extra, ` `)+`]`)
 			}
 		}
-	})
+	}).setTextHint(expected)
 }

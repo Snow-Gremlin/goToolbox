@@ -70,6 +70,12 @@ func (c *checkImp[T]) WithType(key string, valueForType any) testers.Check[T] {
 	})
 }
 
+func (c *checkImp[T]) WithValue(key string, value any) testers.Check[T] {
+	return c.copyAndAdd(func(c2 *checkImp[T]) {
+		c2.b.WithValue(key, value)
+	})
+}
+
 func (c *checkImp[T]) Name(name string) testers.Check[T] {
 	return c.With(`Name`, name)
 }
@@ -93,8 +99,8 @@ func (c *checkImp[T]) Assert(actual T) (pc testers.Check[T]) {
 	getHelper(c.b.t)()
 
 	b2 := c.b.Copy().
-		With(`Actual Value`, actual).
-		Withf(`Actual Type`, `%T`, actual)
+		WithValue(`Actual Value`, actual).
+		WithType(`Actual Type`, actual)
 	c.trial(b2, actual)
 	b2.Finish()
 	return c
@@ -123,17 +129,24 @@ func (c *checkImp[T]) Panic(handle func()) (pc testers.Check[T]) {
 
 	actual, ok := recovered.(T)
 	if !ok {
-		b2.With(`Panicked Value`, recovered).
-			Withf(`Panicked Type`, `%T`, recovered).
+		b2.WithValue(`Panicked Value`, recovered).
+			WithType(`Panicked Type`, recovered).
 			Should(`be a panic of the expected type`).
 			Finish()
 		return c
 	}
 
 	b2 = c.b.Copy().
-		With(`Panicked Value`, actual).
-		Withf(`Panicked Type`, `%T`, actual)
+		WithValue(`Panicked Value`, actual).
+		WithType(`Panicked Type`, actual)
 	c.trial(b2, actual)
 	b2.Finish()
+	return c
+}
+
+func (c *checkImp[T]) setTextHint(value any) *checkImp[T] {
+	if _, ok := value.(string); ok {
+		c.b.textHint = true
+	}
 	return c
 }

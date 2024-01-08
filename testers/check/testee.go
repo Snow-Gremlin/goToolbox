@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"maps"
+	"sort"
 	"strconv"
 	"strings"
 
+	"goToolbox/internal/simpleSet"
 	"goToolbox/testers"
 	"goToolbox/utils"
 )
@@ -24,10 +26,11 @@ type testee struct {
 	failed    bool
 	action    string
 	must      bool
-	textHint  bool
 	maxLines  int
 	tailLines int
-	context   map[string]any
+	textHint  bool
+	pContext  map[string]string
+	fContext  map[string]any
 }
 
 func newTestee(t testers.Tester) *testee {
@@ -36,33 +39,38 @@ func newTestee(t testers.Tester) *testee {
 		failed:    false,
 		action:    ``,
 		must:      false,
-		textHint:  false,
 		maxLines:  defaultMaxLines,
 		tailLines: defaultTailLines,
-		context:   map[string]any{},
+		textHint:  false,
+		pContext:  map[string]string{},
+		fContext:  map[string]any{},
 	}
 }
 
 func (b *testee) Copy() *testee {
 	b2 := *b
-	b2.context = maps.Clone(b.context)
+	b2.pContext = maps.Clone(b.pContext)
+	b2.fContext = maps.Clone(b.fContext)
 	return &b2
 }
 
 func (b *testee) With(key string, args ...any) *testee {
-	// when context is `[]any` it still needs to be formatted
-	b.context[key] = args
+	b.pContext[key] = b.limitLines(fmt.Sprint(args...))
 	return b
 }
 
 func (b *testee) Withf(key, format string, args ...any) *testee {
-	// when context is `string` it has been preformatted
-	b.context[key] = fmt.Sprintf(format, args...)
+	b.pContext[key] = b.limitLines(fmt.Sprintf(format, args...))
 	return b
 }
 
 func (b *testee) WithType(key string, valueForType any) *testee {
 	return b.Withf(key, `%T`, valueForType)
+}
+
+func (b *testee) WithValue(key string, value any) *testee {
+	b.fContext[key] = value
+	return b
 }
 
 func (b *testee) Required() *testee {
@@ -90,8 +98,8 @@ func (b *testee) Finish() {
 		imperative = `Must`
 	}
 	message := fmt.Sprintf("\n%s %s", imperative, b.action)
-	if len(b.context) > 0 {
-		message += `:` + b.formatContext()
+	if context := b.formatContext(); len(context) > 0 {
+		message += `:` + context
 	}
 	b.t.Error(message + "\n")
 	if b.must {
@@ -100,42 +108,55 @@ func (b *testee) Finish() {
 }
 
 func (b *testee) formatContext() string {
-	keys := utils.SortedKeys(b.context)
+	context := maps.Clone(b.pContext)
+	for key, value := range b.fContext {
+		context[key] = b.limitLines(b.formatValue(value))
+	}
+	keys := utils.SortedKeys(context)
 	maxWidth := utils.GetMaxStringLen(keys) + 2
 	padding := newLine + indent + strings.Repeat(` `, maxWidth)
 	buf := &bytes.Buffer{}
 	for _, key := range keys {
+		value := strings.ReplaceAll(context[key], newLine, padding)
 		_, _ = buf.WriteString(newLine)
 		_, _ = buf.WriteString(indent)
 		_, _ = buf.WriteString(fmt.Sprintf(`%-*s`, maxWidth, key+`: `))
-		_, _ = buf.WriteString(b.valueToString(key, padding))
+		_, _ = buf.WriteString(value)
 	}
 	return buf.String()
 }
 
-func (b *testee) valueToString(key, padding string) string {
-	value := b.context[key]
-	if str, ok := value.(string); ok {
-		return b.limitLines(str)
+func (b *testee) limitLines(value string) string {
+	maxLines := max(b.maxLines, 3)
+	if strings.Count(value, newLine) <= maxLines {
+		return value
 	}
 
-	parts := value.([]any)
-	switch len(parts) {
-	case 0:
-		return `<empty>`
-	case 1:
-		return fmt.Sprint(b.formatValuePart(parts[0], true))
-	default:
-		for i, part := range parts {
-			parts[i] = b.formatValuePart(part, false)
-		}
-		str := b.limitLines(fmt.Sprint(parts...))
-		return strings.ReplaceAll(str, newLine, padding)
+	lines := strings.Split(value, newLine)
+	count := len(lines)
+	result := []string{}
+	tailLines := min(max(b.tailLines, 0), maxLines-2)
+	if headEnd := maxLines - tailLines - 1; headEnd > 0 {
+		result = append(result, lines[:headEnd]...)
 	}
+
+	result = append(result, ellipsis)
+	if tailStart := count - tailLines; tailStart < count {
+		result = append(result, lines[tailStart:]...)
+	}
+
+	return strings.Join(result, newLine)
 }
 
-func (b *testee) formatValuePart(part any, quoteHint bool) any {
-	switch t := part.(type) {
+func (b *testee) setTextHint(value any) *testee {
+	if _, ok := value.(string); ok {
+		b.textHint = true
+	}
+	return b
+}
+
+func (b *testee) formatValue(value any) string {
+	switch t := value.(type) {
 	case nil:
 		return `<nil>`
 	case byte:
@@ -147,45 +168,21 @@ func (b *testee) formatValuePart(part any, quoteHint bool) any {
 			return strconv.QuoteRuneToGraphic(t)
 		}
 	case string:
-		if quoteHint {
-			return strconv.QuoteToGraphic(t)
-		}
-		return t
-	case error:
-		return t.Error()
+		return strconv.QuoteToGraphic(t)
 	case utils.Stringer:
-		if quoteHint {
-			return strconv.QuoteToGraphic(t.String())
-		}
-		return t.String()
+		return strconv.QuoteToGraphic(t.String())
 	}
-	return part
+	return utils.String(value)
 }
 
-func (b *testee) limitLines(value string) string {
-	maxLines := max(b.maxLines, 3)
-	if strings.Count(value, newLine) <= maxLines {
-		return value
+func (b *testee) formatUniqueValues(values []any) string {
+	values = simpleSet.With(values...).ToSlice()
+	parts := make([]string, len(values))
+	for i, value := range values {
+		parts[i] = b.formatValue(value)
 	}
-
-	lines := strings.Split(value, newLine)
-	count := len(lines)
-	if count <= maxLines {
-		return value
-	}
-
-	result := []string{}
-	tailLines := min(max(b.tailLines, 0), maxLines-2)
-	if headEnd := maxLines - tailLines - 1; headEnd <= 0 {
-		result = append(result, lines[:headEnd]...)
-	}
-
-	result = append(result, ellipsis)
-	if tailStart := count - tailLines; tailStart < count {
-		result = append(result, lines[tailStart:]...)
-	}
-
-	return strings.Join(result, newLine)
+	sort.Strings(parts)
+	return `[` + strings.Join(parts, ` `) + `]`
 }
 
 // handlePanic handles a panic in a check.

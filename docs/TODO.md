@@ -49,6 +49,9 @@ This also contains ideas which need to be investigated.
 
 - [ ] Add format hints, like `Hex()`, `Bin()`, etc to `Check`.
       These give hints to how to format the expected and actual values.
+      Also think about adding key groups where keys contain a `;`,
+      like `key (';' <key> )*`, group such that a tree of keys is built
+      where each leaf has a value on it.
 
 ## New Enumerator Functions
 

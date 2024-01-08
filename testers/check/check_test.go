@@ -25,9 +25,9 @@ func Test_Check_Require(t *testing.T) {
 	Equal(pt, `World`).Require(`Hello`)
 	pt.Check(`Must be equal:`,
 		`\tActual Type:    string`,
-		`\tActual Value:   Hello`,
+		`\tActual Value:   "Hello"`,
 		`\tExpected Type:  string`,
-		`\tExpected Value: World`,
+		`\tExpected Value: "World"`,
 		`FAIL NOW`)
 
 	Equal(pt, (error)(nil)).Require(nil)
@@ -43,9 +43,9 @@ func Test_Check_Required_Assert(t *testing.T) {
 	Equal(pt, `World`).Required().Assert(`Hello`)
 	pt.Check(`Must be equal:`,
 		`\tActual Type:    string`,
-		`\tActual Value:   Hello`,
+		`\tActual Value:   "Hello"`,
 		`\tExpected Type:  string`,
-		`\tExpected Value: World`,
+		`\tExpected Value: "World"`,
 		`FAIL NOW`)
 
 	Equal(pt, (error)(nil)).Required().Assert(nil)
@@ -161,8 +161,11 @@ func Test_Check_Helper(t *testing.T) {
 	pt := &pseudoTesterWithHelper{
 		pseudoTester: *newTester(t),
 	}
-	Equal(pt, 13).Assert(12)
+	c := Equal(pt, 13)
+	pt.Check(`Helper`)
+	c.Assert(12)
 	pt.Check(`Helper`,
+		``,
 		`Should be equal:`,
 		`\tActual Type:    int`,
 		`\tActual Value:   12`,
@@ -289,7 +292,7 @@ func Test_Check_Match(t *testing.T) {
 	Match(pt, `0x[0-9A-Z]{4}`).Assert(`Cat`)
 	pt.Check(`Should match the given regular expression pattern:`,
 		`\tActual Type:  string`,
-		`\tActual Value: Cat`,
+		`\tActual Value: "Cat"`,
 		`\tPattern:      0x\[0-9A-Z\]\{4\}`)
 
 	Match(pt, `0x[0-9A-Z]{4}`).Assert(`0xF4B2`)
@@ -302,7 +305,7 @@ func Test_Check_String(t *testing.T) {
 	String(pt, `cat`).Assert(ps)
 	pt.Check(`Should have string be equal:`,
 		`\tActual Type:     check.pseudoStringer`,
-		`\tActual Value:    Lumpy`,
+		`\tActual Value:    "Lumpy"`,
 		`\tExpected String: cat`)
 
 	String(pt, `Lumpy`).Assert(ps)
@@ -524,8 +527,8 @@ func Test_Check_StartWith(t *testing.T) {
 	StartsWith(pt, `World`).Assert(`Hello World`)
 	pt.Check(`Should start with the given prefix:`,
 		`\tActual Type:     string`,
-		`\tActual Value:    Hello World`,
-		`\tExpected Prefix: World`,
+		`\tActual Value:    "Hello World"`,
+		`\tExpected Prefix: "World"`,
 		`\tExpected Type:   string`)
 
 	StartsWith(pt, `He`).Assert(`Hello World`)
@@ -659,7 +662,7 @@ func Test_Check_ShorterThan(t *testing.T) {
 	pt.Check(`Should be shorter than the expected length:`,
 		`\tActual Length:  11`,
 		`\tActual Type:    string`,
-		`\tActual Value:   Hello World`,
+		`\tActual Value:   "Hello World"`,
 		`\tMaximum Length: 8`)
 }
 
@@ -676,7 +679,7 @@ func Test_Check_LongerThan(t *testing.T) {
 	pt.Check(`Should be longer than the expected length:`,
 		`\tActual Length:  11`,
 		`\tActual Type:    string`,
-		`\tActual Value:   Hello World`,
+		`\tActual Value:   "Hello World"`,
 		`\tMinimum Length: 15`)
 
 	LongerThan(pt, 8).Assert(s)
@@ -780,7 +783,7 @@ func Test_Check_ConvertibleTo(t *testing.T) {
 	ConvertibleTo[float64](pt).Assert(v3)
 	pt.Check(`Should be convertible to the target type:`,
 		`\tActual Type:  string`,
-		`\tActual Value: Hello`,
+		`\tActual Value: "Hello"`,
 		`\tTarget Type:  float64`)
 
 	type tt string
@@ -952,6 +955,15 @@ func Test_Check_EqualElems(t *testing.T) {
 
 	EqualElems(pt, []int{5, 3, 1, 4, 2}).Assert(s)
 	pt.Check()
+
+	EqualElems(pt, `abcdefghijklmnopqrstuvwxyz`).
+		Assert(`the quick brown fox jumps over the lazy dog`)
+	pt.Check(`Should have the expected elements:`,
+		`\tActual Type:       string`,
+		`\tActual Value:      "the quick brown fox jumps over the lazy dog"`,
+		`\tExpected Elements: "abcdefghijklmnopqrstuvwxyz"`,
+		`\tExpected Type:     string`,
+		`\tExtra Elements:    \[' '\]`)
 }
 
 func Test_Check_SameElems(t *testing.T) {
@@ -963,7 +975,7 @@ func Test_Check_SameElems(t *testing.T) {
 		`\tActual Value:      \[1 2 2 3 4 5 5 5\]`,
 		`\tExpected Elements: \[\]`,
 		`\tExpected Type:     \[\]int`,
-		`\tExtra Elements:    1, 2\(x2\), 3, 4, 5\(x3\)`)
+		`\tExtra Elements:    \[1 2\(x2\) 3 4 5\(x3\)\]`)
 
 	SameElems(pt, []int{1, 2, 2, 2, 3, 3, 4, 5}).Assert(s)
 	pt.Check(`Should have the expected elements:`,
@@ -971,21 +983,20 @@ func Test_Check_SameElems(t *testing.T) {
 		`\tActual Value:      \[1 2 2 3 4 5 5 5\]`,
 		`\tExpected Elements: \[1 2 2 2 3 3 4 5\]`,
 		`\tExpected Type:     \[\]int`,
-		`\tExtra Elements:    5\(x2\)`,
-		`\tMissing Elements:  2, 3`)
+		`\tExtra Elements:    \[5\(x2\)\]`,
+		`\tMissing Elements:  \[2 3\]`)
 
 	SameElems(pt, []int{1, 2, 2, 3, 4, 5, 5, 5}).Assert(s)
 	pt.Check()
 
-	SameElems(pt, `abcdefghijklmnopqrstuvwxyz `).
+	SameElems(pt, `abcdefghijklmnopqrstuvwxyz`).
 		Assert(`the quick brown fox jumps over the lazy dog`)
 	pt.Check(`Should have the expected elements:`,
-		`\tActual Type:       \[\]int`,
-		`\tActual Value:      \[1 2 2 3 4 5 5 5\]`,
-		`\tExpected Elements: \[1 2 2 2 3 3 4 5\]`,
-		`\tExpected Type:     \[\]int`,
-		`\tExtra Elements:    5 \(x2\)`,
-		`\tMissing Elements:  2, 3`)
+		`\tActual Type:       string`,
+		`\tActual Value:      "the quick brown fox jumps over the lazy dog"`,
+		`\tExpected Elements: "abcdefghijklmnopqrstuvwxyz"`,
+		`\tExpected Type:     string`,
+		`\tExtra Elements:    \[' '\(x8\) 'e'\(x2\) 'h' 'o'\(x3\) 'r' 't' 'u'\]`)
 }
 
 type pseudoTester struct {
@@ -1055,7 +1066,7 @@ type pseudoTesterWithHelper struct {
 }
 
 func (p pseudoTesterWithHelper) Helper() {
-	if _, err := p.buf.WriteString("\nHelper"); err != nil {
+	if _, err := p.buf.WriteString("\nHelper\n"); err != nil {
 		panic(err)
 	}
 }

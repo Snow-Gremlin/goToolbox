@@ -16,6 +16,11 @@ type Check[T any] interface {
 	// The new check with the additional context is returned.
 	WithType(key string, valueForType any) Check[T]
 
+	// WithValue adds the given value as context to the check being performed.
+	// The value is formatted based on test configuration.
+	// The new check with the additional context is returned.
+	WithValue(key string, value any) Check[T]
+
 	// Name adds context with the key "name" to the check being performed.
 	// This is a quick way to add unique information to a check.
 	// The new check with the additional context is returned.
