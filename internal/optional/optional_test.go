@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 func Test_Optional_oneArg(t *testing.T) {

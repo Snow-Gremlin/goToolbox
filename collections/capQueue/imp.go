@@ -1,13 +1,13 @@
 package capQueue
 
 import (
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/collections/iterator"
-	"goToolbox/collections/list"
-	"goToolbox/collections/readonlyQueue"
-	"goToolbox/terrors/terror"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
+	"github.com/Snow-Gremlin/goToolbox/collections/list"
+	"github.com/Snow-Gremlin/goToolbox/collections/readonlyQueue"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 // growthRate is the number of nodes to add when
@@ -28,6 +28,16 @@ type (
 		enumGuard uint
 	}
 )
+
+func newImp[T any]() *capQueueImp[T] {
+	return &capQueueImp[T]{
+		count:     0,
+		head:      nil,
+		tail:      nil,
+		graveyard: nil,
+		enumGuard: 0,
+	}
+}
 
 func (q *capQueueImp[T]) newNode(value T) *node[T] {
 	if q.graveyard == nil {

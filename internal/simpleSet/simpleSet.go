@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"goToolbox/internal/liteUtils"
+	"github.com/Snow-Gremlin/goToolbox/internal/liteUtils"
 )
 
 var slug = struct{}{}

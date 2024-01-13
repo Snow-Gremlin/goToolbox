@@ -1,6 +1,6 @@
 package readonlyStack
 
-import "goToolbox/collections"
+import "github.com/Snow-Gremlin/goToolbox/collections"
 
 type readonlyStackImp[T any] struct {
 	s collections.ReadonlyStack[T]

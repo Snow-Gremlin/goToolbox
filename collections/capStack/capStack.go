@@ -1,10 +1,10 @@
 package capStack
 
 import (
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/internal/optional"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/internal/optional"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 // New creates a new stack.
@@ -12,9 +12,9 @@ import (
 // This may optionally have an initial size to
 // pre-populate the stack with that number of zero values.
 func New[T any](sizes ...int) collections.Stack[T] {
-	size, cap := optional.SizeAndCapacity(sizes)
-	s := &capStackImp[T]{}
-	s.growCap(cap)
+	size, initCap := optional.SizeAndCapacity(sizes)
+	s := newImp[T]()
+	s.growCap(initCap)
 	s.PushFrom(enumerator.Repeat(utils.Zero[T](), size))
 	return s
 }
@@ -23,25 +23,25 @@ func New[T any](sizes ...int) collections.Stack[T] {
 // value repeated the given number of times.
 func Fill[T any](value T, count int, capacity ...int) collections.Stack[T] {
 	count = max(count, 0)
-	cap := max(count, optional.Capacity(capacity))
-	s := &capStackImp[T]{}
-	s.growCap(cap)
+	initCap := max(count, optional.Capacity(capacity))
+	s := newImp[T]()
+	s.growCap(initCap)
 	s.PushFrom(enumerator.Repeat(value, count))
 	return s
 }
 
 // With creates a stack with the given values.
 func With[T any](values ...T) collections.Stack[T] {
-	s := &capStackImp[T]{}
+	s := newImp[T]()
 	s.Push(values...)
 	return s
 }
 
 // From creates a new stack from the given enumerator.
 func From[T any](e collections.Enumerator[T], capacity ...int) collections.Stack[T] {
-	cap := optional.Capacity(capacity)
-	s := &capStackImp[T]{}
-	s.growCap(cap)
+	initCap := optional.Capacity(capacity)
+	s := newImp[T]()
+	s.growCap(initCap)
 	s.PushFrom(e)
 	return s
 }

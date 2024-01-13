@@ -4,13 +4,13 @@ import (
 	"reflect"
 	"slices"
 
-	"goToolbox/collections"
-	"goToolbox/collections/predicate"
-	"goToolbox/collections/tuple2"
-	"goToolbox/internal/optional"
-	"goToolbox/internal/simpleSet"
-	"goToolbox/terrors/terror"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
+	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/internal/optional"
+	"github.com/Snow-Gremlin/goToolbox/internal/simpleSet"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 // New creates a new iterator for stepping through values using a fetcher.

@@ -3,11 +3,11 @@ package linkedList
 import (
 	"testing"
 
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/collections/iterator"
-	"goToolbox/collections/predicate"
-	"goToolbox/testers/check"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
+	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
+	"github.com/Snow-Gremlin/goToolbox/testers/check"
 )
 
 func validate[T any](t *testing.T, list collections.List[T]) {

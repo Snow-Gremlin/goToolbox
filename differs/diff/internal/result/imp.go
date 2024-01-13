@@ -3,9 +3,9 @@ package result
 import (
 	"fmt"
 
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/differs/step"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/differs/step"
 )
 
 type resultImp struct {

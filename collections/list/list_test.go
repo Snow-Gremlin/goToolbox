@@ -3,9 +3,9 @@ package list
 import (
 	"testing"
 
-	"goToolbox/collections/enumerator"
-	"goToolbox/collections/predicate"
-	"goToolbox/testers/check"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
+	"github.com/Snow-Gremlin/goToolbox/testers/check"
 )
 
 func Test_List(t *testing.T) {

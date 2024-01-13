@@ -1,10 +1,9 @@
 package internal
 
-import "goToolbox/differs"
+import "github.com/Snow-Gremlin/goToolbox/differs"
 
 // Collector is a tool for collecting the diff result.
 type Collector interface {
-
 	// InsertAdded inserts new Added parts into this collection.
 	// This is expected to be inserted in reverse order from the expected result.
 	InsertAdded(count int)

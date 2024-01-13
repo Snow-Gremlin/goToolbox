@@ -1,9 +1,9 @@
 package diff
 
 import (
-	"goToolbox/differs"
-	"goToolbox/differs/diff/internal/hirschberg"
-	"goToolbox/differs/diff/internal/wagner"
+	"github.com/Snow-Gremlin/goToolbox/differs"
+	"github.com/Snow-Gremlin/goToolbox/differs/diff/internal/hirschberg"
+	"github.com/Snow-Gremlin/goToolbox/differs/diff/internal/wagner"
 )
 
 // DefaultWagnerThreshold is the point at which the algorithms switch from Hirschberg

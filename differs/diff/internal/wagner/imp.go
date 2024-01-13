@@ -1,6 +1,6 @@
 package wagner
 
-import "goToolbox/differs/diff/internal"
+import "github.com/Snow-Gremlin/goToolbox/differs/diff/internal"
 
 type wagnerImp struct {
 	costs []int

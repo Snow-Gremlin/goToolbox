@@ -1,6 +1,6 @@
 package wagner
 
-import "goToolbox/differs/diff/internal"
+import "github.com/Snow-Gremlin/goToolbox/differs/diff/internal"
 
 // walkerStep is the signature for steps which the walker can take.
 type walkerStep func()
@@ -8,7 +8,6 @@ type walkerStep func()
 // walker is a structure for keeping track of a walk through
 // the cost matrix for Wagner–Fischer.
 type walker struct {
-
 	// col is the collector to output the walk into.
 	col internal.Collector
 

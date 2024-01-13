@@ -1,8 +1,8 @@
 package differs
 
 import (
-	"goToolbox/collections"
-	"goToolbox/differs/step"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/differs/step"
 )
 
 // Result contains the steps to take to walk through the diff.
@@ -11,7 +11,6 @@ import (
 // of the same type of step represented by the step type and the number
 // of steps of that type.
 type Result interface {
-
 	// Count get the number of step groups.
 	collections.Countable
 

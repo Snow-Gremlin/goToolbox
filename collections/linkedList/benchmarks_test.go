@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"goToolbox/collections/enumerator"
-	"goToolbox/testers/check"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/testers/check"
 )
 
 func new_ViaIteration[T any](src ...T) *linkedListImp[T] {

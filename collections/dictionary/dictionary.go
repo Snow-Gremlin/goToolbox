@@ -3,8 +3,8 @@ package dictionary
 import (
 	"maps"
 
-	"goToolbox/collections"
-	"goToolbox/internal/optional"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/internal/optional"
 )
 
 // New creates a new dictionary with unsorted keys.
@@ -16,10 +16,10 @@ import (
 // with enough space to hold the specified number of elements.
 // The capacity may be omitted, in which case a small starting size is allocated.
 func New[TKey comparable, TValue any](capacity ...int) collections.Dictionary[TKey, TValue] {
-	cap := optional.Capacity(capacity)
-	d := &dictionaryImp[TKey, TValue]{}
-	d.m = make(map[TKey]TValue, cap)
-	return d
+	initCap := optional.Capacity(capacity)
+	return &dictionaryImp[TKey, TValue]{
+		m: make(map[TKey]TValue, initCap),
+	}
 }
 
 // With creates a new dictionary with unsorted keys

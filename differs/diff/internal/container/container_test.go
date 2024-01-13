@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"goToolbox/differs/diff/internal"
-	"goToolbox/differs/diff/internal/collector"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/differs/diff/internal"
+	"github.com/Snow-Gremlin/goToolbox/differs/diff/internal/collector"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 func Test_Equals(t *testing.T) {

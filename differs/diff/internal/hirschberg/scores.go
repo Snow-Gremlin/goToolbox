@@ -1,10 +1,9 @@
 package hirschberg
 
-import "goToolbox/differs/diff/internal"
+import "github.com/Snow-Gremlin/goToolbox/differs/diff/internal"
 
 // scores is the Hirschberg scores used for diffing two comparable sources.
 type scores struct {
-
 	// front is the score vector at the front of the score calculation.
 	front []int
 
@@ -18,7 +17,11 @@ type scores struct {
 // newScores creates a new path builder. The given length must be one greater
 // than the maximum B length that will be passed into these scores.
 func newScores(length int) *scores {
-	s := &scores{}
+	s := &scores{
+		front: nil,
+		back:  nil,
+		other: nil,
+	}
 	if length > 0 {
 		s.allocateVectors(length)
 	}

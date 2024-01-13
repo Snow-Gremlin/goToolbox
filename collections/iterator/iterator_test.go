@@ -4,11 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"goToolbox/collections"
-	"goToolbox/collections/predicate"
-	"goToolbox/collections/tuple2"
-	"goToolbox/terrors/terror"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
+	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 func Test_Iterator_NilFetcher(t *testing.T) {

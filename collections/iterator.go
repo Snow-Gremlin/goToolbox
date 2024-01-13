@@ -14,7 +14,6 @@ package collections
 //
 // ```
 type Iterator[T any] interface {
-
 	// Next steps this iterator the next value and updates Current.
 	//
 	// After creation `Next` should be called to prime the iterator

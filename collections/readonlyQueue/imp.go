@@ -1,6 +1,6 @@
 package readonlyQueue
 
-import "goToolbox/collections"
+import "github.com/Snow-Gremlin/goToolbox/collections"
 
 type readonlyQueueImp[T any] struct {
 	q collections.ReadonlyQueue[T]

@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"goToolbox/internal/simpleSet"
-	"goToolbox/testers"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/internal/simpleSet"
+	"github.com/Snow-Gremlin/goToolbox/testers"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 const (
@@ -21,7 +21,6 @@ const (
 	newLine          = "\n"
 	indent           = "\t"
 	ellipsis         = `...`
-	intByteSize      = 32 << (^uint(0) >> 63)
 )
 
 type testee struct {

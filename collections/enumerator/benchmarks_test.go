@@ -5,9 +5,9 @@ import (
 	"math/rand"
 	"testing"
 
-	"goToolbox/collections"
-	"goToolbox/collections/iterator"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 type buffered_Handle[T any] func(e collections.Enumerator[T]) collections.Enumerator[T]
@@ -32,7 +32,10 @@ func buffered_SimpleStack[T any](e collections.Enumerator[T]) collections.Enumer
 			}
 			if source.Next() {
 				value := source.Current()
-				tail := &node{value: value}
+				tail := &node{
+					value: value,
+					next:  nil,
+				}
 				if last != nil {
 					last.next = tail
 				} else {

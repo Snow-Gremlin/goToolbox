@@ -1,11 +1,12 @@
 package readonlyVariantList
 
 import (
-	"goToolbox/collections"
-	"goToolbox/collections/tuple2"
-	"goToolbox/terrors/terror"
-	"goToolbox/utils"
 	"reflect"
+
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 // From creates a new readonly variant list which is sourced by the two given functions.
@@ -96,7 +97,7 @@ func fromSlice[E any, S ~[]E](s S) collections.ReadonlyList[any] {
 
 func fromArrayValue(val reflect.Value) collections.ReadonlyList[any] {
 	return From(
-		func() int { return val.Len() },
+		val.Len,
 		func(i int) any { return val.Index(i).Interface() })
 }
 
@@ -117,8 +118,7 @@ func fromObject(source any, val reflect.Value) (collections.ReadonlyList[any], b
 		}
 	}
 
-	switch v := source.(type) {
-	case interface{ Bytes() []byte }:
+	if v, ok := source.(interface{ Bytes() []byte }); ok {
 		return fromSlice(v.Bytes()), true
 	}
 

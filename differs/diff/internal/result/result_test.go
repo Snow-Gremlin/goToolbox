@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"goToolbox/collections/stack"
-	"goToolbox/collections/tuple2"
-	"goToolbox/differs/step"
+	"github.com/Snow-Gremlin/goToolbox/collections/stack"
+	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/differs/step"
 )
 
 func Test_Result(t *testing.T) {

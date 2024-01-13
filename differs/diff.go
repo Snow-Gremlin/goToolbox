@@ -2,7 +2,6 @@ package differs
 
 // Diff is an instance of a Levenshtein difference algorithm.
 type Diff interface {
-
 	// Diff performs a diff on the given data and
 	// returns the resulting diff path.
 	Diff(data Data) Result

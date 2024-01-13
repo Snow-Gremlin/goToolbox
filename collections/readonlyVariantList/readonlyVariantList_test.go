@@ -5,7 +5,7 @@ import (
 	"sort"
 	"testing"
 
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 func Test_ReadonlyVariantList_Fallbacks(t *testing.T) {
@@ -75,12 +75,12 @@ func Test_ReadonlyVariantList_String(t *testing.T) {
 
 	checkEqual(t, []any{
 		byte('H'), byte('e'), byte('l'), byte('l'), byte('o'), byte(' '),
-		byte('W'), byte('o'), byte('r'), byte('l'), byte('d')},
-		rv.ToSlice(), `Enumerate() and ToSlice()`)
+		byte('W'), byte('o'), byte('r'), byte('l'), byte('d'),
+	}, rv.ToSlice(), `Enumerate() and ToSlice()`)
 	checkEqual(t, []any{
 		byte('d'), byte('l'), byte('r'), byte('o'), byte('W'), byte(' '),
-		byte('o'), byte('l'), byte('l'), byte('e'), byte('H')},
-		rv.Backwards().ToSlice(), `Backwards()`)
+		byte('o'), byte('l'), byte('l'), byte('e'), byte('H'),
+	}, rv.Backwards().ToSlice(), `Backwards()`)
 
 	sc := make([]any, 3)
 	rv.CopyToSlice(sc)
@@ -243,8 +243,9 @@ func Test_ReadonlyVariantList_Cast(t *testing.T) {
 }
 
 func Test_ReadonlyVariantList_UnstableIteration(t *testing.T) {
-	s := &pseudoSliceWrapper{}
-	s.slice = []int{1, 2, 3, 4, 5}
+	s := &pseudoSliceWrapper{
+		slice: []int{1, 2, 3, 4, 5},
+	}
 	rv := Wrap(s)
 
 	it1 := rv.Enumerate().Iterate()

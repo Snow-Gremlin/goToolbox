@@ -1,10 +1,10 @@
 package stack
 
 import (
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/internal/optional"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/internal/optional"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 // New creates a new stack.
@@ -23,14 +23,14 @@ func Fill[T any](value T, count int) collections.Stack[T] {
 
 // With creates a stack with the given values.
 func With[T any](values ...T) collections.Stack[T] {
-	s := &stackImp[T]{}
+	s := newImp[T]()
 	s.Push(values...)
 	return s
 }
 
 // From creates a new stack from the given enumerator.
 func From[T any](e collections.Enumerator[T]) collections.Stack[T] {
-	s := &stackImp[T]{}
+	s := newImp[T]()
 	s.PushFrom(e)
 	return s
 }

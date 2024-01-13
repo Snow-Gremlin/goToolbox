@@ -1,11 +1,11 @@
 package collector
 
 import (
-	"goToolbox/collections"
-	"goToolbox/collections/tuple2"
-	"goToolbox/differs"
-	"goToolbox/differs/diff/internal/result"
-	"goToolbox/differs/step"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/differs"
+	"github.com/Snow-Gremlin/goToolbox/differs/diff/internal/result"
+	"github.com/Snow-Gremlin/goToolbox/differs/step"
 )
 
 type collectorImp struct {

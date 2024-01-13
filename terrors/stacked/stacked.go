@@ -4,8 +4,8 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"goToolbox/internal/liteUtils"
-	"goToolbox/terrors"
+	"github.com/Snow-Gremlin/goToolbox/internal/liteUtils"
+	"github.com/Snow-Gremlin/goToolbox/terrors"
 )
 
 // Stack gets the stack trace not including the call into this method.

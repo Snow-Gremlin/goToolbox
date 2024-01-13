@@ -1,8 +1,8 @@
 package container
 
 import (
-	"goToolbox/differs"
-	"goToolbox/differs/diff/internal"
+	"github.com/Snow-Gremlin/goToolbox/differs"
+	"github.com/Snow-Gremlin/goToolbox/differs/diff/internal"
 )
 
 func newSub(data differs.Data, aOffset, aCount, bOffset, bCount int, reverse bool) internal.Container {
@@ -76,7 +76,7 @@ func (cont *containerImp) Reduce() (internal.Container, int, int) {
 		}
 	}
 
-	width = width - before
+	width -= before
 	for after, i, j = 0, cont.aCount-1+cont.aOffset, cont.bCount-1+cont.bOffset; after < width; after, i, j = after+1, i-1, j-1 {
 		if !cont.data.Equals(i, j) {
 			break

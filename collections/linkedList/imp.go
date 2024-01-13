@@ -1,18 +1,23 @@
 package linkedList
 
 import (
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/collections/iterator"
-	"goToolbox/collections/readonlyList"
-	"goToolbox/internal/optional"
-	"goToolbox/terrors/terror"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
+	"github.com/Snow-Gremlin/goToolbox/collections/readonlyList"
+	"github.com/Snow-Gremlin/goToolbox/internal/optional"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 func newImp[T any](s ...T) *linkedListImp[T] {
 	count := len(s)
-	list := &linkedListImp[T]{}
+	list := &linkedListImp[T]{
+		count:     0,
+		head:      nil,
+		tail:      nil,
+		enumGuard: 0,
+	}
 	if count <= 0 {
 		return list
 	}
@@ -35,7 +40,12 @@ func newImp[T any](s ...T) *linkedListImp[T] {
 }
 
 func impFrom[T any](e collections.Enumerator[T]) *linkedListImp[T] {
-	list := &linkedListImp[T]{}
+	list := &linkedListImp[T]{
+		count:     0,
+		head:      nil,
+		tail:      nil,
+		enumGuard: 0,
+	}
 	if utils.IsNil(e) {
 		return list
 	}
@@ -276,9 +286,10 @@ func (list *linkedListImp[T]) TakeFront(count int) collections.List[T] {
 	}
 	split := list.nodeAt(count - 1)
 	result := &linkedListImp[T]{
-		count: count,
-		head:  list.head,
-		tail:  split,
+		count:     count,
+		head:      list.head,
+		tail:      split,
+		enumGuard: 0,
 	}
 	list.head = split.next
 	split.next = nil
@@ -299,9 +310,10 @@ func (list *linkedListImp[T]) TakeBack(count int) collections.List[T] {
 	}
 	split := list.nodeAt(list.count - count)
 	result := &linkedListImp[T]{
-		count: count,
-		head:  split,
-		tail:  list.tail,
+		count:     count,
+		head:      split,
+		tail:      list.tail,
+		enumGuard: 0,
 	}
 	list.tail = split.prev
 	split.prev = nil

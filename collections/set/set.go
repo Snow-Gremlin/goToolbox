@@ -1,9 +1,9 @@
 package set
 
 import (
-	"goToolbox/collections"
-	"goToolbox/internal/optional"
-	"goToolbox/internal/simpleSet"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/internal/optional"
+	"github.com/Snow-Gremlin/goToolbox/internal/simpleSet"
 )
 
 // New creates a new set with unsorted values.

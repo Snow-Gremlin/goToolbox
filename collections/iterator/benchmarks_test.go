@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections"
 )
 
 func toSlice_SimpleStack[T any](it collections.Iterator[T]) []T {
@@ -41,6 +41,7 @@ func toSlice_ChunkyStack[T any](it collections.Iterator[T], chunkSize int) []T {
 	chunkCount := 0
 	prev := &node{
 		value: make([]T, chunkSize),
+		prev:  nil,
 	}
 	for it.Next() {
 		count++

@@ -8,13 +8,13 @@ import (
 	"sort"
 	"strings"
 
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/collections/predicate"
-	"goToolbox/collections/readonlyVariantList"
-	"goToolbox/internal/optional"
-	"goToolbox/testers"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
+	"github.com/Snow-Gremlin/goToolbox/collections/readonlyVariantList"
+	"github.com/Snow-Gremlin/goToolbox/internal/optional"
+	"github.com/Snow-Gremlin/goToolbox/testers"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 // Nil creates a check that the actual type is nil.

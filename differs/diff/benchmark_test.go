@@ -2,11 +2,12 @@ package diff
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 
-	"goToolbox/differs"
-	"goToolbox/differs/data"
+	"github.com/Snow-Gremlin/goToolbox/differs"
+	"github.com/Snow-Gremlin/goToolbox/differs/data"
 )
 
 func runBenchmarks(b *testing.B, data differs.Data, suffix string) {
@@ -102,7 +103,7 @@ func Benchmark_Basic_Comparison(b *testing.B) {
 		inputA := billNyeA[:len(billNyeA)*(i+1)/groups]
 		inputB := billNyeB[:len(billNyeB)*(i+1)/groups]
 		comp := data.Chars(inputA, inputB)
-		suffix := `-` + fmt.Sprint(len(inputA)*len(inputB))
+		suffix := `-` + strconv.Itoa(len(inputA)*len(inputB))
 		runBenchmarks(b, comp, suffix)
 	}
 }
@@ -114,7 +115,7 @@ func Benchmark_Variant_Comparison(b *testing.B) {
 		for j := 0; j < groups; j++ {
 			inputB := billNyeB[:len(billNyeB)*(j+1)/groups]
 			comp := data.Chars(inputA, inputB)
-			suffix := `-` + fmt.Sprint(len(inputA)*len(inputB))
+			suffix := `-` + strconv.Itoa(len(inputA)*len(inputB))
 			runBenchmarks(b, comp, suffix)
 		}
 	}

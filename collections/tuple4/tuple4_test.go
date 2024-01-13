@@ -3,7 +3,7 @@ package tuple4
 import (
 	"testing"
 
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 func Test_Tuple4(t *testing.T) {

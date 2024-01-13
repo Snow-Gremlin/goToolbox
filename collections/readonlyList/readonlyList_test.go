@@ -5,11 +5,11 @@ import (
 	"slices"
 	"testing"
 
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/internal/optional"
-	"goToolbox/testers/check"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/internal/optional"
+	"github.com/Snow-Gremlin/goToolbox/testers/check"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 type pseudoList[T any] struct {

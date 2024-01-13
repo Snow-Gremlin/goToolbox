@@ -1,6 +1,6 @@
 package iterator
 
-import "goToolbox/utils"
+import "github.com/Snow-Gremlin/goToolbox/utils"
 
 type iteratorImp[T any] struct {
 	fetcher Fetcher[T]

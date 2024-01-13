@@ -11,7 +11,7 @@ func Test_Stack(t *testing.T) {
 	s1 := Stack(0, 2)
 
 	exp := `^goroutine\s\d+\s\[running\]:\s*\n` +
-		`goToolbox.terrors.stacked\.Test_Stack\(0x[0-9a-f]+\)\n` +
+		`github\.com\/Snow-Gremlin\/goToolbox.terrors.stacked\.Test_Stack\(0x[0-9a-f]+\)\n` +
 		`\t.+stacked_test\.go:\d+\s\+0x[0-9a-f]+$`
 	re := regexp.MustCompile(exp)
 
@@ -50,7 +50,7 @@ func Test_DeepestStacked(t *testing.T) {
 		t.Errorf("\nExpected a nil stacked from no stack error:\nActual: %v", s1)
 	}
 
-	e2 := pseudoStackErr{msg: `Second`}
+	e2 := pseudoStackErr{msg: `Second`, err: nil}
 	e3 := pseudoStackErr{msg: `Third`, err: e1}
 	e4 := fmt.Errorf(`Forth: [%w, %w]`, e2, e3)
 	e5 := pseudoStackErr{msg: `Fifth`, err: e4}

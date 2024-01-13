@@ -3,11 +3,11 @@ package capStack
 import (
 	"testing"
 
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/collections/list"
-	"goToolbox/collections/predicate"
-	"goToolbox/testers/check"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/collections/list"
+	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
+	"github.com/Snow-Gremlin/goToolbox/testers/check"
 )
 
 type nodeCollection map[any]bool

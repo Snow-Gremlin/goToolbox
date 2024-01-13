@@ -3,11 +3,11 @@ package hirschberg
 import (
 	"testing"
 
-	"goToolbox/differs/data"
-	"goToolbox/differs/diff/internal"
-	"goToolbox/differs/diff/internal/collector"
-	"goToolbox/differs/diff/internal/container"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/differs/data"
+	"github.com/Snow-Gremlin/goToolbox/differs/diff/internal"
+	"github.com/Snow-Gremlin/goToolbox/differs/diff/internal/collector"
+	"github.com/Snow-Gremlin/goToolbox/differs/diff/internal/container"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 func Test_Hirschberg_NoReduce(t *testing.T) {

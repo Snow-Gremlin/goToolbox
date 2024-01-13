@@ -4,12 +4,12 @@ import (
 	"strings"
 	"testing"
 
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/collections/predicate"
-	"goToolbox/collections/tuple2"
-	"goToolbox/testers/check"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
+	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/testers/check"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 func validate[TKey comparable, TValue any](t *testing.T, dic collections.Dictionary[TKey, TValue]) {

@@ -1,13 +1,13 @@
 package capStack
 
 import (
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/collections/iterator"
-	"goToolbox/collections/list"
-	"goToolbox/collections/readonlyStack"
-	"goToolbox/terrors/terror"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
+	"github.com/Snow-Gremlin/goToolbox/collections/list"
+	"github.com/Snow-Gremlin/goToolbox/collections/readonlyStack"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 // growthRate is the number of nodes to add when
@@ -27,6 +27,15 @@ type (
 		enumGuard uint
 	}
 )
+
+func newImp[T any]() *capStackImp[T] {
+	return &capStackImp[T]{
+		count:     0,
+		head:      nil,
+		graveyard: nil,
+		enumGuard: 0,
+	}
+}
 
 func (s *capStackImp[T]) newNode(value T) *node[T] {
 	if s.graveyard == nil {

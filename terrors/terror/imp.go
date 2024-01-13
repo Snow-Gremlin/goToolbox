@@ -4,9 +4,9 @@ import (
 	"maps"
 	"slices"
 
-	"goToolbox/internal/liteUtils"
-	"goToolbox/terrors"
-	"goToolbox/terrors/stacked"
+	"github.com/Snow-Gremlin/goToolbox/internal/liteUtils"
+	"github.com/Snow-Gremlin/goToolbox/terrors"
+	"github.com/Snow-Gremlin/goToolbox/terrors/stacked"
 )
 
 type tErrorImp struct {

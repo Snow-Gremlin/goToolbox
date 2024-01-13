@@ -75,7 +75,7 @@ func Test_LiteUtils_Zero(t *testing.T) {
 	checkIsZero(t, false, t)
 }
 
-func checkIsNil[T any](t *testing.T, expNil, expNotNil, expOk bool, value T) {
+func checkIsNil[T any](t *testing.T, expNil, expOk bool, value T) {
 	if isNil, ok := TryIsNil(value); expNil != isNil || expOk != ok {
 		t.Errorf("\n"+
 			"Unexpected value from TryIsNil:\n"+
@@ -95,30 +95,34 @@ func checkIsNil[T any](t *testing.T, expNil, expNotNil, expOk bool, value T) {
 
 func Test_LiteUtils_IsNil(t *testing.T) {
 	v1 := 12
-	checkIsNil(t, false, false, false, v1)
-	checkIsNil(t, false, true, true, &v1)
-	checkIsNil(t, true, false, true, (*int)(nil))
+	checkIsNil(t, false, false, v1)
+	checkIsNil(t, false, true, &v1)
+	checkIsNil(t, true, true, (*int)(nil))
 
 	var v2 error
-	checkIsNil(t, true, false, true, v2)
+	checkIsNil(t, true, true, v2)
 	v3 := (*strconv.NumError)(nil)
-	checkIsNil(t, true, false, true, v3)
+	checkIsNil(t, true, true, v3)
 	v2 = v3
-	checkIsNil(t, true, false, true, v2)
-	v3 = &strconv.NumError{Func: `Oops`}
-	checkIsNil(t, false, true, true, v3)
+	checkIsNil(t, true, true, v2)
+	v3 = &strconv.NumError{
+		Func: `Oops`,
+		Num:  `X`,
+		Err:  nil,
+	}
+	checkIsNil(t, false, true, v3)
 	v2 = v3
-	checkIsNil(t, false, true, true, v2)
+	checkIsNil(t, false, true, v2)
 
 	var v4 []int
-	checkIsNil(t, true, false, true, v4)
+	checkIsNil(t, true, true, v4)
 	v4 = []int{}
-	checkIsNil(t, false, true, true, v4)
+	checkIsNil(t, false, true, v4)
 
 	var v5 map[string]int
-	checkIsNil(t, true, false, true, v5)
+	checkIsNil(t, true, true, v5)
 	v5 = map[string]int{}
-	checkIsNil(t, false, true, true, v5)
+	checkIsNil(t, false, true, v5)
 }
 
 func checkString[T any](t *testing.T, exp string, value T) {
@@ -165,7 +169,7 @@ func Test_LiteUtils_Strings(t *testing.T) {
 
 type pseudoEquatable struct{ success bool }
 
-func (pe *pseudoEquatable) Equals(other any) bool { return pe.success }
+func (pe *pseudoEquatable) Equals(_ any) bool { return pe.success }
 
 func checkEqual(t *testing.T, a, b any, exp bool) {
 	if Equal(a, b) != exp {

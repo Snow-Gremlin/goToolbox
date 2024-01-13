@@ -1,9 +1,9 @@
 package result
 
 import (
-	"goToolbox/collections"
-	"goToolbox/differs"
-	"goToolbox/differs/step"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/differs"
+	"github.com/Snow-Gremlin/goToolbox/differs/step"
 )
 
 // New creates a new result from a diff.

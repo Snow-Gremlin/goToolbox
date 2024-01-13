@@ -1,6 +1,6 @@
 package readonlyDictionary
 
-import "goToolbox/collections"
+import "github.com/Snow-Gremlin/goToolbox/collections"
 
 type readonlyDictionaryImp[TKey comparable, TValue any] struct {
 	dic collections.ReadonlyDictionary[TKey, TValue]

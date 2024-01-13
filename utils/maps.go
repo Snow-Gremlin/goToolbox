@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"goToolbox/internal/liteUtils"
-	"goToolbox/terrors/terror"
 	"slices"
+
+	"github.com/Snow-Gremlin/goToolbox/internal/liteUtils"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
 )
 
 // Keys gets all the keys for the given map in random order.

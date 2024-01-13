@@ -1,8 +1,8 @@
 package optional
 
 import (
-	"goToolbox/terrors/terror"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 func oneArg(values []int, default1 int, usage string) int {
@@ -36,8 +36,8 @@ func twoArgs(values []int, default1, default2 int, usage string) (int, int) {
 // The second value is the capacity which is clamped to the size.
 // This will panic if more than two values.
 func SizeAndCapacity(sizes []int) (int, int) {
-	size, cap := twoArgs(sizes, 0, 0, `size and capacity`)
-	return max(0, size), max(0, size, cap)
+	size, initCap := twoArgs(sizes, 0, 0, `size and capacity`)
+	return max(0, size), max(0, size, initCap)
 }
 
 // Capacity deals with an optional capacity.

@@ -1,6 +1,6 @@
 package readonlyDictionary
 
-import "goToolbox/collections"
+import "github.com/Snow-Gremlin/goToolbox/collections"
 
 // New wraps another dictionary in a readonly shell.
 func New[TKey comparable, TValue any](dic collections.ReadonlyDictionary[TKey, TValue]) collections.ReadonlyDictionary[TKey, TValue] {

@@ -3,11 +3,11 @@ package enumerator
 import (
 	"strings"
 
-	"goToolbox/collections"
-	"goToolbox/collections/iterator"
-	"goToolbox/collections/tuple2"
-	"goToolbox/terrors/terror"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
+	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 // New creates a new enumerator around the given iterator factory.

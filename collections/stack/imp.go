@@ -1,13 +1,13 @@
 package stack
 
 import (
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/collections/iterator"
-	"goToolbox/collections/list"
-	"goToolbox/collections/readonlyStack"
-	"goToolbox/terrors/terror"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
+	"github.com/Snow-Gremlin/goToolbox/collections/list"
+	"github.com/Snow-Gremlin/goToolbox/collections/readonlyStack"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 type (
@@ -22,6 +22,14 @@ type (
 		enumGuard uint
 	}
 )
+
+func newImp[T any]() *stackImp[T] {
+	return &stackImp[T]{
+		count:     0,
+		head:      nil,
+		enumGuard: 0,
+	}
+}
 
 func (s *stackImp[T]) Enumerate() collections.Enumerator[T] {
 	return enumerator.New(func() collections.Iterator[T] {
@@ -115,12 +123,14 @@ func (s *stackImp[T]) PushFrom(e collections.Enumerator[T]) {
 
 	newHead := &node[T]{
 		value: it.Current(),
+		prev:  nil,
 	}
 	prev := newHead
 	count := 1
 	for it.Next() {
 		n := &node[T]{
 			value: it.Current(),
+			prev:  nil,
 		}
 		prev.prev = n
 		prev = n

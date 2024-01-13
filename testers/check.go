@@ -2,7 +2,6 @@ package testers
 
 // Check performs a test of an expectation on some value.
 type Check[T any] interface {
-
 	// With adds context to the check being performed.
 	// The new check with the additional context is returned.
 	With(key string, args ...any) Check[T]

@@ -3,9 +3,9 @@ package sortedDictionary
 import (
 	"maps"
 
-	"goToolbox/collections"
-	"goToolbox/internal/optional"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/internal/optional"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 // New creates a new dictionary with sorted keys by the

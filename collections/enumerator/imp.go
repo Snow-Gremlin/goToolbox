@@ -4,11 +4,11 @@ import (
 	"strconv"
 	"strings"
 
-	"goToolbox/collections"
-	"goToolbox/collections/iterator"
-	"goToolbox/collections/predicate"
-	"goToolbox/internal/optional"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
+	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
+	"github.com/Snow-Gremlin/goToolbox/internal/optional"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 type enumeratorImp[T any] struct {
@@ -132,9 +132,7 @@ func (e enumeratorImp[T]) Reverse() collections.Enumerator[T] {
 }
 
 func (e enumeratorImp[T]) Strings() collections.Enumerator[string] {
-	return Select[T, string](e, func(value T) string {
-		return utils.String(value)
-	})
+	return Select[T, string](e, utils.String)
 }
 
 func (e enumeratorImp[T]) Quotes() collections.Enumerator[string] {

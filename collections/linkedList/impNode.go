@@ -4,6 +4,7 @@ func newNode[T any](value T, prev *node[T]) *node[T] {
 	return &node[T]{
 		value: value,
 		prev:  prev,
+		next:  nil,
 	}
 }
 

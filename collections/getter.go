@@ -6,7 +6,6 @@ package collections
 // this would be `public T this[int i]{ get; }`, but with Go's flair
 // of allowing one or two returns, like when reading from a map in Go.
 type Getter[TIn, TOut any] interface {
-
 	// Get gets a value at the given index or key.
 	//
 	// Typically, if the index is out-of-bounds, this will panic.

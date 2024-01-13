@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"goToolbox/differs"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/differs"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 func Test_Basics(t *testing.T) {

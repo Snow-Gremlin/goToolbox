@@ -4,13 +4,13 @@ import (
 	"strings"
 	"testing"
 
-	"goToolbox/collections/stack"
-	"goToolbox/collections/tuple2"
-	"goToolbox/differs"
-	"goToolbox/differs/data"
-	"goToolbox/differs/diff/internal/result"
-	"goToolbox/differs/step"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections/stack"
+	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/differs"
+	"github.com/Snow-Gremlin/goToolbox/differs/data"
+	"github.com/Snow-Gremlin/goToolbox/differs/diff/internal/result"
+	"github.com/Snow-Gremlin/goToolbox/differs/step"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 var (

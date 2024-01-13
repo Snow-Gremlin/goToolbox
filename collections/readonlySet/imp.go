@@ -1,8 +1,6 @@
 package readonlySet
 
-import (
-	"goToolbox/collections"
-)
+import "github.com/Snow-Gremlin/goToolbox/collections"
 
 type readonlySetImp[T comparable] struct {
 	s collections.ReadonlySet[T]

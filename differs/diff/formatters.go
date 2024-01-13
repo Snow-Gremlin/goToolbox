@@ -3,21 +3,20 @@ package diff
 import (
 	"strings"
 
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/collections/iterator"
-	"goToolbox/collections/tuple2"
-	"goToolbox/differs"
-	"goToolbox/differs/step"
-	"goToolbox/terrors/terror"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
+	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/differs"
+	"github.com/Snow-Gremlin/goToolbox/differs/step"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 const (
 	startChange   = `<<<<<<<<`
 	middleChange  = `========`
 	endChange     = `>>>>>>>>`
-	ellipse       = `...`
 	equalPrefix   = ` `
 	addedPrefix   = `+`
 	removedPrefix = `-`

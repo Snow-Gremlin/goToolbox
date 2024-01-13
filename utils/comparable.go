@@ -4,7 +4,6 @@ package utils
 //
 // The given T variable type is typically the type that is implementing this interface.
 type Comparable[T any] interface {
-
 	// CompareTo returns a comparison result of this object and the given object.
 	//
 	// The comparison results should be:

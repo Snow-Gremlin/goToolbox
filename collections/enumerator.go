@@ -1,6 +1,6 @@
 package collections
 
-import "goToolbox/utils"
+import "github.com/Snow-Gremlin/goToolbox/utils"
 
 // Enumerator is a tool for walking through a collection of data.
 type Enumerator[T any] interface {

@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"sort"
 
-	"goToolbox/internal/liteUtils"
-	"goToolbox/terrors"
+	"github.com/Snow-Gremlin/goToolbox/internal/liteUtils"
+	"github.com/Snow-Gremlin/goToolbox/terrors"
 )
 
 // ToString constructs a long detailed string for the whole

@@ -4,7 +4,6 @@ package collections
 //
 // Not all clippable data structures will be able to have capacity.
 type Clippable interface {
-
 	// Clip removes any excess capacity.
 	//
 	// If there is no capacity, this will have no effect.

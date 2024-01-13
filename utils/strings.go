@@ -1,6 +1,6 @@
 package utils
 
-import "goToolbox/internal/liteUtils"
+import "github.com/Snow-Gremlin/goToolbox/internal/liteUtils"
 
 // Stringer is an interface for an object which
 // returns a string from a `String()` method.

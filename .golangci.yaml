@@ -1,0 +1,47 @@
+output:
+  format: colored-line-number,github-actions
+
+linters:
+  enable:
+    - asciicheck
+    - errcheck
+    - exhaustruct
+    - exportloopref
+    - gocheckcompilerdirectives
+    - gochecknoinits
+    - gocritic
+    - gofumpt
+    - goimports
+    - gomodguard 
+    - gosimple
+    - govet
+    - importas
+    - inamedparam
+    - ineffassign
+    - misspell
+    - perfsprint
+    - prealloc
+    - predeclared
+    - reassign
+    - revive
+    - staticcheck
+    - testableexamples
+    - unconvert
+    - unused
+
+linters-settings:
+  gocritic:
+    disabled-checks:
+      - sloppyLen
+  gomodguard:
+    allowed:
+      modules:
+        - gopkg.in
+  revive:
+    rules:
+      - name: unused-parameter
+        disabled: true
+      - name: var-naming
+        disabled: true
+      - name: var-declaration
+        disabled: true

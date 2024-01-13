@@ -3,10 +3,10 @@ package stack
 import (
 	"testing"
 
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/collections/list"
-	"goToolbox/testers/check"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/collections/list"
+	"github.com/Snow-Gremlin/goToolbox/testers/check"
 )
 
 func validate[T any](t *testing.T, stack collections.Stack[T]) {

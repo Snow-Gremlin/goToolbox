@@ -1,12 +1,9 @@
 package utils
 
-import (
-	"goToolbox/internal/liteUtils"
-)
+import "github.com/Snow-Gremlin/goToolbox/internal/liteUtils"
 
 // Equatable is an object which can be checked for equality against another object.
 type Equatable interface {
-
 	// Equals returns true if this object and the given object are equal.
 	Equals(other any) bool
 }

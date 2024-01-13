@@ -1,6 +1,6 @@
 package internal
 
-import "goToolbox/differs"
+import "github.com/Snow-Gremlin/goToolbox/differs"
 
 // Container is a wrapper for the data.
 // It is used to determine subset and revered reading of the data.

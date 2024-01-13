@@ -1,6 +1,6 @@
 package tuple2
 
-import "goToolbox/collections"
+import "github.com/Snow-Gremlin/goToolbox/collections"
 
 // New constructs a new tuple with two values.
 func New[T1, T2 any](value1 T1, value2 T2) collections.Tuple2[T1, T2] {

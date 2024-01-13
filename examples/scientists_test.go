@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"strconv"
 
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/collections/set"
-	"goToolbox/collections/sortedDictionary"
-	"goToolbox/collections/tuple4"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/collections/set"
+	"github.com/Snow-Gremlin/goToolbox/collections/sortedDictionary"
+	"github.com/Snow-Gremlin/goToolbox/collections/tuple4"
 )
 
 //go:embed scientists_data.md
@@ -30,14 +30,16 @@ func newEntry(parts []string) entry {
 }
 
 func getEntryEnumerator() collections.Enumerator[entry] {
-	lines := enumerator.Lines(mdFile). // Breaks the text into lines
-						Skip(4).  // Skips over the first 4 lines, the header, of the file.
-						NotZero() // Skip blank lines
+	lines := enumerator.
+		Lines(mdFile). // Breaks the text into lines
+		Skip(4).       // Skips over the first 4 lines, the header, of the file.
+		NotZero()      // Skip blank lines
 
 	allParts := enumerator.Select(lines, func(line string) []string {
-		return enumerator.Split(line, `|`). // Split line into parts
-							Trim().   // Trim space off of each part
-							ToSlice() // Put the parts into a slice
+		return enumerator.
+			Split(line, `|`). // Split line into 4 parts
+			Trim().           // Trim space off of each part
+			ToSlice()         // Put the parts into a slice
 	})
 
 	return enumerator.Select(allParts, newEntry)

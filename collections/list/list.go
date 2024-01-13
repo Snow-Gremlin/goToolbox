@@ -3,9 +3,9 @@ package list
 import (
 	"slices"
 
-	"goToolbox/collections"
-	"goToolbox/internal/optional"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/internal/optional"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 // New creates a new list on an underlying array
@@ -16,9 +16,9 @@ import (
 // provided it will specify a different capacity from the length.
 // The capacity will never be smaller than the list's length.
 func New[T any](sizes ...int) collections.List[T] {
-	size, cap := optional.SizeAndCapacity(sizes)
+	size, initCap := optional.SizeAndCapacity(sizes)
 	return &listImp[T]{
-		s: make([]T, size, cap),
+		s: make([]T, size, initCap),
 	}
 }
 
@@ -27,9 +27,9 @@ func New[T any](sizes ...int) collections.List[T] {
 // This may have an optional capacity for the list's initial capacity.
 func Fill[T any](value T, count int, capacity ...int) collections.List[T] {
 	count = max(count, 0)
-	cap := max(count, optional.Capacity(capacity))
+	initCap := max(count, optional.Capacity(capacity))
 	list := &listImp[T]{
-		s: make([]T, count, cap),
+		s: make([]T, count, initCap),
 	}
 	for i := 0; i < count; i++ {
 		list.s[i] = value

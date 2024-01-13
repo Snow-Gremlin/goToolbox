@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"goToolbox/collections"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 func Test_Predicate_IsNil(t *testing.T) {

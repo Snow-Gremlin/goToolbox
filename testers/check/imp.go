@@ -1,10 +1,10 @@
 package check
 
 import (
-	"goToolbox/collections"
-	"goToolbox/collections/readonlyVariantList"
-	"goToolbox/testers"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/readonlyVariantList"
+	"github.com/Snow-Gremlin/goToolbox/testers"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 type trialHandle[T any] func(b *testee, actual T)

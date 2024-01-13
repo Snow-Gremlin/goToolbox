@@ -3,11 +3,11 @@ package predicate
 import (
 	"regexp"
 
-	"goToolbox/collections"
-	"goToolbox/internal/optional"
-	"goToolbox/internal/simpleSet"
-	"goToolbox/terrors/terror"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/internal/optional"
+	"github.com/Snow-Gremlin/goToolbox/internal/simpleSet"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 // IsNil is a predicate which returns true if the given value is nil.

@@ -3,9 +3,9 @@ package terror
 import (
 	"slices"
 
-	"goToolbox/internal/liteUtils"
-	"goToolbox/terrors"
-	"goToolbox/terrors/stacked"
+	"github.com/Snow-Gremlin/goToolbox/internal/liteUtils"
+	"github.com/Snow-Gremlin/goToolbox/terrors"
+	"github.com/Snow-Gremlin/goToolbox/terrors/stacked"
 )
 
 // New creates a new error with the given message
@@ -18,9 +18,10 @@ func New(msg string, errs ...error) terrors.TError {
 	errs = slices.DeleteFunc(errs, liteUtils.IsZero)
 
 	return &tErrorImp{
-		msg:   msg,
-		errs:  slices.Clip(errs),
-		stack: stacked.Stack(1, 0),
+		msg:     msg,
+		errs:    slices.Clip(errs),
+		stack:   stacked.Stack(1, 0),
+		context: nil,
 	}
 }
 

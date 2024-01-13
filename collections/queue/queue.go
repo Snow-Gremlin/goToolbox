@@ -1,10 +1,10 @@
 package queue
 
 import (
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/internal/optional"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/internal/optional"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 // New creates a new linked queue.
@@ -23,14 +23,14 @@ func Fill[T any](value T, count int) collections.Queue[T] {
 
 // With creates a queue with the given values.
 func With[T any](values ...T) collections.Queue[T] {
-	q := &queueImp[T]{}
+	q := newImp[T]()
 	q.Enqueue(values...)
 	return q
 }
 
 // From creates a new queue from the given enumerator.
 func From[T any](e collections.Enumerator[T]) collections.Queue[T] {
-	q := &queueImp[T]{}
+	q := newImp[T]()
 	q.EnqueueFrom(e)
 	return q
 }

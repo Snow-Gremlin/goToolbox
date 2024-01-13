@@ -3,11 +3,11 @@ package diff
 import (
 	"sync"
 
-	"goToolbox/differs"
-	"goToolbox/differs/data"
-	"goToolbox/differs/diff/internal"
-	"goToolbox/differs/diff/internal/collector"
-	"goToolbox/differs/diff/internal/container"
+	"github.com/Snow-Gremlin/goToolbox/differs"
+	"github.com/Snow-Gremlin/goToolbox/differs/data"
+	"github.com/Snow-Gremlin/goToolbox/differs/diff/internal"
+	"github.com/Snow-Gremlin/goToolbox/differs/diff/internal/collector"
+	"github.com/Snow-Gremlin/goToolbox/differs/diff/internal/container"
 )
 
 func wrap(alg internal.Algorithm) differs.Diff {

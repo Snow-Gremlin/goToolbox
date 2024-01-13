@@ -89,7 +89,11 @@ func Test_Utils_IsNil(t *testing.T) {
 	checkIsNil(t, true, true, v3)
 	v2 = v3
 	checkIsNil(t, true, true, v2)
-	v3 = &strconv.NumError{Func: `Oops`}
+	v3 = &strconv.NumError{
+		Func: `Oops`,
+		Num:  `X`,
+		Err:  nil,
+	}
 	checkIsNil(t, false, true, v3)
 	v2 = v3
 	checkIsNil(t, false, true, v2)
@@ -106,13 +110,13 @@ func Test_Utils_IsNil(t *testing.T) {
 }
 
 func checkLength[T any](t *testing.T, expLen int, expOk bool, value T) {
-	len, ok := Length(value)
-	if expLen != len || expOk != ok {
+	length, ok := Length(value)
+	if expLen != length || expOk != ok {
 		t.Errorf("\n"+
 			"Unexpected value from Length:\n"+
 			"\tType:     %T\n"+
 			"\tActual:   %d, %t\n"+
-			"\tExpected: %d, %t\n", value, len, ok, expLen, expOk)
+			"\tExpected: %d, %t\n", value, length, ok, expLen, expOk)
 	}
 }
 
@@ -481,12 +485,12 @@ func Test_Utils_Strings(t *testing.T) {
 }
 
 func checkGetMaxStringLen(t *testing.T, exp int, str ...string) {
-	len := GetMaxStringLen(str)
-	if exp != len {
+	length := GetMaxStringLen(str)
+	if exp != length {
 		t.Errorf("\n"+
 			"Unexpected value from GetMaxStringLen:\n"+
 			"\tActual:   %d\n"+
-			"\tExpected: %d\n", len, exp)
+			"\tExpected: %d\n", length, exp)
 	}
 }
 
@@ -498,7 +502,7 @@ func Test_Utils_GetMaxStringLen(t *testing.T) {
 
 type pseudoEquatable struct{ success bool }
 
-func (pe *pseudoEquatable) Equals(other any) bool { return pe.success }
+func (pe *pseudoEquatable) Equals(_ any) bool { return pe.success }
 
 func checkEqual(t *testing.T, a, b any, exp bool) {
 	if Equal(a, b) != exp {

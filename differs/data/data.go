@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"slices"
 
-	"goToolbox/differs"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/differs"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 // New creates a comparer for comparing two collections of data.

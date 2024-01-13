@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"goToolbox/collections/tuple2"
-	"goToolbox/differs/data"
-	"goToolbox/differs/diff"
-	"goToolbox/terrors/terror"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/differs/data"
+	"github.com/Snow-Gremlin/goToolbox/differs/diff"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 func Test_Check_Require(t *testing.T) {
@@ -189,7 +189,7 @@ func Test_Check_MaxLines(t *testing.T) {
 	pt := newTester(t)
 	lines := make([]string, 200)
 	for i := range lines {
-		lines[i] = fmt.Sprintf(`%d`, i)
+		lines[i] = strconv.Itoa(i)
 	}
 	Equal(pt, 13).
 		With(`Long Output`, strings.Join(lines, "\n")).
@@ -435,7 +435,7 @@ func Test_Check_Zero(t *testing.T) {
 	Zero(pt).Assert(``)
 	Zero(pt).Assert(0.0)
 	Zero(pt).Assert(nil)
-	Zero(pt).Assert(struct{ a int }{})
+	Zero(pt).Assert(struct{ a int }{a: 0})
 	pt.Check()
 }
 
@@ -1685,7 +1685,7 @@ func (p pseudoTester) Check(patterns ...string) {
 			pattern = `^` + pattern
 		}
 		if !strings.HasSuffix(pattern, `$`) {
-			pattern = pattern + `$`
+			pattern += `$`
 		}
 		patterns[i] = pattern
 	}

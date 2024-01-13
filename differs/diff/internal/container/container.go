@@ -1,8 +1,8 @@
 package container
 
 import (
-	"goToolbox/differs"
-	"goToolbox/differs/diff/internal"
+	"github.com/Snow-Gremlin/goToolbox/differs"
+	"github.com/Snow-Gremlin/goToolbox/differs/diff/internal"
 )
 
 // New creates a new container for full data.

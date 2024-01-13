@@ -7,13 +7,13 @@ import (
 	"slices"
 	"strings"
 
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/collections/iterator"
-	"goToolbox/collections/readonlyDictionary"
-	"goToolbox/collections/tuple2"
-	"goToolbox/internal/simpleSet"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
+	"github.com/Snow-Gremlin/goToolbox/collections/readonlyDictionary"
+	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/internal/simpleSet"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 type sortedImp[TKey comparable, TValue any] struct {

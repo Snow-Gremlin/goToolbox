@@ -3,7 +3,7 @@ package data
 import (
 	"testing"
 
-	"goToolbox/differs"
+	"github.com/Snow-Gremlin/goToolbox/differs"
 )
 
 func Test_Data_New(t *testing.T) {

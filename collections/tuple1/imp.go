@@ -1,9 +1,9 @@
 package tuple1
 
 import (
-	"goToolbox/collections"
-	"goToolbox/terrors/terror"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 type tuple1Imp[T1 any] struct {

@@ -1,6 +1,6 @@
 package utils
 
-import "goToolbox/internal/liteUtils"
+import "github.com/Snow-Gremlin/goToolbox/internal/liteUtils"
 
 // TryIsNil determines if the value is nil
 // or returns false if the value isn't able to check for nil.

@@ -1,8 +1,8 @@
 package terror
 
 import (
-	"goToolbox/internal/liteUtils"
-	"goToolbox/terrors"
+	"github.com/Snow-Gremlin/goToolbox/internal/liteUtils"
+	"github.com/Snow-Gremlin/goToolbox/terrors"
 )
 
 // Iterator is a collection.Iterator.
@@ -15,7 +15,8 @@ type Iterator[T any] interface {
 // in the error tree in depth first order.
 func Walk(err error) Iterator[error] {
 	return &walkIteratorImp{
-		head: pushWalk(nil, err),
+		head:    pushWalk(nil, err),
+		current: nil,
 	}
 }
 

@@ -1,6 +1,6 @@
 package hirschberg
 
-import "goToolbox/differs/diff/internal"
+import "github.com/Snow-Gremlin/goToolbox/differs/diff/internal"
 
 // New creates a new Hirschberg diff algorithm
 // (https://en.wikipedia.org/wiki/Hirschberg%27s_algorithm)

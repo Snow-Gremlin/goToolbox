@@ -5,10 +5,10 @@ import (
 	"reflect"
 	"testing"
 
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/collections/tuple2"
-	"goToolbox/testers/check"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/testers/check"
 )
 
 type pseudoDic[TKey comparable, TValue any] map[TKey]TValue

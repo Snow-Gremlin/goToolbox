@@ -1,10 +1,10 @@
 package hirschberg
 
 import (
-	"goToolbox/collections"
-	"goToolbox/collections/stack"
-	"goToolbox/collections/tuple2"
-	"goToolbox/differs/diff/internal"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/stack"
+	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/differs/diff/internal"
 )
 
 type hirschbergImp struct {

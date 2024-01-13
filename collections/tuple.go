@@ -1,6 +1,6 @@
 package collections
 
-import "goToolbox/utils"
+import "github.com/Snow-Gremlin/goToolbox/utils"
 
 // Tuple is an object containing several values.
 type Tuple interface {

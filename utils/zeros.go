@@ -3,7 +3,7 @@ package utils
 import (
 	"slices"
 
-	"goToolbox/internal/liteUtils"
+	"github.com/Snow-Gremlin/goToolbox/internal/liteUtils"
 )
 
 // Zero gets the zero value for the given type.
@@ -22,9 +22,9 @@ func IsZero[T any](value T) bool {
 // RemoveZeros creates a new slice without modifying the
 // given values which has all the zero values remove from it.
 func RemoveZeros[T any, S ~[]T](s S) S {
-	copy := slices.Clone(s)
-	copy = slices.DeleteFunc(copy, IsZero)
-	return slices.Clip(copy)
+	c := slices.Clone(s)
+	c = slices.DeleteFunc(c, IsZero)
+	return slices.Clip(c)
 }
 
 // SetToZero sets the given range of the slice to zero.

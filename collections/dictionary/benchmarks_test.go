@@ -7,11 +7,11 @@ import (
 	"math/rand"
 	"testing"
 
-	"goToolbox/collections"
-	"goToolbox/collections/predicate"
-	"goToolbox/internal/simpleSet"
-	"goToolbox/testers/check"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
+	"github.com/Snow-Gremlin/goToolbox/internal/simpleSet"
+	"github.com/Snow-Gremlin/goToolbox/testers/check"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 func removeIf_StackStore[T comparable](test simpleSet.Set[T], p collections.Predicate[T]) bool {

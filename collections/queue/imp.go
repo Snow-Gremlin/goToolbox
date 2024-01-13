@@ -1,13 +1,13 @@
 package queue
 
 import (
-	"goToolbox/collections"
-	"goToolbox/collections/enumerator"
-	"goToolbox/collections/iterator"
-	"goToolbox/collections/list"
-	"goToolbox/collections/readonlyQueue"
-	"goToolbox/terrors/terror"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
+	"github.com/Snow-Gremlin/goToolbox/collections/list"
+	"github.com/Snow-Gremlin/goToolbox/collections/readonlyQueue"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 type (
@@ -27,6 +27,16 @@ type (
 func newNode[T any](value T) *node[T] {
 	return &node[T]{
 		value: value,
+		next:  nil,
+	}
+}
+
+func newImp[T any]() *queueImp[T] {
+	return &queueImp[T]{
+		count:     0,
+		head:      nil,
+		tail:      nil,
+		enumGuard: 0,
 	}
 }
 

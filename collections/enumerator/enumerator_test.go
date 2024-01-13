@@ -10,11 +10,11 @@ import (
 	"strings"
 	"testing"
 
-	"goToolbox/collections"
-	"goToolbox/collections/iterator"
-	"goToolbox/collections/predicate"
-	"goToolbox/terrors/terror"
-	"goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
+	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
+	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 type pseudoComparable[T cmp.Ordered] struct {
@@ -364,7 +364,8 @@ func Test_Enumerator_Interweave(t *testing.T) {
 	e4 := Interweave(e1, e2, e3)
 	checkEqual(t, []string{
 		`I`, `one`, `1`, `II`, `two`, `2`, `III`, `three`, `3`, `IV`, `four`, `4`,
-		`V`, `five`, `5`, `VI`, `6`, `VII`, `7`, `VIII`, `8`, `IX`, `X`}, e4.ToSlice())
+		`V`, `five`, `5`, `VI`, `6`, `VII`, `7`, `VIII`, `8`, `IX`, `X`,
+	}, e4.ToSlice())
 	checkLength(t, 23, e4)
 }
 

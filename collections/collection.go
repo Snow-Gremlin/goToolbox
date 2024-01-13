@@ -1,6 +1,6 @@
 package collections
 
-import "goToolbox/utils"
+import "github.com/Snow-Gremlin/goToolbox/utils"
 
 // Collection is a collection of values.
 type Collection[T any] interface {

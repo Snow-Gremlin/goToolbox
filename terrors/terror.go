@@ -17,13 +17,16 @@ type TError interface {
 	String() string
 
 	// With adds more context to this error.
+	// Returns the receiver for method chaining.
 	With(key string, value any) TError
 
 	// WithError adds another wrapped error to this error.
+	// Returns the receiver for method chaining.
 	WithError(err error) TError
 
 	// Resets the stack trace for the error.
 	// Offset is the number of frames to leave off of the top of the stack.
+	// Returns the receiver for method chaining.
 	ResetStack(offset int) TError
 
 	// Clone creates a copy of this error.

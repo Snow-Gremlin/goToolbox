@@ -6,13 +6,13 @@ import (
 	"regexp"
 	"testing"
 
-	"goToolbox/internal/liteUtils"
-	"goToolbox/terrors"
-	"goToolbox/terrors/stacked"
+	"github.com/Snow-Gremlin/goToolbox/internal/liteUtils"
+	"github.com/Snow-Gremlin/goToolbox/terrors"
+	"github.com/Snow-Gremlin/goToolbox/terrors/stacked"
 )
 
 func pokeTheBear(e terrors.TError) {
-	e.ResetStack(0)
+	_ = e.ResetStack(0)
 }
 
 func Test_TError(t *testing.T) {
@@ -50,7 +50,7 @@ func Test_TError(t *testing.T) {
 	checkMatch(t, `^Hello: World - unknown error: unknown error$`, e6)
 
 	e8 := fmt.Errorf(`Blue`)
-	e6.WithError(e8)
+	_ = e6.WithError(e8)
 	checkEqual(t, []error{e5, e8}, e6.Unwrap())
 	checkMatch(t, `^Hello: \[World - unknown error: unknown error, Blue\]$`, e6)
 
@@ -62,7 +62,7 @@ func Test_TError(t *testing.T) {
 	pokeTheBear(e6)
 	checkMatch(t, `terror\.pokeTheBear\(`, e6.Stack())
 
-	e4.WithError(e6)
+	_ = e4.WithError(e6)
 	checkMatch(t, `^Hello: \[World - unknown error: unknown error, Blue\]$`, e6)
 }
 
