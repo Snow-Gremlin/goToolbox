@@ -8,6 +8,8 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections"
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/list"
+	"github.com/Snow-Gremlin/goToolbox/events"
+	"github.com/Snow-Gremlin/goToolbox/events/event"
 	"github.com/Snow-Gremlin/goToolbox/internal/simpleSet"
 	"github.com/Snow-Gremlin/goToolbox/testers/check"
 	"github.com/Snow-Gremlin/goToolbox/utils"
@@ -15,10 +17,14 @@ import (
 
 type pseudoSetImp struct {
 	m simpleSet.Set[int]
+	e events.Event[collections.ChangeArgs]
 }
 
 func newPseudoImp(values ...int) *pseudoSetImp {
-	return &pseudoSetImp{simpleSet.With(values...)}
+	return &pseudoSetImp{
+		m: simpleSet.With(values...),
+		e: event.New[collections.ChangeArgs](),
+	}
 }
 
 func (s *pseudoSetImp) Enumerate() collections.Enumerator[int] {
@@ -68,6 +74,10 @@ func (s *pseudoSetImp) Equals(other any) bool {
 	return true
 }
 
+func (s *pseudoSetImp) OnChange() events.Event[collections.ChangeArgs] {
+	return s.e
+}
+
 func Test_ReadonlySet(t *testing.T) {
 	s0 := newPseudoImp(1, 2, 3)
 	s1 := New(s0)
@@ -88,9 +98,11 @@ func Test_ReadonlySet(t *testing.T) {
 
 	check.True(t).Assert(s1.Contains(1))
 	check.False(t).Assert(s1.Contains(4))
+	check.Same(t, s0.OnChange()).Assert(s1.OnChange())
 
 	s2 := &pseudoSetImp{
 		m: maps.Clone(s0.m),
+		e: event.New[collections.ChangeArgs](),
 	}
 	s3 := New(s2)
 	check.Equal(t, s3).Assert(s1)
@@ -99,4 +111,5 @@ func Test_ReadonlySet(t *testing.T) {
 	s2.m.Set(5)
 	check.String(t, `1, 2, 3, 5`).Assert(s3)
 	check.NotEqual(t, s3).Assert(s1)
+	check.Same(t, s2.OnChange()).Assert(s3.OnChange())
 }

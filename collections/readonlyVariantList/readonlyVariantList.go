@@ -5,8 +5,26 @@ import (
 
 	"github.com/Snow-Gremlin/goToolbox/collections"
 	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/events"
 	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
 	"github.com/Snow-Gremlin/goToolbox/utils"
+)
+
+type (
+	// CountFunc is a function signature to get a count of elements in a collection.
+	CountFunc func() int
+
+	// GetFunc is a function signature to get an element in a collection
+	// at a given index. The index should only be between zero inclusively,
+	// and the count exclusively gotten from the accompanying CountFunc.
+	GetFunc[T any] func(int) T
+
+	// OnChangeFunc is a function signature for getting an event that indicates
+	// when the source changed.
+	//
+	// This will be optional since not all data sources know when they
+	// have been changed and are able to emit an event.
+	OnChangeFunc func() events.Event[collections.ChangeArgs]
 )
 
 // From creates a new readonly variant list which is sourced by the two given functions.
@@ -15,13 +33,14 @@ import (
 // The second function gets an element from the list at the given index.
 // The get function shouldn't fail for any index between zero inclusively and length exclusively.
 // This returns nil if either function is nil.
-func From[T any](count func() int, get func(int) T) collections.ReadonlyList[T] {
+func From[T any](count CountFunc, get GetFunc[T], onChange OnChangeFunc) collections.ReadonlyList[T] {
 	if count == nil || get == nil {
-		return (*impReadonlyVariantList[T])(nil)
+		return (*readonlyVariantListImp[T])(nil)
 	}
-	return &impReadonlyVariantList[T]{
-		countHandle: count,
-		getHandle:   get,
+	return &readonlyVariantListImp[T]{
+		countHandle:    count,
+		getHandle:      get,
+		onChangeHandle: onChange,
 	}
 }
 
@@ -31,10 +50,16 @@ func From[T any](count func() int, get func(int) T) collections.ReadonlyList[T] 
 func Cast[TOut, TIn any](source collections.ReadonlyList[TIn], selector ...collections.Selector[TIn, TOut]) collections.ReadonlyList[TOut] {
 	switch len(selector) {
 	case 0:
-		return From[TOut](source.Count, func(i int) TOut { return any(source.Get(i)).(TOut) })
+		return From[TOut](
+			source.Count,
+			func(i int) TOut { return any(source.Get(i)).(TOut) },
+			source.OnChange)
 	case 1:
 		sel := selector[0]
-		return From[TOut](source.Count, func(i int) TOut { return sel(source.Get(i)) })
+		return From[TOut](
+			source.Count,
+			func(i int) TOut { return sel(source.Get(i)) },
+			source.OnChange)
 	default:
 		panic(terror.InvalidArgCount(1, len(selector), `selector`))
 	}
@@ -51,7 +76,7 @@ func Cast[TOut, TIn any](source collections.ReadonlyList[TIn], selector ...colle
 // underlying source is changed, if it can be changed.
 func Wrap(source any) collections.ReadonlyList[any] {
 	if utils.IsNil(source) {
-		return (*impReadonlyVariantList[any])(nil)
+		return (*readonlyVariantListImp[any])(nil)
 	}
 
 	switch v := source.(type) {
@@ -86,35 +111,28 @@ func Wrap(source any) collections.ReadonlyList[any] {
 func fromString(str string) collections.ReadonlyList[any] {
 	return From(
 		func() int { return len(str) },
-		func(i int) any { return str[i] })
+		func(i int) any { return str[i] },
+		nil)
 }
 
 func fromSlice[E any, S ~[]E](s S) collections.ReadonlyList[any] {
 	return From(
 		func() int { return len(s) },
-		func(i int) any { return s[i] })
+		func(i int) any { return s[i] },
+		nil)
 }
 
 func fromArrayValue(val reflect.Value) collections.ReadonlyList[any] {
 	return From(
 		val.Len,
-		func(i int) any { return val.Index(i).Interface() })
+		func(i int) any { return val.Index(i).Interface() },
+		nil)
 }
 
 func fromObject(source any, val reflect.Value) (collections.ReadonlyList[any], bool) {
-	var countHandle func() int
-	switch v := source.(type) {
-	case interface{ Count() int }:
-		countHandle = v.Count
-	case interface{ Length() int }:
-		countHandle = v.Length
-	case interface{ Len() int }:
-		countHandle = v.Len
-	}
-	if countHandle != nil {
-		get := reflectGetMethod(val)
-		if get != nil {
-			return From(countHandle, get), true
+	if count := countMethod(source); count != nil {
+		if get := reflectGetMethod(val); get != nil {
+			return From(count, get, onChange(source)), true
 		}
 	}
 
@@ -129,7 +147,20 @@ func fromObject(source any, val reflect.Value) (collections.ReadonlyList[any], b
 	return nil, false
 }
 
-func reflectGetMethod(val reflect.Value) func(int) any {
+func countMethod(source any) CountFunc {
+	switch v := source.(type) {
+	case interface{ Count() int }:
+		return v.Count
+	case interface{ Length() int }:
+		return v.Length
+	case interface{ Len() int }:
+		return v.Len
+	default:
+		return nil
+	}
+}
+
+func reflectGetMethod(val reflect.Value) GetFunc[any] {
 	if get := val.MethodByName(`Get`); !utils.IsZero(get) {
 		t := get.Type()
 		if t.NumIn() == 1 && t.In(0) == utils.TypeOf[int]() && t.NumOut() == 1 {
@@ -138,6 +169,13 @@ func reflectGetMethod(val reflect.Value) func(int) any {
 				return result[0].Interface()
 			}
 		}
+	}
+	return nil
+}
+
+func onChange(source any) OnChangeFunc {
+	if c, ok := source.(collections.OnChanger); ok {
+		return c.OnChange
 	}
 	return nil
 }
@@ -164,11 +202,13 @@ func fromMapValue(val reflect.Value) collections.ReadonlyList[any] {
 			key := keys[i].Interface()
 			value := val.MapIndex(keys[i]).Interface()
 			return tuple2.New(key, value)
-		})
+		},
+		nil)
 }
 
 func fromSingleValue(value any) collections.ReadonlyList[any] {
 	return From[any](
 		func() int { return 1 },
-		func(i int) any { return value })
+		func(i int) any { return value },
+		nil)
 }

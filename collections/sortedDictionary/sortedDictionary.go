@@ -19,10 +19,11 @@ func New[TKey comparable, TValue any](comparer ...utils.Comparer[TKey]) collecti
 func CapNew[TKey comparable, TValue any](capacity int, comparer ...utils.Comparer[TKey]) collections.Dictionary[TKey, TValue] {
 	cmp := optional.Comparer(comparer)
 	capacity = max(capacity, 0)
-	return &sortedImp[TKey, TValue]{
+	return &sortedDictionaryImp[TKey, TValue]{
 		data:     make(map[TKey]TValue, capacity),
 		keys:     make([]TKey, 0, capacity),
 		comparer: cmp,
+		event:    nil,
 	}
 }
 
@@ -37,10 +38,11 @@ func With[TKey comparable, TValue any, M ~map[TKey]TValue](m M, comparer ...util
 	if data == nil {
 		data = make(map[TKey]TValue)
 	}
-	return &sortedImp[TKey, TValue]{
+	return &sortedDictionaryImp[TKey, TValue]{
 		data:     data,
 		keys:     utils.SortedKeys(m, cmp),
 		comparer: cmp,
+		event:    nil,
 	}
 }
 
@@ -50,9 +52,9 @@ func With[TKey comparable, TValue any, M ~map[TKey]TValue](m M, comparer ...util
 // The keys are sorted with the optional given comparer function
 // or the default comparer if no comparer was given.
 func From[TKey comparable, TValue any](e collections.Enumerator[collections.Tuple2[TKey, TValue]], comparer ...utils.Comparer[TKey]) collections.Dictionary[TKey, TValue] {
-	m := CapNew[TKey, TValue](0, comparer...)
-	m.AddFrom(e)
-	return m
+	d := CapNew[TKey, TValue](0, comparer...)
+	d.AddFrom(e)
+	return d
 }
 
 // CapFrom creates a new dictionary with sorted keys and an initial capacity
@@ -61,7 +63,7 @@ func From[TKey comparable, TValue any](e collections.Enumerator[collections.Tupl
 // The keys are sorted with the optional given comparer function
 // or the default comparer if no comparer was given.
 func CapFrom[TKey comparable, TValue any](e collections.Enumerator[collections.Tuple2[TKey, TValue]], capacity int, comparer ...utils.Comparer[TKey]) collections.Dictionary[TKey, TValue] {
-	m := CapNew[TKey, TValue](capacity, comparer...)
-	m.AddFrom(e)
-	return m
+	d := CapNew[TKey, TValue](capacity, comparer...)
+	d.AddFrom(e)
+	return d
 }

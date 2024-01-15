@@ -17,9 +17,7 @@ import (
 // The capacity will never be smaller than the list's length.
 func New[T any](sizes ...int) collections.List[T] {
 	size, initCap := optional.SizeAndCapacity(sizes)
-	return &listImp[T]{
-		s: make([]T, size, initCap),
-	}
+	return newImp(make([]T, size, initCap))
 }
 
 // Fill creates a new list initialized with a repeated value.
@@ -28,9 +26,7 @@ func New[T any](sizes ...int) collections.List[T] {
 func Fill[T any](value T, count int, capacity ...int) collections.List[T] {
 	count = max(count, 0)
 	initCap := max(count, optional.Capacity(capacity))
-	list := &listImp[T]{
-		s: make([]T, count, initCap),
-	}
+	list := newImp(make([]T, count, initCap))
 	for i := 0; i < count; i++ {
 		list.s[i] = value
 	}
@@ -39,9 +35,7 @@ func Fill[T any](value T, count int, capacity ...int) collections.List[T] {
 
 // With creates a new list with the given values.
 func With[T any](s ...T) collections.List[T] {
-	return &listImp[T]{
-		s: slices.Clone(s),
-	}
+	return newImp(slices.Clone(s))
 }
 
 // From creates a new list from the given enumerator.

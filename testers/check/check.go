@@ -144,6 +144,34 @@ func String(t testers.Tester, expected string) (c testers.Check[any]) {
 		WithValue(`Expected String`, expected)
 }
 
+// StringAndReset creates a check that the given expected string
+// is the same of the string from the actual object then calls
+// `Reset` on the actual object if it exists.
+//
+// This uses `utils.String` to get the string.
+// This is designed to work with `bytes.Buffer` so that a buffer can be used
+// to collect changes, event, calls, etc then checked that those occurred.
+// Resetting the buffer prepares it for the next collection of changes, etc.
+//
+// Example: `check.StringAndReset(t, "foo").Assert(actual)`
+func StringAndReset(t testers.Tester, expected string) (c testers.Check[any]) {
+	defer handlePanic(t, &c)
+	getHelper(t)()
+	p := predicate.AsString(predicate.Eq(expected))
+	return newCheck(t, func(b *testee, actual any) {
+		if !p(actual) {
+			b.Should(`have string be equal`)
+		}
+		if r, ok := actual.(interface{ Reset() }); ok {
+			// Overwrite value with the string so the reset
+			// doesn't change the formatted string of the value.
+			b.With(`Actual Value`, b.formatValue(r))
+			r.Reset()
+		}
+	}).AsText().
+		WithValue(`Expected String`, expected)
+}
+
 // Equal creates a check that the given expected value
 // is equal to an actual value.
 //

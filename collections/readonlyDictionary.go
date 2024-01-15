@@ -9,6 +9,7 @@ type ReadonlyDictionary[TKey comparable, TValue any] interface {
 	Collection[Tuple2[TKey, TValue]]
 	Container[TKey]
 	Getter[TKey, TValue]
+	OnChanger
 
 	// Keys enumerates the keys.
 	//

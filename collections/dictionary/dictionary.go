@@ -18,7 +18,8 @@ import (
 func New[TKey comparable, TValue any](capacity ...int) collections.Dictionary[TKey, TValue] {
 	initCap := optional.Capacity(capacity)
 	return &dictionaryImp[TKey, TValue]{
-		m: make(map[TKey]TValue, initCap),
+		m:     make(map[TKey]TValue, initCap),
+		event: nil,
 	}
 }
 
@@ -26,7 +27,8 @@ func New[TKey comparable, TValue any](capacity ...int) collections.Dictionary[TK
 // populated with key/value pairs from the given map.
 func With[TKey comparable, TValue any](m map[TKey]TValue) collections.Dictionary[TKey, TValue] {
 	return &dictionaryImp[TKey, TValue]{
-		m: maps.Clone(m),
+		m:     maps.Clone(m),
+		event: nil,
 	}
 }
 

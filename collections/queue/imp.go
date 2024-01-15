@@ -2,10 +2,13 @@ package queue
 
 import (
 	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/changeArgs"
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
 	"github.com/Snow-Gremlin/goToolbox/collections/list"
 	"github.com/Snow-Gremlin/goToolbox/collections/readonlyQueue"
+	"github.com/Snow-Gremlin/goToolbox/events"
+	"github.com/Snow-Gremlin/goToolbox/events/event"
 	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
@@ -21,6 +24,7 @@ type (
 		head      *node[T]
 		tail      *node[T]
 		enumGuard uint
+		event     events.Event[collections.ChangeArgs]
 	}
 )
 
@@ -37,6 +41,19 @@ func newImp[T any]() *queueImp[T] {
 		head:      nil,
 		tail:      nil,
 		enumGuard: 0,
+		event:     nil,
+	}
+}
+
+func (q *queueImp[T]) onEnqueued() {
+	if q.event != nil {
+		q.event.Invoke(changeArgs.NewAdded())
+	}
+}
+
+func (q *queueImp[T]) onDequeued() {
+	if q.event != nil {
+		q.event.Invoke(changeArgs.NewRemoved())
 	}
 }
 
@@ -98,6 +115,13 @@ func (q *queueImp[T]) TryPeek() (T, bool) {
 	return utils.Zero[T](), false
 }
 
+func (q *queueImp[T]) OnChange() events.Event[collections.ChangeArgs] {
+	if q.event == nil {
+		q.event = event.New[collections.ChangeArgs]()
+	}
+	return q.event
+}
+
 func (q *queueImp[T]) Enqueue(values ...T) {
 	count := len(values)
 	if count <= 0 {
@@ -119,6 +143,7 @@ func (q *queueImp[T]) Enqueue(values ...T) {
 
 	q.tail = prev
 	q.count += count
+	q.onEnqueued()
 }
 
 func (q *queueImp[T]) EnqueueFrom(e collections.Enumerator[T]) {
@@ -149,6 +174,7 @@ func (q *queueImp[T]) EnqueueFrom(e collections.Enumerator[T]) {
 	}
 	q.tail = prev
 	q.count += count
+	q.onEnqueued()
 }
 
 func (q *queueImp[T]) Take(count int) []T {
@@ -168,6 +194,7 @@ func (q *queueImp[T]) Take(count int) []T {
 	}
 	q.count -= count
 	q.enumGuard++
+	q.onDequeued()
 	return result
 }
 
@@ -189,14 +216,18 @@ func (q *queueImp[T]) TryDequeue() (T, bool) {
 	}
 	q.count--
 	q.enumGuard++
+	q.onDequeued()
 	return v, true
 }
 
 func (q *queueImp[T]) Clear() {
-	q.head = nil
-	q.tail = nil
-	q.count = 0
-	q.enumGuard++
+	if q.count > 0 {
+		q.head = nil
+		q.tail = nil
+		q.count = 0
+		q.enumGuard++
+		q.onDequeued()
+	}
 }
 
 func (q *queueImp[T]) Clip() {

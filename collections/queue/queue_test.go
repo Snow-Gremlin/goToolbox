@@ -1,11 +1,13 @@
 package queue
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/Snow-Gremlin/goToolbox/collections"
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/list"
+	"github.com/Snow-Gremlin/goToolbox/events/listener"
 	"github.com/Snow-Gremlin/goToolbox/testers/check"
 )
 
@@ -165,4 +167,45 @@ func Test_Queue_UnstableIteration(t *testing.T) {
 	check.Equal(t, 2).Assert(q.Dequeue())
 	check.MatchError(t, `Collection was modified; iteration may not continue`).
 		Panic(func() { it.Next() })
+}
+
+func Test_Queue_OnChange(t *testing.T) {
+	buf := &bytes.Buffer{}
+	q := New[int]()
+	lis := listener.New(func(args collections.ChangeArgs) {
+		_, _ = buf.WriteString(args.Type().String())
+	})
+	defer lis.Cancel()
+	check.True(t).Assert(lis.Subscribe(q.OnChange()))
+	check.StringAndReset(t, ``).Assert(buf)
+
+	q.Enqueue()
+	check.StringAndReset(t, ``).Assert(buf)
+	q.Enqueue(1, 2, 3)
+	check.StringAndReset(t, `Added`).Assert(buf)
+	check.Equal(t, 1).Assert(q.Dequeue())
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.String(t, `2, 3`).Assert(q)
+
+	q.EnqueueFrom(nil)
+	check.StringAndReset(t, ``).Assert(buf)
+	q.EnqueueFrom(enumerator.Enumerate[int]())
+	check.StringAndReset(t, ``).Assert(buf)
+	q.EnqueueFrom(enumerator.Enumerate[int](4, 5, 6))
+	check.StringAndReset(t, `Added`).Assert(buf)
+	check.String(t, `2, 3, 4, 5, 6`).Assert(q)
+
+	check.String(t, `[]`).Assert(q.Take(0))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.String(t, `[2 3 4]`).Assert(q.Take(3))
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.String(t, `5, 6`).Assert(q)
+
+	q.Clear()
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	q.Clear()
+	check.StringAndReset(t, ``).Assert(buf)
+	_, dequeue := q.TryDequeue()
+	check.False(t).Assert(dequeue)
+	check.StringAndReset(t, ``).Assert(buf)
 }

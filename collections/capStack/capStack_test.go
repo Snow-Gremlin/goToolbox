@@ -1,12 +1,14 @@
 package capStack
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/Snow-Gremlin/goToolbox/collections"
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/list"
 	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
+	"github.com/Snow-Gremlin/goToolbox/events/listener"
 	"github.com/Snow-Gremlin/goToolbox/testers/check"
 )
 
@@ -350,4 +352,58 @@ func Test_CapStack_UnstableIteration(t *testing.T) {
 	check.Empty(t).Assert(e.ToSlice())
 	check.MatchError(t, `Collection was modified; iteration may not continue`).
 		Panic(func() { it.Next() })
+}
+
+func Test_CapStack_OnChange(t *testing.T) {
+	buf := &bytes.Buffer{}
+	s := New[int]()
+	lis := listener.New(func(args collections.ChangeArgs) {
+		_, _ = buf.WriteString(args.Type().String())
+	})
+	defer lis.Cancel()
+	check.True(t).Assert(lis.Subscribe(s.OnChange()))
+	check.StringAndReset(t, ``).Assert(buf)
+
+	s.Push()
+	check.StringAndReset(t, ``).Assert(buf)
+	s.Push(1, 2, 3)
+	check.StringAndReset(t, `Added`).Assert(buf)
+	check.Equal(t, 1).Assert(s.Pop())
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.String(t, `2, 3`).Assert(s)
+
+	s.PushFrom(nil)
+	check.StringAndReset(t, ``).Assert(buf)
+	s.PushFrom(enumerator.Enumerate[int]())
+	check.StringAndReset(t, ``).Assert(buf)
+	s.PushFrom(enumerator.Enumerate[int](4, 5, 6))
+	check.StringAndReset(t, `Added`).Assert(buf)
+	check.String(t, `4, 5, 6, 2, 3`).Assert(s)
+
+	check.String(t, `[]`).Assert(s.Take(0))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.String(t, `[4 5 6]`).Assert(s.Take(3))
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.String(t, `2, 3`).Assert(s)
+
+	s.Clear()
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	s.Clear()
+	check.StringAndReset(t, ``).Assert(buf)
+	_, dequeue := s.TryPop()
+	check.False(t).Assert(dequeue)
+	check.StringAndReset(t, ``).Assert(buf)
+
+	s.Push(1, 2, 3)
+	check.StringAndReset(t, `Added`).Assert(buf)
+	s.TrimTo(5)
+	check.StringAndReset(t, ``).Assert(buf)
+	s.TrimTo(3)
+	check.StringAndReset(t, ``).Assert(buf)
+	s.TrimTo(2)
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.String(t, `1, 2`).Assert(s)
+	s.TrimTo(-1)
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.String(t, ``).Assert(s)
 }

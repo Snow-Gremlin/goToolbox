@@ -46,6 +46,7 @@ func Test_SimpleSet(t *testing.T) {
 	m.Set(17)
 	checkEqual(t, `10, 11, 13, 15, 17, 5, 7`, m.ToString(), `after preparing for RemoveIf`)
 
+	checkEqual(t, false, m.RemoveIf(nil), `RemoveIf with nil predicate`)
 	checkEqual(t, true, m.RemoveIf(func(v int) bool { return v%5 == 0 }), `RemoveIf multiples of 5 when set`)
 	checkEqual(t, `11, 13, 17, 7`, m.ToString(), `after RemoveIf multiples of 5 when set`)
 	checkEqual(t, false, m.RemoveIf(func(v int) bool { return v%5 == 0 }), `RemoveIf multiples of 5 when not set`)

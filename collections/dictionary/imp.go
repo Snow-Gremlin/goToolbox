@@ -7,65 +7,108 @@ import (
 	"strings"
 
 	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/changeArgs"
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
 	"github.com/Snow-Gremlin/goToolbox/collections/readonlyDictionary"
 	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/events"
+	"github.com/Snow-Gremlin/goToolbox/events/event"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
+type changeFlag int
+
+const (
+	noChange      changeFlag = 0
+	addChange     changeFlag = 1
+	removeChange  changeFlag = 2
+	replaceChange changeFlag = addChange | removeChange
+)
+
 type dictionaryImp[TKey comparable, TValue any] struct {
-	m map[TKey]TValue
+	m     map[TKey]TValue
+	event events.Event[collections.ChangeArgs]
+}
+
+func (d *dictionaryImp[TKey, TValue]) onChanged(cf changeFlag) bool {
+	if d.event != nil {
+		switch cf {
+		case addChange:
+			d.event.Invoke(changeArgs.NewAdded())
+		case removeChange:
+			d.event.Invoke(changeArgs.NewRemoved())
+		case replaceChange:
+			d.event.Invoke(changeArgs.NewReplaced())
+		}
+	}
+	return cf != noChange
+}
+
+func (d *dictionaryImp[TKey, TValue]) addOne(key TKey, val TValue) changeFlag {
+	if v2, exists := d.m[key]; exists {
+		if utils.Equal(val, v2) {
+			return noChange
+		}
+
+		d.m[key] = val
+		return replaceChange
+	}
+
+	d.m[key] = val
+	return addChange
+}
+
+func (d *dictionaryImp[TKey, TValue]) addOneIfNotSet(key TKey, val TValue) changeFlag {
+	if _, exists := d.m[key]; exists {
+		return noChange
+	}
+	d.m[key] = val
+	return addChange
 }
 
 func (d *dictionaryImp[TKey, TValue]) Add(key TKey, val TValue) bool {
-	_, exists := d.m[key]
-	d.m[key] = val
-	return !exists
+	return d.onChanged(d.addOne(key, val))
 }
 
 func (d *dictionaryImp[TKey, TValue]) AddIfNotSet(key TKey, val TValue) bool {
-	if _, exists := d.m[key]; exists {
-		return false
-	}
-	d.m[key] = val
-	return true
+	return d.onChanged(d.addOneIfNotSet(key, val))
 }
 
-func addFromTo[TKey comparable, TValue any](e collections.Enumerator[collections.Tuple2[TKey, TValue]], addHandle func(key TKey, val TValue) bool) bool {
+func addFromTo[TKey comparable, TValue any](e collections.Enumerator[collections.Tuple2[TKey, TValue]], addHandle func(key TKey, val TValue) changeFlag) changeFlag {
 	if utils.IsNil(e) {
-		return false
+		return noChange
 	}
-	result := false
+	result := noChange
 	e.All(func(t collections.Tuple2[TKey, TValue]) bool {
-		result = addHandle(t.Values()) || result
+		result |= addHandle(t.Values())
 		return true
 	})
 	return result
 }
 
 func (d *dictionaryImp[TKey, TValue]) AddFrom(e collections.Enumerator[collections.Tuple2[TKey, TValue]]) bool {
-	return addFromTo(e, d.Add)
+	return d.onChanged(addFromTo(e, d.addOne))
 }
 
 func (d *dictionaryImp[TKey, TValue]) AddIfNotSetFrom(e collections.Enumerator[collections.Tuple2[TKey, TValue]]) bool {
-	return addFromTo(e, d.AddIfNotSet)
+	return d.onChanged(addFromTo(e, d.addOneIfNotSet))
 }
 
-func addMapTo[TKey comparable, TValue any](m map[TKey]TValue, addHandle func(key TKey, val TValue) bool) bool {
-	result := false
+func addMapTo[TKey comparable, TValue any](m map[TKey]TValue, addHandle func(key TKey, val TValue) changeFlag) changeFlag {
+	result := noChange
 	for key, value := range m {
-		result = addHandle(key, value) || result
+		result |= addHandle(key, value)
 	}
 	return result
 }
 
 func (d *dictionaryImp[TKey, TValue]) AddMap(m map[TKey]TValue) bool {
-	return addMapTo(m, d.Add)
+	return d.onChanged(addMapTo(m, d.addOne))
 }
 
 func (d *dictionaryImp[TKey, TValue]) AddMapIfNotSet(m map[TKey]TValue) bool {
-	return addMapTo(m, d.AddIfNotSet)
+	return d.onChanged(addMapTo(m, d.addOneIfNotSet))
 }
 
 func (d *dictionaryImp[TKey, TValue]) Get(key TKey) TValue {
@@ -82,37 +125,54 @@ func (d *dictionaryImp[TKey, TValue]) ToMap() map[TKey]TValue {
 }
 
 func (d *dictionaryImp[TKey, TValue]) Remove(keys ...TKey) bool {
-	removed := false
+	result := noChange
 	for _, key := range keys {
 		if _, exists := d.m[key]; exists {
 			delete(d.m, key)
-			removed = true
+			result = removeChange
 		}
 	}
-	return removed
+	return d.onChanged(result)
 }
 
 func (d *dictionaryImp[TKey, TValue]) RemoveIf(p collections.Predicate[TKey]) bool {
 	if utils.IsNil(p) {
 		return false
 	}
-	count := len(d.m)
-	maps.DeleteFunc(d.m, func(key TKey, _ TValue) bool { return p(key) })
-	return len(d.m) != count
+	result := noChange
+	maps.DeleteFunc(d.m, func(key TKey, _ TValue) bool {
+		if p(key) {
+			result = removeChange
+			return true
+		}
+		return false
+	})
+	return d.onChanged(result)
 }
 
 func (d *dictionaryImp[TKey, TValue]) Clear() {
-	d.m = make(map[TKey]TValue)
+	if len(d.m) > 0 {
+		d.m = make(map[TKey]TValue)
+		d.onChanged(removeChange)
+	}
 }
 
 func (d *dictionaryImp[TKey, TValue]) Clone() collections.Dictionary[TKey, TValue] {
 	return &dictionaryImp[TKey, TValue]{
-		m: maps.Clone(d.m),
+		m:     maps.Clone(d.m),
+		event: nil,
 	}
 }
 
 func (d *dictionaryImp[TKey, TValue]) Readonly() collections.ReadonlyDictionary[TKey, TValue] {
 	return readonlyDictionary.New(d)
+}
+
+func (d *dictionaryImp[TKey, TValue]) OnChange() events.Event[collections.ChangeArgs] {
+	if d.event == nil {
+		d.event = event.New[collections.ChangeArgs]()
+	}
+	return d.event
 }
 
 func (d *dictionaryImp[TKey, TValue]) Enumerate() collections.Enumerator[collections.Tuple2[TKey, TValue]] {

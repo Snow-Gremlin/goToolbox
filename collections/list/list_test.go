@@ -1,10 +1,13 @@
 package list
 
 import (
+	"bytes"
 	"testing"
 
+	"github.com/Snow-Gremlin/goToolbox/collections"
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
+	"github.com/Snow-Gremlin/goToolbox/events/listener"
 	"github.com/Snow-Gremlin/goToolbox/testers/check"
 )
 
@@ -254,4 +257,86 @@ func Test_List_UnstableIteration(t *testing.T) {
 	check.True(t).Assert(it2.Next())
 	check.Equal(t, 1).Assert(it2.Current())
 	check.False(t).Assert(it2.Next())
+}
+
+func Test_List_OnChange(t *testing.T) {
+	buf := &bytes.Buffer{}
+	s := New[int]()
+	lis := listener.New(func(args collections.ChangeArgs) {
+		_, _ = buf.WriteString(args.Type().String())
+	})
+	defer lis.Cancel()
+	check.True(t).Assert(lis.Subscribe(s.OnChange()))
+	check.StringAndReset(t, ``).Assert(buf)
+
+	s.Prepend()
+	check.StringAndReset(t, ``).Assert(buf)
+	s.Prepend(1, 2)
+	check.StringAndReset(t, `Added`).Assert(buf)
+	s.PrependFrom(enumerator.Enumerate[int]())
+	check.StringAndReset(t, ``).Assert(buf)
+	s.PrependFrom(enumerator.Enumerate[int](3, 4))
+	check.StringAndReset(t, `Added`).Assert(buf)
+	check.String(t, `3, 4, 1, 2`).Assert(s)
+
+	s.Append()
+	check.StringAndReset(t, ``).Assert(buf)
+	s.Append(5, 6)
+	check.StringAndReset(t, `Added`).Assert(buf)
+	s.AppendFrom(enumerator.Enumerate[int]())
+	check.StringAndReset(t, ``).Assert(buf)
+	s.AppendFrom(enumerator.Enumerate[int](7, 8))
+	check.StringAndReset(t, `Added`).Assert(buf)
+	check.String(t, `3, 4, 1, 2, 5, 6, 7, 8`).Assert(s)
+
+	check.Equal(t, 3).Assert(s.TakeFirst())
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.Equal(t, 8).Assert(s.TakeLast())
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.String(t, ``).Assert(s.TakeFront(0))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.String(t, `4, 1`).Assert(s.TakeFront(2))
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.String(t, ``).Assert(s.TakeBack(0))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.String(t, `6, 7`).Assert(s.TakeBack(2))
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.String(t, `2, 5`).Assert(s)
+
+	s.Insert(1)
+	check.StringAndReset(t, ``).Assert(buf)
+	s.Insert(1, 9, 10)
+	check.StringAndReset(t, `Added`).Assert(buf)
+	s.InsertFrom(1, enumerator.Enumerate[int]())
+	check.StringAndReset(t, ``).Assert(buf)
+	s.InsertFrom(1, enumerator.Enumerate(11, 12))
+	check.StringAndReset(t, `Added`).Assert(buf)
+	check.String(t, `2, 11, 12, 9, 10, 5`).Assert(s)
+
+	s.Remove(1, 0)
+	check.StringAndReset(t, ``).Assert(buf)
+	s.Remove(1, 2)
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.False(t).Assert(s.RemoveIf(predicate.Eq(13)))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.True(t).Assert(s.RemoveIf(predicate.Eq(10)))
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.String(t, `2, 9, 5`).Assert(s)
+
+	s.Set(1)
+	check.StringAndReset(t, ``).Assert(buf)
+	s.Set(1, 13)
+	check.StringAndReset(t, `Replaced`).Assert(buf)
+	check.String(t, `2, 13, 5`).Assert(s)
+	s.Set(1, 14, 15, 16)
+	check.StringAndReset(t, `Replaced`).Assert(buf)
+	check.String(t, `2, 14, 15, 16`).Assert(s)
+	s.Set(4, 17)
+	check.StringAndReset(t, `Added`).Assert(buf)
+	check.String(t, `2, 14, 15, 16, 17`).Assert(s)
+
+	s.Clear()
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	s.Clear()
+	check.StringAndReset(t, ``).Assert(buf)
 }

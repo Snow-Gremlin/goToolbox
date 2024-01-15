@@ -2,10 +2,13 @@ package capQueue
 
 import (
 	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/changeArgs"
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
 	"github.com/Snow-Gremlin/goToolbox/collections/list"
 	"github.com/Snow-Gremlin/goToolbox/collections/readonlyQueue"
+	"github.com/Snow-Gremlin/goToolbox/events"
+	"github.com/Snow-Gremlin/goToolbox/events/event"
 	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
@@ -26,6 +29,7 @@ type (
 		tail      *node[T]
 		graveyard *node[T]
 		enumGuard uint
+		event     events.Event[collections.ChangeArgs]
 	}
 )
 
@@ -36,6 +40,7 @@ func newImp[T any]() *capQueueImp[T] {
 		tail:      nil,
 		graveyard: nil,
 		enumGuard: 0,
+		event:     nil,
 	}
 }
 
@@ -84,6 +89,18 @@ func (q *capQueueImp[T]) addTombs(count int) {
 		prev = n
 	}
 	q.graveyard = &c[0]
+}
+
+func (q *capQueueImp[T]) onEnqueued() {
+	if q.event != nil {
+		q.event.Invoke(changeArgs.NewAdded())
+	}
+}
+
+func (q *capQueueImp[T]) onDequeued() {
+	if q.event != nil {
+		q.event.Invoke(changeArgs.NewRemoved())
+	}
 }
 
 func (q *capQueueImp[T]) Enumerate() collections.Enumerator[T] {
@@ -146,6 +163,13 @@ func (q *capQueueImp[T]) TryPeek() (T, bool) {
 	return utils.Zero[T](), false
 }
 
+func (q *capQueueImp[T]) OnChange() events.Event[collections.ChangeArgs] {
+	if q.event == nil {
+		q.event = event.New[collections.ChangeArgs]()
+	}
+	return q.event
+}
+
 func (q *capQueueImp[T]) Enqueue(values ...T) {
 	count := len(values)
 	if count <= 0 {
@@ -167,6 +191,7 @@ func (q *capQueueImp[T]) Enqueue(values ...T) {
 
 	q.tail = prev
 	q.count += count
+	q.onEnqueued()
 }
 
 func (q *capQueueImp[T]) EnqueueFrom(e collections.Enumerator[T]) {
@@ -197,6 +222,7 @@ func (q *capQueueImp[T]) EnqueueFrom(e collections.Enumerator[T]) {
 	}
 	q.tail = prev
 	q.count += count
+	q.onEnqueued()
 }
 
 func (q *capQueueImp[T]) Take(count int) []T {
@@ -223,6 +249,7 @@ func (q *capQueueImp[T]) Take(count int) []T {
 	}
 	q.count -= count
 	q.enumGuard++
+	q.onDequeued()
 	return result
 }
 
@@ -250,6 +277,7 @@ func (q *capQueueImp[T]) TryDequeue() (T, bool) {
 	n.next = q.graveyard
 	q.graveyard = n
 	q.enumGuard++
+	q.onDequeued()
 	return v, true
 }
 
@@ -269,6 +297,7 @@ func (q *capQueueImp[T]) Clear() {
 	q.tail = nil
 	q.count = 0
 	q.enumGuard++
+	q.onDequeued()
 }
 
 func (q *capQueueImp[T]) Clip() {

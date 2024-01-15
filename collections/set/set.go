@@ -16,7 +16,8 @@ import (
 // The capacity may be omitted, in which case a small starting size is allocated.
 func New[T comparable](capacity ...int) collections.Set[T] {
 	return &setImp[T]{
-		m: simpleSet.Cap[T](optional.Capacity(capacity)),
+		m:     simpleSet.Cap[T](optional.Capacity(capacity)),
+		event: nil,
 	}
 }
 
@@ -26,7 +27,8 @@ func New[T comparable](capacity ...int) collections.Set[T] {
 // and may have different orders per enumeration.
 func With[T comparable](values ...T) collections.Set[T] {
 	s := &setImp[T]{
-		m: simpleSet.New[T](),
+		m:     simpleSet.New[T](),
+		event: nil,
 	}
 	s.Add(values...)
 	return s

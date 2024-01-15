@@ -8,12 +8,15 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections"
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/list"
+	"github.com/Snow-Gremlin/goToolbox/events"
+	"github.com/Snow-Gremlin/goToolbox/events/event"
 	"github.com/Snow-Gremlin/goToolbox/testers/check"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 type pseudoStackImp[T any] struct {
 	s []T
+	e events.Event[collections.ChangeArgs]
 }
 
 func (s *pseudoStackImp[T]) Enumerate() collections.Enumerator[T] {
@@ -60,13 +63,19 @@ func (s *pseudoStackImp[T]) TryPeek() (T, bool) {
 	return s.s[0], true
 }
 
+func (s *pseudoStackImp[T]) OnChange() events.Event[collections.ChangeArgs] {
+	return s.e
+}
+
 func Test_ReadonlyStack(t *testing.T) {
 	s0 := &pseudoStackImp[int]{
 		s: []int{1, 2, 3},
+		e: event.New[collections.ChangeArgs](),
 	}
 	s1 := New(s0)
 	s2 := &pseudoStackImp[int]{
 		s: []int{1, 2, 3},
+		e: event.New[collections.ChangeArgs](),
 	}
 	s3 := New(s2)
 	check.False(t).Assert(s1.Empty())
@@ -90,4 +99,7 @@ func Test_ReadonlyStack(t *testing.T) {
 	check.Equal(t, 1).Assert(v)
 	check.True(t).Assert(ok)
 	check.NotEqual(t, s3).Assert(s1)
+
+	check.Same(t, s0.OnChange()).Assert(s1.OnChange())
+	check.Same(t, s2.OnChange()).Assert(s3.OnChange())
 }

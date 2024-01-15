@@ -8,7 +8,8 @@ type Dictionary[TKey comparable, TValue any] interface {
 	ReadonlyDictionary[TKey, TValue]
 
 	// Add will add or overwrite the key with the given value.
-	// Returns true if the key was added or false if overwritten.
+	// Returns true if the key was added or, if the key
+	// existed but the value is different, otherwise returns false.
 	Add(key TKey, value TValue) bool
 
 	// AddIfNotSet will add the given key with the given value if the
@@ -18,7 +19,8 @@ type Dictionary[TKey comparable, TValue any] interface {
 
 	// AddFrom adds all the key/value pairs from the tuples.
 	// This will overwrite any existing value with the same key.
-	// Returns true if any key was added, false if none were added.
+	// Returns true if any key/value was added or overwritten,
+	// false if none were changed.
 	AddFrom(e Enumerator[Tuple2[TKey, TValue]]) bool
 
 	// AddIfNotSetFrom adds all the key/value pairs
@@ -29,7 +31,8 @@ type Dictionary[TKey comparable, TValue any] interface {
 
 	// AddMap adds all the key/value pairs from the map.
 	// This will overwrite any existing value with the same key.
-	// Returns true if any key was added, false if none were added.
+	// Returns true if any key/value was added or overwritten,
+	// false if none were changed.
 	AddMap(m map[TKey]TValue) bool
 
 	// AddIfNotSetMap adds all the key/value pairs from the map

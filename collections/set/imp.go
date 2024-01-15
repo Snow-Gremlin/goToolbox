@@ -5,16 +5,32 @@ import (
 	"strings"
 
 	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/changeArgs"
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
 	"github.com/Snow-Gremlin/goToolbox/collections/list"
 	"github.com/Snow-Gremlin/goToolbox/collections/readonlySet"
+	"github.com/Snow-Gremlin/goToolbox/events"
+	"github.com/Snow-Gremlin/goToolbox/events/event"
 	"github.com/Snow-Gremlin/goToolbox/internal/simpleSet"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 type setImp[T comparable] struct {
-	m simpleSet.Set[T]
+	m     simpleSet.Set[T]
+	event events.Event[collections.ChangeArgs]
+}
+
+func (s *setImp[T]) onAdded() {
+	if s.event != nil {
+		s.event.Invoke(changeArgs.NewAdded())
+	}
+}
+
+func (s *setImp[T]) onRemoved() {
+	if s.event != nil {
+		s.event.Invoke(changeArgs.NewRemoved())
+	}
 }
 
 func (s *setImp[T]) Enumerate() collections.Enumerator[T] {
@@ -89,10 +105,20 @@ func (s *setImp[T]) Equals(other any) bool {
 	return true
 }
 
+func (s *setImp[T]) OnChange() events.Event[collections.ChangeArgs] {
+	if s.event == nil {
+		s.event = event.New[collections.ChangeArgs]()
+	}
+	return s.event
+}
+
 func (s *setImp[T]) Add(values ...T) bool {
 	added := false
 	for _, key := range values {
 		added = s.m.SetTest(key) || added
+	}
+	if added {
+		s.onAdded()
 	}
 	return added
 }
@@ -106,6 +132,9 @@ func (s *setImp[T]) AddFrom(e collections.Enumerator[T]) bool {
 	for it.Next() {
 		added = s.m.SetTest(it.Current()) || added
 	}
+	if added {
+		s.onAdded()
+	}
 	return added
 }
 
@@ -114,20 +143,31 @@ func (s *setImp[T]) Remove(values ...T) bool {
 	for _, key := range values {
 		removed = s.m.RemoveTest(key) || removed
 	}
+	if removed {
+		s.onRemoved()
+	}
 	return removed
 }
 
 func (s *setImp[T]) RemoveIf(predicate collections.Predicate[T]) bool {
-	return s.m.RemoveIf(predicate)
+	if s.m.RemoveIf(predicate) {
+		s.onRemoved()
+		return true
+	}
+	return false
 }
 
 func (s *setImp[T]) Clear() {
-	s.m = simpleSet.New[T]()
+	if len(s.m) > 0 {
+		s.m = simpleSet.New[T]()
+		s.onRemoved()
+	}
 }
 
 func (s *setImp[T]) Clone() collections.Set[T] {
 	return &setImp[T]{
-		m: s.m.Clone(),
+		m:     s.m.Clone(),
+		event: nil,
 	}
 }
 
