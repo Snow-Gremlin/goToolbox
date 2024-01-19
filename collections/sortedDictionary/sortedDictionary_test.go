@@ -1,6 +1,7 @@
 package sortedDictionary
 
 import (
+	"bytes"
 	"strings"
 	"testing"
 
@@ -8,12 +9,13 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
 	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/events/listener"
 	"github.com/Snow-Gremlin/goToolbox/testers/check"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 func validate[TKey comparable, TValue any](t *testing.T, dic collections.Dictionary[TKey, TValue]) {
-	d, ok := dic.(*sortedImp[TKey, TValue])
+	d, ok := dic.(*sortedDictionaryImp[TKey, TValue])
 	check.True(t).Name(`Convert to sortedImp for validation`).Assert(ok)
 	check.NotNil(t).Assert(d.keys)
 	check.NotNil(t).Assert(d.data)
@@ -28,6 +30,8 @@ func Test_SortedDictionary(t *testing.T) {
 	validate(t, d1)
 
 	check.True(t).Assert(d1.Add(123, 321))
+	validate(t, d1)
+	check.True(t).Assert(d1.Add(123, 456))
 	validate(t, d1)
 	check.False(t).Assert(d1.Add(123, 456))
 	validate(t, d1)
@@ -133,30 +137,30 @@ func Test_SortedDictionary_FromAndWith(t *testing.T) {
 }
 
 func Test_SortedDictionary_New(t *testing.T) {
-	d1 := New[int, string]().(*sortedImp[int, string])
+	d1 := New[int, string]().(*sortedDictionaryImp[int, string])
 	check.Empty(t).Assert(d1.keys)
 	check.Zero(t).Assert(cap(d1.keys))
 
-	d1 = CapNew[int, string](5).(*sortedImp[int, string])
+	d1 = CapNew[int, string](5).(*sortedDictionaryImp[int, string])
 	check.Empty(t).Assert(d1.keys)
 	check.Equal(t, 5).Assert(cap(d1.keys))
 
 	check.MatchError(t, `^invalid number of arguments \{count: 2, maximum: 1, usage: comparer\}$`).
 		Panic(func() { New[int, string](utils.OrderedComparer[int](), utils.OrderedComparer[int]()) })
 
-	d2 := CapNew[*pseudoComparable, int](7).(*sortedImp[*pseudoComparable, int])
+	d2 := CapNew[*pseudoComparable, int](7).(*sortedDictionaryImp[*pseudoComparable, int])
 	check.Empty(t).Assert(d2.keys)
 	check.Equal(t, 7).Assert(cap(d2.keys))
 
-	d2 = With[*pseudoComparable, int]((map[*pseudoComparable]int)(nil)).(*sortedImp[*pseudoComparable, int])
+	d2 = With[*pseudoComparable, int]((map[*pseudoComparable]int)(nil)).(*sortedDictionaryImp[*pseudoComparable, int])
 	check.Empty(t).Assert(d2.keys)
 	check.Zero(t).Assert(cap(d2.keys))
 
-	d3 := From[*pseudoComparable, int](d2.Enumerate()).(*sortedImp[*pseudoComparable, int])
+	d3 := From[*pseudoComparable, int](d2.Enumerate()).(*sortedDictionaryImp[*pseudoComparable, int])
 	check.Empty(t).Assert(d3.keys)
 	check.Zero(t).Assert(cap(d3.keys))
 
-	d3 = CapFrom[*pseudoComparable, int](d2.Enumerate(), 6).(*sortedImp[*pseudoComparable, int])
+	d3 = CapFrom[*pseudoComparable, int](d2.Enumerate(), 6).(*sortedDictionaryImp[*pseudoComparable, int])
 	check.Empty(t).Assert(d3.keys)
 	check.Equal(t, 6).Assert(cap(d3.keys))
 }
@@ -187,6 +191,70 @@ func Test_SortedDictionary_UnstableIteration(t *testing.T) {
 	check.True(t).Assert(it1.Next())
 	check.String(t, `[9, nine]`).Assert(it1.Current())
 	check.False(t).Assert(it1.Next())
+}
+
+func Test_SortedDictionary_OnChange(t *testing.T) {
+	buf := &bytes.Buffer{}
+	d := New[int, string]()
+	lis := listener.New(func(args collections.ChangeArgs) {
+		_, _ = buf.WriteString(args.Type().String())
+	})
+	defer lis.Cancel()
+	check.True(t).Assert(lis.Subscribe(d.OnChange()))
+	check.StringAndReset(t, ``).Assert(buf)
+
+	check.True(t).Assert(d.Add(1, `one`))
+	check.StringAndReset(t, `Added`).Assert(buf)
+	check.False(t).Assert(d.Add(1, `one`))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.True(t).Assert(d.Add(1, `uno`))
+	check.StringAndReset(t, `Replaced`).Assert(buf)
+	check.False(t).Assert(d.AddIfNotSet(1, `one`))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.True(t).Assert(d.AddIfNotSet(2, `two`))
+	check.StringAndReset(t, `Added`).Assert(buf)
+
+	check.False(t).Assert(d.AddFrom(nil))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.False(t).Assert(d.AddFrom(enumerator.Enumerate[collections.Tuple2[int, string]]()))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.True(t).Assert(d.AddFrom(enumerator.Enumerate(tuple2.New(3, `three`))))
+	check.StringAndReset(t, `Added`).Assert(buf)
+	check.True(t).Assert(d.AddFrom(enumerator.Enumerate(tuple2.New(1, `one`), tuple2.New(4, `four`))))
+	check.StringAndReset(t, `Replaced`).Assert(buf)
+	check.False(t).Assert(d.AddIfNotSetFrom(enumerator.Enumerate(tuple2.New(1, `I`), tuple2.New(4, `IV`))))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.True(t).Assert(d.AddIfNotSetFrom(enumerator.Enumerate(tuple2.New(5, `five`))))
+	check.StringAndReset(t, `Added`).Assert(buf)
+
+	check.False(t).Assert(d.AddMap(map[int]string{}))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.False(t).Assert(d.AddMap(map[int]string{1: `one`}))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.True(t).Assert(d.AddMap(map[int]string{6: `six`}))
+	check.StringAndReset(t, `Added`).Assert(buf)
+	check.True(t).Assert(d.AddMap(map[int]string{6: `VI`}))
+	check.StringAndReset(t, `Replaced`).Assert(buf)
+	check.False(t).Assert(d.AddMapIfNotSet(map[int]string{6: `six`}))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.True(t).Assert(d.AddMapIfNotSet(map[int]string{7: `VII`}))
+	check.StringAndReset(t, `Added`).Assert(buf)
+
+	check.True(t).Assert(d.Remove(4, 7))
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.False(t).Assert(d.Remove(4, 7))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.False(t).Assert(d.RemoveIf(nil))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.True(t).Assert(d.RemoveIf(predicate.GreaterThan(4)))
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.False(t).Assert(d.RemoveIf(predicate.GreaterThan(4)))
+	check.StringAndReset(t, ``).Assert(buf)
+
+	d.Clear()
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	d.Clear()
+	check.StringAndReset(t, ``).Assert(buf)
 }
 
 type pseudoComparable struct {

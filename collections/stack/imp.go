@@ -2,10 +2,13 @@ package stack
 
 import (
 	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/changeArgs"
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
 	"github.com/Snow-Gremlin/goToolbox/collections/list"
 	"github.com/Snow-Gremlin/goToolbox/collections/readonlyStack"
+	"github.com/Snow-Gremlin/goToolbox/events"
+	"github.com/Snow-Gremlin/goToolbox/events/event"
 	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
@@ -20,6 +23,7 @@ type (
 		count     int
 		head      *node[T]
 		enumGuard uint
+		event     events.Event[collections.ChangeArgs]
 	}
 )
 
@@ -28,7 +32,36 @@ func newImp[T any]() *stackImp[T] {
 		count:     0,
 		head:      nil,
 		enumGuard: 0,
+		event:     nil,
 	}
+}
+
+func (s *stackImp[T]) onPushed() {
+	if s.event != nil {
+		s.event.Invoke(changeArgs.NewAdded())
+	}
+}
+
+func (s *stackImp[T]) onPopped() {
+	if s.event != nil {
+		s.event.Invoke(changeArgs.NewRemoved())
+	}
+}
+
+func (s *stackImp[T]) pushOne(value T) {
+	s.head = &node[T]{
+		value: value,
+		prev:  s.head,
+	}
+	s.count++
+}
+
+func (s *stackImp[T]) popOne() T {
+	v := s.head.value
+	s.head = s.head.prev
+	s.count--
+	s.enumGuard++
+	return v
 }
 
 func (s *stackImp[T]) Enumerate() collections.Enumerator[T] {
@@ -89,25 +122,19 @@ func (s *stackImp[T]) TryPeek() (T, bool) {
 	return utils.Zero[T](), false
 }
 
-func (s *stackImp[T]) pushOne(value T) {
-	s.head = &node[T]{
-		value: value,
-		prev:  s.head,
+func (s *stackImp[T]) OnChange() events.Event[collections.ChangeArgs] {
+	if s.event == nil {
+		s.event = event.New[collections.ChangeArgs]()
 	}
-	s.count++
-}
-
-func (s *stackImp[T]) popOne() T {
-	v := s.head.value
-	s.head = s.head.prev
-	s.count--
-	s.enumGuard++
-	return v
+	return s.event
 }
 
 func (s *stackImp[T]) Push(values ...T) {
-	for i := len(values) - 1; i >= 0; i-- {
-		s.pushOne(values[i])
+	if length := len(values); length > 0 {
+		for i := length - 1; i >= 0; i-- {
+			s.pushOne(values[i])
+		}
+		s.onPushed()
 	}
 }
 
@@ -140,14 +167,19 @@ func (s *stackImp[T]) PushFrom(e collections.Enumerator[T]) {
 	prev.prev = s.head
 	s.head = newHead
 	s.count += count
+	s.onPushed()
 }
 
 func (s *stackImp[T]) Take(count int) []T {
 	count = min(count, s.count)
+	if count <= 0 {
+		return []T{}
+	}
 	result := make([]T, count)
 	for i := 0; i < count; i++ {
 		result[i] = s.popOne()
 	}
+	s.onPopped()
 	return result
 }
 
@@ -155,20 +187,23 @@ func (s *stackImp[T]) Pop() T {
 	if s.head == nil {
 		panic(terror.EmptyCollection(`Pop`))
 	}
-	return s.popOne()
+	v := s.popOne()
+	s.onPopped()
+	return v
 }
 
 func (s *stackImp[T]) TryPop() (T, bool) {
 	if s.head == nil {
 		return utils.Zero[T](), false
 	}
-	return s.popOne(), true
+	v := s.popOne()
+	s.onPopped()
+	return v, true
 }
 
 func (s *stackImp[T]) TrimTo(count int) {
 	if count <= 0 {
-		s.head = nil
-		s.count = 0
+		s.Clear()
 		return
 	}
 
@@ -179,15 +214,22 @@ func (s *stackImp[T]) TrimTo(count int) {
 			return
 		}
 	}
-	prev.prev = nil
-	s.count = count
-	s.enumGuard++
+
+	if prev.prev != nil {
+		prev.prev = nil
+		s.count = count
+		s.enumGuard++
+		s.onPopped()
+	}
 }
 
 func (s *stackImp[T]) Clear() {
-	s.head = nil
-	s.count = 0
-	s.enumGuard++
+	if s.count > 0 {
+		s.head = nil
+		s.count = 0
+		s.enumGuard++
+		s.onPopped()
+	}
 }
 
 func (s *stackImp[T]) Clip() {

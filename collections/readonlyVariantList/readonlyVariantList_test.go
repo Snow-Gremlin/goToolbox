@@ -5,30 +5,37 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/changeArgs"
+	"github.com/Snow-Gremlin/goToolbox/events"
+	"github.com/Snow-Gremlin/goToolbox/events/event"
+	"github.com/Snow-Gremlin/goToolbox/events/listener"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 func Test_ReadonlyVariantList_Fallbacks(t *testing.T) {
-	rv := (*impReadonlyVariantList[any])(nil)
+	rv := (*readonlyVariantListImp[any])(nil)
 	checkEqual(t, 0, rv.Count(), `Count() on nil struct`)
 	checkEqual(t, nil, rv.liteGet(0), `liteGet(0) on nil struct`)
 
-	rv = &impReadonlyVariantList[any]{
-		countHandle: nil,
-		getHandle:   func(i int) any { return 1 },
+	rv = &readonlyVariantListImp[any]{
+		countHandle:    nil,
+		getHandle:      func(i int) any { return 1 },
+		onChangeHandle: nil,
 	}
 	checkEqual(t, 0, rv.Count(), `Count() on nil "count"`)
 	checkEqual(t, 1, rv.liteGet(0), `liteGet(0) on nil "count"`)
 
-	rv = &impReadonlyVariantList[any]{
-		countHandle: func() int { return 10 },
-		getHandle:   nil,
+	rv = &readonlyVariantListImp[any]{
+		countHandle:    func() int { return 10 },
+		getHandle:      nil,
+		onChangeHandle: nil,
 	}
 	checkEqual(t, 10, rv.Count(), `Count() on nil "get"`)
 	checkEqual(t, nil, rv.Get(0), `Get(0) on nil "get"`)
 
-	r2 := From[any](nil, nil)
-	checkEqual(t, 0, r2.Count(), `Count() on nil struct via "From(nil, nil)"`)
+	r2 := From[any](nil, nil, nil)
+	checkEqual(t, 0, r2.Count(), `Count() on nil struct via "From(nil, nil, nil)"`)
 
 	r2 = Wrap(nil)
 	checkEqual(t, 0, r2.Count(), `Count() on nil struct via "Wrap(nil)"`)
@@ -279,6 +286,25 @@ func Test_ReadonlyVariantList_UnstableIteration(t *testing.T) {
 	checkEqual(t, false, it2.Next(), `6th backward next`)
 }
 
+func Test_ReadonlyVariantList_OnChange(t *testing.T) {
+	buf := &bytes.Buffer{}
+	lis := listener.New(func(args collections.ChangeArgs) {
+		_, _ = buf.WriteString(`[` + args.Type().String() + `]`)
+	})
+	s := &pseudoChanger{
+		slice: []int{1, 2, 3, 4, 5},
+		event: event.New[collections.ChangeArgs](),
+	}
+	rv := Wrap(s)
+	checkEqual(t, true, lis.Subscribe(rv.OnChange()), `subscribe`)
+	s.event.Invoke(changeArgs.NewAdded())
+	checkEqual(t, buf.String(), `[Added]`, `after event invoke`)
+	lis.Cancel()
+
+	rv = Wrap(40)
+	checkEqual(t, false, lis.Subscribe(rv.OnChange()), `subscribe`)
+}
+
 func checkEqual(t *testing.T, exp, actual any, name string) {
 	t.Helper()
 	if !utils.Equal(actual, exp) {
@@ -351,3 +377,12 @@ type pseudoSliceWrapper struct{ slice []int }
 
 func (psw *pseudoSliceWrapper) Count() int    { return len(psw.slice) }
 func (psw *pseudoSliceWrapper) Get(i int) int { return psw.slice[i] }
+
+type pseudoChanger struct {
+	slice []int
+	event events.Event[collections.ChangeArgs]
+}
+
+func (psw *pseudoChanger) Count() int                                     { return len(psw.slice) }
+func (psw *pseudoChanger) Get(i int) int                                  { return psw.slice[i] }
+func (psw *pseudoChanger) OnChange() events.Event[collections.ChangeArgs] { return psw.event }

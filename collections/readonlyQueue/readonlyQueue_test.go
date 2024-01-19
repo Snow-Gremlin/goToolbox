@@ -8,12 +8,14 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections"
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/list"
+	"github.com/Snow-Gremlin/goToolbox/events"
 	"github.com/Snow-Gremlin/goToolbox/testers/check"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 type pseudoQueueImp[T any] struct {
 	q []T
+	e events.Event[collections.ChangeArgs]
 }
 
 func (q *pseudoQueueImp[T]) Enumerate() collections.Enumerator[T] {
@@ -60,13 +62,19 @@ func (q *pseudoQueueImp[T]) TryPeek() (T, bool) {
 	return q.q[0], true
 }
 
+func (q *pseudoQueueImp[T]) OnChange() events.Event[collections.ChangeArgs] {
+	return q.e
+}
+
 func Test_ReadonlyQueue(t *testing.T) {
 	q0 := &pseudoQueueImp[int]{
 		q: []int{1, 2, 3},
+		e: nil,
 	}
 	q1 := New(q0)
 	q2 := &pseudoQueueImp[int]{
 		q: []int{1, 2, 3},
+		e: nil,
 	}
 	q3 := New(q2)
 	check.False(t).Assert(q1.Empty())
@@ -90,4 +98,7 @@ func Test_ReadonlyQueue(t *testing.T) {
 	check.Equal(t, 1).Assert(v)
 	check.True(t).Assert(ok)
 	check.NotEqual(t, q3).Assert(q1)
+
+	check.Same(t, q0.OnChange()).Assert(q1.OnChange())
+	check.Same(t, q2.OnChange()).Assert(q3.OnChange())
 }

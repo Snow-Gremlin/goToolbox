@@ -1,6 +1,7 @@
 package dictionary
 
 import (
+	"bytes"
 	"strings"
 	"testing"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
 	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/events/listener"
 	"github.com/Snow-Gremlin/goToolbox/testers/check"
 )
 
@@ -17,6 +19,7 @@ func Test_Dictionary(t *testing.T) {
 	check.True(t).Assert(d1.Empty())
 
 	check.True(t).Assert(d1.Add(123, 321))
+	check.True(t).Assert(d1.Add(123, 456))
 	check.False(t).Assert(d1.Add(123, 456))
 	check.Length(t, 1).Assert(d1)
 	check.False(t).Assert(d1.Empty())
@@ -142,4 +145,68 @@ func Test_Dictionary_UnstableIteration(t *testing.T) {
 	// Didn't pick up Four because it was added after the keys were captured.
 	check.False(t).Assert(it.Next())
 	check.SameElems(t, []string{`One`, `Two`, `Three`}).Assert(keys)
+}
+
+func Test_Dictionary_OnChange(t *testing.T) {
+	buf := &bytes.Buffer{}
+	d := New[int, string]()
+	lis := listener.New(func(args collections.ChangeArgs) {
+		_, _ = buf.WriteString(args.Type().String())
+	})
+	defer lis.Cancel()
+	check.True(t).Assert(lis.Subscribe(d.OnChange()))
+	check.StringAndReset(t, ``).Assert(buf)
+
+	check.True(t).Assert(d.Add(1, `one`))
+	check.StringAndReset(t, `Added`).Assert(buf)
+	check.False(t).Assert(d.Add(1, `one`))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.True(t).Assert(d.Add(1, `uno`))
+	check.StringAndReset(t, `Replaced`).Assert(buf)
+	check.False(t).Assert(d.AddIfNotSet(1, `one`))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.True(t).Assert(d.AddIfNotSet(2, `two`))
+	check.StringAndReset(t, `Added`).Assert(buf)
+
+	check.False(t).Assert(d.AddFrom(nil))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.False(t).Assert(d.AddFrom(enumerator.Enumerate[collections.Tuple2[int, string]]()))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.True(t).Assert(d.AddFrom(enumerator.Enumerate(tuple2.New(3, `three`))))
+	check.StringAndReset(t, `Added`).Assert(buf)
+	check.True(t).Assert(d.AddFrom(enumerator.Enumerate(tuple2.New(1, `one`), tuple2.New(4, `four`))))
+	check.StringAndReset(t, `Replaced`).Assert(buf)
+	check.False(t).Assert(d.AddIfNotSetFrom(enumerator.Enumerate(tuple2.New(1, `I`), tuple2.New(4, `IV`))))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.True(t).Assert(d.AddIfNotSetFrom(enumerator.Enumerate(tuple2.New(5, `five`))))
+	check.StringAndReset(t, `Added`).Assert(buf)
+
+	check.False(t).Assert(d.AddMap(map[int]string{}))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.False(t).Assert(d.AddMap(map[int]string{1: `one`}))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.True(t).Assert(d.AddMap(map[int]string{6: `six`}))
+	check.StringAndReset(t, `Added`).Assert(buf)
+	check.True(t).Assert(d.AddMap(map[int]string{6: `VI`}))
+	check.StringAndReset(t, `Replaced`).Assert(buf)
+	check.False(t).Assert(d.AddMapIfNotSet(map[int]string{6: `six`}))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.True(t).Assert(d.AddMapIfNotSet(map[int]string{7: `VII`}))
+	check.StringAndReset(t, `Added`).Assert(buf)
+
+	check.True(t).Assert(d.Remove(4, 7))
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.False(t).Assert(d.Remove(4, 7))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.False(t).Assert(d.RemoveIf(nil))
+	check.StringAndReset(t, ``).Assert(buf)
+	check.True(t).Assert(d.RemoveIf(predicate.GreaterThan(4)))
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.False(t).Assert(d.RemoveIf(predicate.GreaterThan(4)))
+	check.StringAndReset(t, ``).Assert(buf)
+
+	d.Clear()
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	d.Clear()
+	check.StringAndReset(t, ``).Assert(buf)
 }

@@ -6,4 +6,5 @@ type ReadonlyStack[T any] interface {
 	Sliceable[T]
 	Listable[T]
 	Peeker[T]
+	OnChanger
 }

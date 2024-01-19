@@ -62,11 +62,13 @@ func (b *testee) Copy() *testee {
 
 func (b *testee) With(key string, args ...any) *testee {
 	b.pContext[key] = b.limitLines(fmt.Sprint(args...))
+	delete(b.fContext, key)
 	return b
 }
 
 func (b *testee) Withf(key, format string, args ...any) *testee {
 	b.pContext[key] = b.limitLines(fmt.Sprintf(format, args...))
+	delete(b.fContext, key)
 	return b
 }
 
@@ -76,6 +78,7 @@ func (b *testee) WithType(key string, valueForType any) *testee {
 
 func (b *testee) WithValue(key string, value any) *testee {
 	b.fContext[key] = value
+	delete(b.pContext, key)
 	return b
 }
 

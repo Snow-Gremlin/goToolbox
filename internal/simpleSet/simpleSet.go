@@ -89,6 +89,9 @@ func (s Set[T]) RemoveTest(value T) bool {
 // RemoveIf removes any value which the given predicate accepts.
 // Returns true if any value was remove, otherwise false if none were removed.
 func (s Set[T]) RemoveIf(predicate func(T) bool) bool {
+	if predicate == nil {
+		return false
+	}
 	removed := false
 	maps.DeleteFunc(s, func(key T, _ struct{}) bool {
 		if predicate(key) {

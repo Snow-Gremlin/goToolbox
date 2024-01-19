@@ -2,9 +2,12 @@ package linkedList
 
 import (
 	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/changeArgs"
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
 	"github.com/Snow-Gremlin/goToolbox/collections/readonlyList"
+	"github.com/Snow-Gremlin/goToolbox/events"
+	"github.com/Snow-Gremlin/goToolbox/events/event"
 	"github.com/Snow-Gremlin/goToolbox/internal/optional"
 	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
 	"github.com/Snow-Gremlin/goToolbox/utils"
@@ -17,6 +20,7 @@ func newImp[T any](s ...T) *linkedListImp[T] {
 		head:      nil,
 		tail:      nil,
 		enumGuard: 0,
+		event:     nil,
 	}
 	if count <= 0 {
 		return list
@@ -45,6 +49,7 @@ func impFrom[T any](e collections.Enumerator[T]) *linkedListImp[T] {
 		head:      nil,
 		tail:      nil,
 		enumGuard: 0,
+		event:     nil,
 	}
 	if utils.IsNil(e) {
 		return list
@@ -76,12 +81,7 @@ type linkedListImp[T any] struct {
 	head      *node[T]
 	tail      *node[T]
 	enumGuard uint
-}
-
-func (list *linkedListImp[T]) overwriteWith(temp *linkedListImp[T]) {
-	list.tail = temp.tail
-	list.head = temp.head
-	list.count = temp.count
+	event     events.Event[collections.ChangeArgs]
 }
 
 func (list *linkedListImp[T]) nodeAt(index int) *node[T] {
@@ -89,6 +89,24 @@ func (list *linkedListImp[T]) nodeAt(index int) *node[T] {
 		return list.tail.backwards(index2)
 	}
 	return list.head.forward(index)
+}
+
+func (list *linkedListImp[T]) onAdded() {
+	if list.event != nil {
+		list.event.Invoke(changeArgs.NewAdded())
+	}
+}
+
+func (list *linkedListImp[T]) onRemoved() {
+	if list.event != nil {
+		list.event.Invoke(changeArgs.NewRemoved())
+	}
+}
+
+func (list *linkedListImp[T]) onReplaced() {
+	if list.event != nil {
+		list.event.Invoke(changeArgs.NewReplaced())
+	}
 }
 
 func (list *linkedListImp[T]) Enumerate() collections.Enumerator[T] {
@@ -203,18 +221,29 @@ func (list *linkedListImp[T]) Equals(other any) bool {
 		list.Enumerate().Equals(s.Enumerate())
 }
 
+func (list *linkedListImp[T]) OnChange() events.Event[collections.ChangeArgs] {
+	if list.event == nil {
+		list.event = event.New[collections.ChangeArgs]()
+	}
+	return list.event
+}
+
 func (list *linkedListImp[T]) prependOther(temp *linkedListImp[T]) {
 	if temp.Empty() {
 		return
 	}
 	if list.Empty() {
-		list.overwriteWith(temp)
+		list.tail = temp.tail
+		list.head = temp.head
+		list.count = temp.count
+		list.onAdded()
 		return
 	}
 	temp.tail.next = list.head
 	list.head.prev = temp.tail
 	list.head = temp.head
 	list.count += temp.count
+	list.onAdded()
 }
 
 func (list *linkedListImp[T]) Prepend(values ...T) {
@@ -230,13 +259,17 @@ func (list *linkedListImp[T]) appendOther(temp *linkedListImp[T]) {
 		return
 	}
 	if list.Empty() {
-		list.overwriteWith(temp)
+		list.tail = temp.tail
+		list.head = temp.head
+		list.count = temp.count
+		list.onAdded()
 		return
 	}
 	temp.head.prev = list.tail
 	list.tail.next = temp.head
 	list.tail = temp.tail
 	list.count += temp.count
+	list.onAdded()
 }
 
 func (list *linkedListImp[T]) Append(values ...T) {
@@ -260,6 +293,7 @@ func (list *linkedListImp[T]) TakeFirst() T {
 	}
 	list.count--
 	list.enumGuard++
+	list.onRemoved()
 	return value
 }
 
@@ -276,6 +310,7 @@ func (list *linkedListImp[T]) TakeLast() T {
 	}
 	list.count--
 	list.enumGuard++
+	list.onRemoved()
 	return value
 }
 
@@ -290,6 +325,7 @@ func (list *linkedListImp[T]) TakeFront(count int) collections.List[T] {
 		head:      list.head,
 		tail:      split,
 		enumGuard: 0,
+		event:     nil,
 	}
 	list.head = split.next
 	split.next = nil
@@ -300,6 +336,7 @@ func (list *linkedListImp[T]) TakeFront(count int) collections.List[T] {
 	}
 	list.count -= count
 	list.enumGuard++
+	list.onRemoved()
 	return result
 }
 
@@ -314,6 +351,7 @@ func (list *linkedListImp[T]) TakeBack(count int) collections.List[T] {
 		head:      split,
 		tail:      list.tail,
 		enumGuard: 0,
+		event:     nil,
 	}
 	list.tail = split.prev
 	split.prev = nil
@@ -324,12 +362,16 @@ func (list *linkedListImp[T]) TakeBack(count int) collections.List[T] {
 	}
 	list.count -= count
 	list.enumGuard++
+	list.onRemoved()
 	return result
 }
 
 func (list *linkedListImp[T]) insertOther(index int, temp *linkedListImp[T]) {
 	if index < 0 || index > list.count {
 		panic(terror.OutOfBounds(index, list.count))
+	}
+	if temp.Empty() {
+		return
 	}
 	if index == 0 {
 		list.prependOther(temp)
@@ -348,6 +390,7 @@ func (list *linkedListImp[T]) insertOther(index int, temp *linkedListImp[T]) {
 	}
 	split.next = temp.head
 	list.count += temp.count
+	list.onAdded()
 }
 
 func (list *linkedListImp[T]) Insert(index int, values ...T) {
@@ -381,6 +424,7 @@ func (list *linkedListImp[T]) Remove(index, count int) {
 	}
 	list.count -= count
 	list.enumGuard++
+	list.onRemoved()
 }
 
 func (list *linkedListImp[T]) RemoveIf(handle collections.Predicate[T]) bool {
@@ -418,10 +462,13 @@ func (list *linkedListImp[T]) RemoveIf(handle collections.Predicate[T]) bool {
 		changed = true
 	}
 
-	if changed {
-		list.enumGuard++
+	if !changed {
+		return false
 	}
-	return changed
+
+	list.enumGuard++
+	list.onRemoved()
+	return true
 }
 
 func (list *linkedListImp[T]) Set(index int, values ...T) {
@@ -435,15 +482,24 @@ func (list *linkedListImp[T]) SetFrom(index int, e collections.Enumerator[T]) {
 	if index < 0 || index > list.count {
 		panic(terror.OutOfBounds(index, list.count))
 	}
+	if index == list.count {
+		list.appendOther(impFrom(e))
+		return
+	}
 
+	changed := false
 	n := list.nodeAt(index)
 	it := e.Iterate()
 	for n != nil {
 		if !it.Next() {
+			if changed {
+				list.onReplaced()
+			}
 			return
 		}
 		n.value = it.Current()
 		n = n.next
+		changed = true
 	}
 
 	prev := list.tail
@@ -456,13 +512,19 @@ func (list *linkedListImp[T]) SetFrom(index int, e collections.Enumerator[T]) {
 	}
 	list.tail = n
 	list.count += count
+	list.onReplaced()
 }
 
 func (list *linkedListImp[T]) Clear() {
+	if list.Empty() {
+		return
+	}
+
 	list.head = nil
 	list.tail = nil
 	list.count = 0
 	list.enumGuard++
+	list.onRemoved()
 }
 
 func (list *linkedListImp[T]) Clone() collections.List[T] {

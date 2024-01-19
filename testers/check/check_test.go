@@ -566,6 +566,24 @@ func Test_Check_String(t *testing.T) {
 	pt.Check()
 }
 
+func Test_Check_StringAndReset(t *testing.T) {
+	pt := newTester(t)
+	buf := &bytes.Buffer{}
+	StringAndReset(pt, ``).Assert(buf)
+	pt.Check()
+
+	_, _ = buf.WriteString(`Hello`)
+	StringAndReset(pt, `Hello`).Assert(buf)
+	pt.Check()
+
+	_, _ = buf.WriteString(`World`)
+	StringAndReset(pt, `Moon`).Assert(buf)
+	pt.Check(`Should have string be equal:`,
+		`\tActual Type:     \*bytes\.Buffer`,
+		`\tActual Value:    "World"`,
+		`\tExpected String: "Moon"`)
+}
+
 func Test_Check_Equal(t *testing.T) {
 	pt := newTester(t)
 	iVal := 12

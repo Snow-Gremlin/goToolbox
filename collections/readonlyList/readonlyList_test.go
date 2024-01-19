@@ -7,6 +7,8 @@ import (
 
 	"github.com/Snow-Gremlin/goToolbox/collections"
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/events"
+	"github.com/Snow-Gremlin/goToolbox/events/event"
 	"github.com/Snow-Gremlin/goToolbox/internal/optional"
 	"github.com/Snow-Gremlin/goToolbox/testers/check"
 	"github.com/Snow-Gremlin/goToolbox/utils"
@@ -14,10 +16,14 @@ import (
 
 type pseudoList[T any] struct {
 	list []T
+	e    events.Event[collections.ChangeArgs]
 }
 
 func pseudoWith[T any](values ...T) *pseudoList[T] {
-	return &pseudoList[T]{list: values}
+	return &pseudoList[T]{
+		list: values,
+		e:    event.New[collections.ChangeArgs](),
+	}
 }
 
 func (p *pseudoList[T]) Enumerate() collections.Enumerator[T] {
@@ -105,6 +111,10 @@ func (p *pseudoList[T]) Equals(other any) bool {
 	return true
 }
 
+func (p *pseudoList[T]) OnChange() events.Event[collections.ChangeArgs] {
+	return p.e
+}
+
 func Test_ReadonlyList(t *testing.T) {
 	s0 := pseudoWith(1, 2, 3, 4, 5)
 	s := New(s0)
@@ -147,13 +157,17 @@ func Test_ReadonlyList(t *testing.T) {
 	check.False(t).Withf(`[%s].StartsWith([1, 2, 4])`, s.String()).Assert(s.StartsWith(pseudoWith(1, 2, 4)))
 	check.True(t).Withf(`[%s].EndsWith([3, 4, 5])`, s.String()).Assert(s.EndsWith(pseudoWith(3, 4, 5)))
 	check.False(t).Withf(`[%s].EndsWith([3, 2, 5])`, s.String()).Assert(s.EndsWith(pseudoWith(3, 2, 5)))
+	check.Same(t, s0.OnChange()).Assert(s.OnChange())
 
+	e1 := event.New[collections.ChangeArgs]()
 	s2 := New(&pseudoList[int]{
 		list: slices.Clone(s0.list),
+		e:    e1,
 	})
 	check.Equal(t, s).Assert(s2)
 	check.Equal(t, s2).Assert(s)
 	s0.list[0] = 42
 	check.NotEqual(t, s).Assert(s2)
 	check.NotEqual(t, s2).Assert(s)
+	check.Same(t, e1).Assert(s2.OnChange())
 }

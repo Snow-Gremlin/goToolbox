@@ -9,4 +9,5 @@ type ReadonlySet[T comparable] interface {
 	Sliceable[T]
 	Listable[T]
 	Container[T]
+	OnChanger
 }

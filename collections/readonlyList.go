@@ -6,6 +6,7 @@ type ReadonlyList[T any] interface {
 	Sliceable[T]
 	Container[T]
 	Getter[int, T]
+	OnChanger
 
 	// First attempts to get the first value from the list.
 	// If the list is empty, this will panic.

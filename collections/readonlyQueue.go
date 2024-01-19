@@ -6,4 +6,5 @@ type ReadonlyQueue[T any] interface {
 	Sliceable[T]
 	Listable[T]
 	Peeker[T]
+	OnChanger
 }
