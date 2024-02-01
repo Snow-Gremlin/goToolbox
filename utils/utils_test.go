@@ -484,6 +484,106 @@ func Test_Utils_Strings(t *testing.T) {
 	}
 }
 
+func Test_Utils_LazyMatcher(t *testing.T) {
+	hex := LazyMatcher(`^[0-9A-Fa-f]+$`)
+	checkEqual(t, hex(`572A6F`), true, true)
+	checkEqual(t, hex(`CAT`), false, true)
+
+	exp := "regexp: Compile(`((((`): error parsing regexp: missing closing ): `((((`"
+	hex = LazyMatcher(`((((`) // bad pattern but won't panic yet
+
+	err := func() (r any) {
+		defer func() { r = recover() }()
+		// panic occurs on first use
+		return hex(`CAT`)
+	}()
+	checkEqual(t, err, exp, true)
+
+	err = func() (r any) {
+		defer func() { r = recover() }()
+		// panic is re-panicked on each following call
+		return hex(`CAT`)
+	}()
+	checkEqual(t, err, exp, true)
+}
+
+func Test_Utils_Parse(t *testing.T) {
+	v1, err := Parse[string](`Cat`)
+	checkEqual(t, v1, `Cat`, true)
+	checkEqual(t, err, nil, true)
+
+	v2, err := Parse[bool](`true`)
+	checkEqual(t, v2, true, true)
+	checkEqual(t, err, nil, true)
+
+	v2, err = Parse[bool](`Cat`)
+	checkEqual(t, v2, false, true)
+	checkEqual(t, err.Error(),
+		`unable to parse value {input: Cat, type: bool}: `+
+			`strconv.ParseBool: parsing "Cat": `+
+			`invalid syntax: invalid syntax`, true)
+
+	v3, err := Parse[int](`-24`)
+	checkEqual(t, v3, -24, true)
+	checkEqual(t, err, nil, true)
+
+	v3, err = Parse[int](`-0xA5`)
+	checkEqual(t, v3, -0xA5, true)
+	checkEqual(t, err, nil, true)
+
+	v4, err := Parse[int8](`-102`)
+	checkEqual(t, v4, int8(-102), true)
+	checkEqual(t, err, nil, true)
+
+	v5, err := Parse[int16](`-2455`)
+	checkEqual(t, v5, int16(-2455), true)
+	checkEqual(t, err, nil, true)
+
+	v6, err := Parse[int32](`-245512`)
+	checkEqual(t, v6, int32(-245512), true)
+	checkEqual(t, err, nil, true)
+
+	v7, err := Parse[int64](`-24533512`)
+	checkEqual(t, v7, int64(-24533512), true)
+	checkEqual(t, err, nil, true)
+
+	v8, err := Parse[uint](`42`)
+	checkEqual(t, v8, uint(42), true)
+	checkEqual(t, err, nil, true)
+
+	v9, err := Parse[uint8](`102`)
+	checkEqual(t, v9, uint8(102), true)
+	checkEqual(t, err, nil, true)
+
+	v10, err := Parse[uint16](`2455`)
+	checkEqual(t, v10, uint16(2455), true)
+	checkEqual(t, err, nil, true)
+
+	v11, err := Parse[uint32](`245512`)
+	checkEqual(t, v11, uint32(245512), true)
+	checkEqual(t, err, nil, true)
+
+	v12, err := Parse[uint64](`24533512`)
+	checkEqual(t, v12, uint64(24533512), true)
+	checkEqual(t, err, nil, true)
+
+	v13, err := Parse[float32](`2453.3512`)
+	checkEqual(t, v13, float32(2453.3512), true)
+	checkEqual(t, err, nil, true)
+
+	v14, err := Parse[float64](`-2458.351`)
+	checkEqual(t, v14, float64(-2458.351), true)
+	checkEqual(t, err, nil, true)
+
+	v15, err := Parse[complex64](`234+41i`)
+	checkEqual(t, v15, complex64(234+41i), true)
+	checkEqual(t, err, nil, true)
+
+	v16, err := Parse[complex128](`-1234.3+41.4i`)
+	checkEqual(t, v16, -1234.3+41.4i, true)
+	checkEqual(t, err, nil, true)
+}
+
 func checkGetMaxStringLen(t *testing.T, exp int, str ...string) {
 	length := GetMaxStringLen(str)
 	if exp != length {
