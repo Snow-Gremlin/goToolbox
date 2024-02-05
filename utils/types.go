@@ -18,6 +18,11 @@ type NumConstraint interface {
 	IntConstraint | FloatingConstraint
 }
 
+// ParsableConstraint is the set of types that can be parsed.
+type ParsableConstraint interface {
+	~string | ~bool | NumConstraint | ~complex64 | ~complex128
+}
+
 // TypeOf gets the reflect type of the given generic value.
 func TypeOf[T any]() reflect.Type {
 	var zero [0]T
