@@ -12,7 +12,7 @@ func Test_Args_Empty(t *testing.T) {
 	check.NoError(t).Assert(err)
 
 	err = New().Process([]string{`cat`})
-	check.MatchError(t, `^too many arguments \{arguments: cat, gotten: 1, maximum: 0\}$`).
+	check.MatchError(t, `^too many optional arguments \{arguments: cat, gotten: 1, maximum: 0\}$`).
 		Assert(err)
 
 	err = New().Process([]string{`-c`})
@@ -37,7 +37,7 @@ func Test_Args_Positional(t *testing.T) {
 	check.MatchError(t, `^not enough positional arguments \{arguments: cat, gotten: 1, needed: 2\}$`).Assert(err)
 
 	err = r.Process([]string{`cat`, `dog`, `mouse`})
-	check.MatchError(t, `^too many arguments \{arguments: mouse, gotten: 1, maximum: 0\}$`).Assert(err)
+	check.MatchError(t, `^too many optional arguments \{arguments: mouse, gotten: 1, maximum: 0\}$`).Assert(err)
 
 	check.MatchError(t, `^must provide a non-nil target pointer for a positional argument$`).
 		Panic(func() { r.PosInt(nil) })
@@ -290,7 +290,7 @@ func Test_Args_Optional(t *testing.T) {
 	check.True(t).Assert(b4)
 
 	err = r.Process([]string{`dog`, `-24`, `3.125`, `true`, `pancake`})
-	check.MatchError(t, `^too many arguments \{arguments: dog, -24, 3\.125, `+
+	check.MatchError(t, `^too many optional arguments \{arguments: dog, -24, 3\.125, `+
 		`true, pancake, gotten: 5, maximum: 4\}$`).
 		Assert(err)
 
@@ -324,9 +324,9 @@ func Test_Args_Variant(t *testing.T) {
 	check.Equal(t, []int{1, -5, 42}).Assert(iVar)
 
 	err = r.Process([]string{`1`, `cat`})
-	check.MatchError(t, `error setting variant argument \{arguments: 1, cat\}: `+
+	check.MatchError(t, `^error setting variant argument \{arguments: 1, cat\}: `+
 		`unable to parse value \{input: cat, type: int\}: strconv\.ParseInt: parsing "cat": `+
-		`invalid syntax: invalid syntax`).Assert(err)
+		`invalid syntax: invalid syntax$`).Assert(err)
 	check.Equal(t, []int{1, -5, 42}).Assert(iVar)
 
 	check.MatchError(t, `^must provide a non-nil target pointer for a variadic argument$`).
@@ -375,4 +375,318 @@ func Test_Args_Combination(t *testing.T) {
 	check.Equal(t, `dog`).Assert(s4)
 	check.Equal(t, `pig`).Assert(s5)
 	check.Empty(t).Assert(s6)
+}
+
+func Test_Args_Struct_Pos(t *testing.T) {
+	t0 := struct {
+		X     int
+		Y     int
+		moose int
+		Title string
+	}{X: 0, Y: 0, moose: 0, Title: ``}
+	r := New().Struct(&t0)
+
+	check.MatchError(t, `^not enough positional arguments \{arguments: 12, 34, gotten: 2, needed: 3\}$`).
+		Assert(r.Process([]string{`12`, `34`}))
+
+	check.MatchError(t, `^error setting positional argument \{argument: Dog, argument index: 3\}: `+
+		`unable to parse value \{input: Dog, type: int\}: strconv.ParseInt: parsing \"Dog\": `+
+		`invalid syntax: invalid syntax$`).
+		Assert(r.Process([]string{`12`, `Dog`, `Cat`}))
+
+	check.NoError(t).Assert(r.Process([]string{`12`, `34`, `Cat`}))
+	check.Equal(t, 12).Assert(t0.X)
+	check.Equal(t, 34).Assert(t0.Y)
+	check.Equal(t, `Cat`).Assert(t0.Title)
+
+	check.MatchError(t, `^must provide a non-nil pointer to a structure$`).
+		Panic(func() { New().Struct(nil) })
+	check.MatchError(t, `^must provide a non-nil pointer to a structure$`).
+		Panic(func() { New().Struct(t0) })
+	check.MatchError(t, `^must provide a non-nil pointer to a structure$`).
+		Panic(func() {
+			v := 10
+			New().Struct(&v)
+		})
+
+	t1 := struct {
+		X int `args:"  "`
+	}{X: 0}
+	check.NoError(t).Assert(New().Struct(&t1).Process([]string{`76`}))
+	check.Equal(t, 76).Assert(t1.X)
+}
+
+func Test_Args_Struct_Types(t *testing.T) {
+	t0 := struct {
+		B    bool
+		Str  string
+		I00  int
+		I08  int8
+		I16  int16
+		I32  int32
+		I64  int64
+		U00  uint
+		U08  uint8
+		U16  uint16
+		U32  uint32
+		U64  uint64
+		F32  float32
+		F64  float64
+		C64  complex64
+		C128 complex128
+	}{B: false, Str: ``, I00: 0, I08: 0, I16: 0, I32: 0, I64: 0, U00: 0, U08: 0, U16: 0, U32: 0, U64: 0, F32: 0, F64: 0, C64: 0, C128: 0}
+	check.NoError(t).Assert(New().Struct(&t0).Process([]string{
+		`true`, `Hello`,
+		`-1`, `-2`, `-3`, `-4`, `-5`,
+		`1`, `2`, `3`, `4`, `5`,
+		`3.14`, `6.28`, `5+3i`, `6+8i`,
+	}))
+	check.True(t).Assert(t0.B)
+	check.Equal[string](t, `Hello`).Assert(t0.Str)
+	check.Equal[int](t, -1).Assert(t0.I00)
+	check.Equal[int8](t, -2).Assert(t0.I08)
+	check.Equal[int16](t, -3).Assert(t0.I16)
+	check.Equal[int32](t, -4).Assert(t0.I32)
+	check.Equal[int64](t, -5).Assert(t0.I64)
+	check.Equal[uint](t, 1).Assert(t0.U00)
+	check.Equal[uint8](t, 2).Assert(t0.U08)
+	check.Equal[uint16](t, 3).Assert(t0.U16)
+	check.Equal[uint32](t, 4).Assert(t0.U32)
+	check.Equal[uint64](t, 5).Assert(t0.U64)
+	check.Equal[float32](t, 3.14).Assert(t0.F32)
+	check.Equal[float64](t, 6.28).Assert(t0.F64)
+	check.Equal[complex64](t, 5+3i).Assert(t0.C64)
+	check.Equal[complex128](t, 6+8i).Assert(t0.C128)
+
+	t1 := struct {
+		Ptr *int
+	}{Ptr: nil}
+	check.MatchError(t, `^must provide a non-nil target pointer for a positional argument \{field: Ptr, tag: \}$`).
+		Panic(func() { New().Struct(&t1) })
+
+	var i0 int
+	t1.Ptr = &i0
+	check.NoError(t).Assert(New().Struct(&t1).Process([]string{`1234`}))
+	check.Equal(t, 1234).Assert(i0)
+
+	t2 := struct {
+		Foo func(x, y int) int
+	}{Foo: nil}
+	check.MatchError(t, `^unexpected field type for arguments \{field: Foo\}$`).
+		Panic(func() { New().Struct(&t2) })
+}
+
+func Test_Args_Struct_Skip(t *testing.T) {
+	t0 := struct {
+		X int
+		Y int `args:"skip"`
+		Z int
+	}{X: 0, Y: 0, Z: 0}
+	r := New().Struct(&t0)
+
+	check.NoError(t).Assert(r.Process([]string{`12`, `34`}))
+	check.Equal(t, 12).Assert(t0.X)
+	check.Zero(t).Assert(t0.Y)
+	check.Equal(t, 34).Assert(t0.Z)
+}
+
+func Test_Args_Struct_Optional(t *testing.T) {
+	t0 := struct {
+		X int
+		Y int `args:"optional"`
+		Z int `args:"optional"`
+	}{X: 0, Y: 0, Z: 0}
+	r := New().Struct(&t0)
+
+	check.MatchError(t, `^not enough positional arguments \{arguments: , gotten: 0, needed: 1\}$`).
+		Assert(r.Process([]string{}))
+
+	t0.X, t0.Y, t0.Z = 0, 0, 0
+	check.NoError(t).Assert(r.Process([]string{`42`}))
+	check.Equal(t, 42).Assert(t0.X)
+	check.Zero(t).Assert(t0.Y)
+	check.Zero(t).Assert(t0.Z)
+
+	t0.X, t0.Y, t0.Z = 0, 0, 0
+	check.NoError(t).Assert(r.Process([]string{`12`, `34`}))
+	check.Equal(t, 12).Assert(t0.X)
+	check.Equal(t, 34).Assert(t0.Y)
+	check.Zero(t).Assert(t0.Z)
+
+	t0.X, t0.Y, t0.Z = 0, 0, 0
+	check.NoError(t).Assert(r.Process([]string{`56`, `78`, `90`}))
+	check.Equal(t, 56).Assert(t0.X)
+	check.Equal(t, 78).Assert(t0.Y)
+	check.Equal(t, 90).Assert(t0.Z)
+
+	check.MatchError(t, `^too many optional arguments \{arguments: 2, 3, 4, gotten: 3, maximum: 2\}$`).
+		Assert(r.Process([]string{`1`, `2`, `3`, `4`}))
+
+	check.MatchError(t, `^error setting optional argument \{argument index: 2, arguments: 2, cat\}: `+
+		`unable to parse value \{input: cat, type: int\}: strconv.ParseInt: `+
+		`parsing "cat": invalid syntax: invalid syntax`).
+		Assert(r.Process([]string{`1`, `2`, `cat`}))
+}
+
+func Test_Args_Struct_Variadic(t *testing.T) {
+	t0 := struct {
+		X int
+		Y []int
+	}{X: 0, Y: nil}
+	r := New().Struct(&t0)
+
+	check.NoError(t).Assert(r.Process([]string{`12`}))
+	check.Equal(t, 12).Assert(t0.X)
+	check.Zero(t).Assert(t0.Y)
+
+	check.NoError(t).Assert(r.Process([]string{`12`, `34`}))
+	check.Equal(t, 12).Assert(t0.X)
+	check.Equal(t, []int{34}).Assert(t0.Y)
+
+	check.NoError(t).Assert(r.Process([]string{`12`, `34`, `56`, `78`}))
+	check.Equal(t, 12).Assert(t0.X)
+	check.Equal(t, []int{34, 56, 78}).Assert(t0.Y)
+
+	check.MatchError(t, `error setting variant argument \{arguments: 34, cat, 78\}: `+
+		`unable to parse value \{input: cat, type: int\}: strconv.ParseInt: `+
+		`parsing "cat": invalid syntax: invalid syntax`).
+		Assert(r.Process([]string{`12`, `34`, `cat`, `78`}))
+
+	t1 := struct {
+		X int
+		Y []int `args:"cat"`
+	}{X: 0, Y: nil}
+	check.MatchError(t, `^invalid tag on a variadic argument value. May only have the skip tag\. \{field: Y, tag: cat\}$`).
+		Panic(func() { New().Struct(&t1) })
+}
+
+func Test_Args_Struct_Flags(t *testing.T) {
+	t0 := struct {
+		X bool `args:"flag,a,apple"`
+		Y int  `args:"flag,b,banana,42"`
+	}{X: false, Y: 0}
+	r := New().Struct(&t0)
+
+	check.NoError(t).Assert(r.Process([]string{}))
+	check.False(t).Assert(t0.X)
+	check.Zero(t).Assert(t0.Y)
+
+	t0.X, t0.Y = false, 0
+	check.NoError(t).Assert(r.Process([]string{`-a`}))
+	check.True(t).Assert(t0.X)
+	check.Zero(t).Assert(t0.Y)
+
+	t0.X, t0.Y = false, 0
+	check.NoError(t).Assert(r.Process([]string{`-ab`}))
+	check.True(t).Assert(t0.X)
+	check.Equal(t, 42).Assert(t0.Y)
+
+	t0.X, t0.Y = false, 0
+	check.NoError(t).Assert(r.Process([]string{`-ba`}))
+	check.True(t).Assert(t0.X)
+	check.Equal(t, 42).Assert(t0.Y)
+
+	t0.X, t0.Y = false, 0
+	check.NoError(t).Assert(r.Process([]string{`-a`, `-b`}))
+	check.True(t).Assert(t0.X)
+	check.Equal(t, 42).Assert(t0.Y)
+
+	t0.X, t0.Y = false, 0
+	check.NoError(t).Assert(r.Process([]string{`--banana`}))
+	check.False(t).Assert(t0.X)
+	check.Equal(t, 42).Assert(t0.Y)
+
+	t1 := struct {
+		X int `args:"flag"`
+	}{X: 0}
+	check.MatchError(t, `^the tag on a flag must have three or four values, `+
+		`i.e. "flag,v,verbose" \{field: X, tag: flag\}$`).
+		Panic(func() { New().Struct(&t1) })
+
+	t2 := struct {
+		X int `args:"flag,a,apples"`
+	}{X: 0}
+	check.MatchError(t, `^the tag on a flag must have the fourth value to use as a `+
+		`default value when the type is not a bool \{field: X, tag: flag,a,apples\}$`).
+		Panic(func() { New().Struct(&t2) })
+
+	t3 := struct {
+		X int `args:"flag,a,apples,cat"`
+	}{X: 0}
+	check.MatchError(t, `^the default value in the tag for a flag could not be parsed `+
+		`\{field: X, tag: flag,a,apples,cat\}: unable to parse value \{input: cat, type: int\}: `+
+		`strconv.ParseInt: parsing "cat": invalid syntax: invalid syntax$`).
+		Panic(func() { New().Struct(&t3) })
+
+	t4 := struct {
+		X int `args:"flag,apples,bananas,12"`
+	}{X: 0}
+	check.MatchError(t, `^may not create a flag with an invalid short name `+
+		`\{field: X, short name: "apples", tag: flag,apples,bananas,12\}$`).
+		Panic(func() { New().Struct(&t4) })
+
+	t5 := struct {
+		X int `args:"flag,,,12"`
+	}{X: 0}
+	check.MatchError(t, `^may not add a flag without a least one name \{field: X, tag: flag,,,12\}$`).
+		Panic(func() { New().Struct(&t5) })
+}
+
+func Test_Args_Struct_Named(t *testing.T) {
+	t0 := struct {
+		X int    `args:"i,input"`
+		Y string `args:"o,output"`
+	}{X: 0, Y: ``}
+	r := New().Struct(&t0)
+
+	check.NoError(t).Assert(r.Process([]string{}))
+	check.Zero(t).Assert(t0.X)
+	check.Empty(t).Assert(t0.Y)
+
+	t0.X, t0.Y = 0, ``
+	check.NoError(t).Assert(r.Process([]string{`-i`, `23`}))
+	check.Equal(t, 23).Assert(t0.X)
+	check.Empty(t).Assert(t0.Y)
+
+	t0.X, t0.Y = 0, ``
+	check.NoError(t).Assert(r.Process([]string{`-o`, `Hello World`}))
+	check.Zero(t).Assert(t0.X)
+	check.Equal(t, `Hello World`).Assert(t0.Y)
+
+	t0.X, t0.Y = 0, ``
+	check.NoError(t).Assert(r.Process([]string{`--input`, `42`}))
+	check.Equal(t, 42).Assert(t0.X)
+	check.Empty(t).Assert(t0.Y)
+
+	check.MatchError(t, `^error setting named argument \{argument: -i, argument index: 0, `+
+		`name: i, name index: 0\}: unable to parse value \{input: cat, type: int\}: `+
+		`strconv\.ParseInt: parsing "cat": invalid syntax: invalid syntax$`).
+		Assert(r.Process([]string{`-i`, `cat`}))
+
+	t1 := struct {
+		X int `args:"i,input,boom"`
+	}{X: 0}
+	check.MatchError(t, `^the tag on a named input must have two values, `+
+		`i\.e\. "i,input" \{field: X, tag: i,input,boom\}$`).
+		Panic(func() { New().Struct(&t1) })
+
+	t2 := struct {
+		X string `args:"i,"`
+		Y string `args:",output"`
+	}{X: ``, Y: ``}
+	r = New().Struct(&t2)
+
+	check.NoError(t).Assert(r.Process([]string{`-i`, `cat`, `--output`, `dog`}))
+	check.Equal(t, `cat`).Assert(t2.X)
+	check.Equal(t, `dog`).Assert(t2.Y)
+
+	t3 := struct {
+		X string `args:"  i,  input"`
+		Y string `args:"  o ,  output"`
+	}{X: ``, Y: ``}
+	r = New().Struct(&t3)
+
+	check.NoError(t).Assert(r.Process([]string{`-i`, `cat`, `--output`, `dog`}))
+	check.Equal(t, `cat`).Assert(t3.X)
+	check.Equal(t, `dog`).Assert(t3.Y)
 }

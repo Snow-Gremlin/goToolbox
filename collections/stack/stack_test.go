@@ -166,7 +166,7 @@ func Test_Stack_UnstableIteration(t *testing.T) {
 	check.Equal(t, 4).Assert(it.Current())
 
 	check.Equal(t, 8).Assert(s.Pop())
-	check.MatchError(t, `Collection was modified; iteration may not continue`).
+	check.MatchError(t, `^Collection was modified; iteration may not continue$`).
 		Panic(func() { it.Next() })
 }
 

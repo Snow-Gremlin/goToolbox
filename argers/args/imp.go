@@ -1,10 +1,13 @@
 package args
 
 import (
+	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/Snow-Gremlin/goToolbox/argers"
 	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/list"
 	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
 	"github.com/Snow-Gremlin/goToolbox/utils"
@@ -192,6 +195,154 @@ func (imp *readerImp) VarFloat(target *[]float64) argers.Reader {
 	return Var(imp, target)
 }
 
+func (imp *readerImp) Struct(target any) argers.Reader {
+	v := reflect.ValueOf(target)
+	if v.Kind() != reflect.Pointer || v.IsNil() || v.Elem().Kind() != reflect.Struct {
+		panic(terror.New(`must provide a non-nil pointer to a structure`))
+	}
+	s := v.Elem()
+	st := s.Type()
+	for i, count := 0, s.NumField(); i < count; i++ {
+		imp.structField(i, s.Field(i), st.Field(i))
+	}
+	return imp
+}
+
+func (imp *readerImp) structField(i int, f reflect.Value, ft reflect.StructField) {
+	if !ft.IsExported() {
+		return
+	}
+	tag := strings.TrimSpace(ft.Tag.Get(`args`))
+	if tag == `skip` {
+		return
+	}
+
+	ftt, name := ft.Type, ft.Name
+	var target any
+	if ftt.Kind() == reflect.Pointer {
+		ftt = ftt.Elem()
+		target = f.Interface()
+	} else {
+		target = f.Addr().Interface()
+	}
+
+	isVar := false
+	if ftt.Kind() == reflect.Slice {
+		isVar = true
+		ftt = ftt.Elem()
+	}
+
+	switch ftt.Kind() {
+	case reflect.Bool:
+		addStructField[bool](imp, target, name, isVar, tag)
+	case reflect.String:
+		addStructField[string](imp, target, name, isVar, tag)
+	case reflect.Int:
+		addStructField[int](imp, target, name, isVar, tag)
+	case reflect.Int8:
+		addStructField[int8](imp, target, name, isVar, tag)
+	case reflect.Int16:
+		addStructField[int16](imp, target, name, isVar, tag)
+	case reflect.Int32:
+		addStructField[int32](imp, target, name, isVar, tag)
+	case reflect.Int64:
+		addStructField[int64](imp, target, name, isVar, tag)
+	case reflect.Uint:
+		addStructField[uint](imp, target, name, isVar, tag)
+	case reflect.Uint8:
+		addStructField[uint8](imp, target, name, isVar, tag)
+	case reflect.Uint16:
+		addStructField[uint16](imp, target, name, isVar, tag)
+	case reflect.Uint32:
+		addStructField[uint32](imp, target, name, isVar, tag)
+	case reflect.Uint64:
+		addStructField[uint64](imp, target, name, isVar, tag)
+	case reflect.Float32:
+		addStructField[float32](imp, target, name, isVar, tag)
+	case reflect.Float64:
+		addStructField[float64](imp, target, name, isVar, tag)
+	case reflect.Complex64:
+		addStructField[complex64](imp, target, name, isVar, tag)
+	case reflect.Complex128:
+		addStructField[complex128](imp, target, name, isVar, tag)
+	default:
+		panic(terror.New(`unexpected field type for arguments`).
+			With(`field`, name))
+	}
+}
+
+func addStructField[T utils.ParsableConstraint](imp *readerImp, target any, name string, isVar bool, tag string) {
+	defer func() {
+		if r := recover(); r != nil {
+			panic(terror.RecoveredPanic(r).
+				With(`tag`, tag).
+				With(`field`, name))
+		}
+	}()
+
+	if isVar {
+		if len(tag) > 0 {
+			panic(terror.New(`invalid tag on a variadic argument value. May only have the skip tag.`))
+		}
+		Var[T](imp, target.(*[]T))
+		return
+	}
+
+	if tag == `optional` {
+		Optional[T](imp, target.(*T))
+		return
+	}
+
+	if hasNames, isFlag, short, long, defVal := parseFieldTag[T](name, tag); hasNames {
+		if isFlag {
+			Flag[T](imp, target.(*T), defVal, short, long)
+			return
+		}
+		Named[T](imp, target.(*T), short, long)
+		return
+	}
+
+	Pos[T](imp, target.(*T))
+}
+
+func parseFieldTag[T utils.ParsableConstraint](name, tag string) (hasNames, isFlag bool, short, long string, defVal T) {
+	var tags []string
+	if len(tag) > 0 {
+		tags = enumerator.Split(tag, `,`).Trim().ToSlice()
+	}
+	count := len(tags)
+	if count <= 0 {
+		return false, false, ``, ``, utils.Zero[T]()
+	}
+
+	if tags[0] == `flag` {
+		if count < 3 || count > 4 {
+			panic(terror.New(`the tag on a flag must have three or four values, i.e. "flag,v,verbose"`))
+		}
+
+		if count == 4 {
+			var err error
+			defVal, err = utils.Parse[T](tags[3])
+			if err != nil {
+				panic(terror.New(`the default value in the tag for a flag could not be parsed`, err))
+			}
+		} else {
+			if utils.TypeOf[T]().Kind() != reflect.Bool {
+				panic(terror.New(`the tag on a flag must have the fourth value ` +
+					`to use as a default value when the type is not a bool`))
+			}
+			defVal = any(true).(T)
+		}
+
+		return true, true, tags[1], tags[2], defVal
+	}
+
+	if count != 2 {
+		panic(terror.New(`the tag on a named input must have two values, i.e. "i,input"`))
+	}
+	return true, false, tags[0], tags[1], defVal
+}
+
 func (imp *readerImp) Process(args []string) error {
 	argList := list.With(args...)
 	if err := imp.consumeNamedInput(argList); err != nil {
@@ -356,7 +507,7 @@ func (imp *readerImp) consumeVarArgs(argList collections.List[string]) error {
 
 	optCount := len(imp.optionals)
 	if argList.Count() > optCount {
-		return terror.New(`too many arguments`).
+		return terror.New(`too many optional arguments`).
 			With(`maximum`, optCount).
 			With(`gotten`, argList.Count()).
 			With(`arguments`, argList.String())
