@@ -99,17 +99,18 @@ func Test_Enumerator_Split(t *testing.T) {
 	checkEqual(t, []string{`Cat`, `dog`, `hot`, `cold`, `mouse`}, e.ToSlice())
 	checkLength(t, 5, e)
 
-	checkEqual(t, []string{`Cat`, ` dog`, ` hot`, ` cold`, ``, ``, `mouse`},
-		Split(`Cat, dog, hot, cold,,,mouse`, `,`).ToSlice())
+	splitCheck := func(s, sep string) {
+		t.Helper()
+		checkEqual(t, strings.Split(s, sep), Split(s, sep).ToSlice())
+	}
 
-	checkEqual(t, []string{`Cat dog hot cold mouse`},
-		Split(`Cat dog hot cold mouse`, `#`).ToSlice())
-
-	checkEqual(t, []string{},
-		Split(``, ` `).ToSlice())
-
-	checkEqual(t, []string{``},
-		Split(` `, ` `).ToSlice())
+	splitCheck(`Cat, dog, hot, cold,,,mouse`, `,`)
+	splitCheck(`Cat dog hot cold mouse`, `#`)
+	splitCheck(``, ` `)
+	splitCheck(` `, ` `)
+	splitCheck(`,`, `,`)
+	splitCheck(`a,`, `,`)
+	splitCheck(`,a,`, `,`)
 }
 
 func Test_Enumerator_SplitFunc(t *testing.T) {
@@ -703,7 +704,7 @@ func (p *pseudoStringer) String() string { return p.text }
 
 func Test_Enumerator_ToStrings(t *testing.T) {
 	s1 := &pseudoStringer{text: `plop`}
-	s2 := fmt.Errorf(`bar`)
+	s2 := errors.New(`bar`)
 	e1 := Enumerate[any](1, `bat`, 3.25, s1, nil, s2, false).Strings()
 	checkEqual(t, []string{`1`, `bat`, `3.25`, `plop`, `<nil>`, `bar`, `false`}, e1.ToSlice())
 }
@@ -734,16 +735,16 @@ func Test_Enumerator_Concat(t *testing.T) {
 }
 
 func Test_Enumerator_OfType(t *testing.T) {
-	e := Enumerate[any](1, 2.0, int64(3), uint(4), `five`, fmt.Errorf(`six`), true)
+	e := Enumerate[any](1, 2.0, int64(3), uint(4), `five`, errors.New(`six`), true)
 	checkEqual(t, []bool{true}, OfType[bool](e).ToSlice())
 	checkEqual(t, []int{1}, OfType[int](e).ToSlice())
 	checkEqual(t, []string{`five`}, OfType[string](e).ToSlice())
 	checkEqual(t, []float64{2.0}, OfType[float64](e).ToSlice())
-	checkEqual(t, []any{1, 2.0, int64(3), uint(4), `five`, fmt.Errorf(`six`), true}, OfType[any](e).ToSlice())
+	checkEqual(t, []any{1, 2.0, int64(3), uint(4), `five`, errors.New(`six`), true}, OfType[any](e).ToSlice())
 }
 
 func Test_Enumerator_Cast(t *testing.T) {
-	e := Enumerate[any](1, 2.0, int64(3), uint(4), `five`, fmt.Errorf(`six`), true)
+	e := Enumerate[any](1, 2.0, int64(3), uint(4), `five`, errors.New(`six`), true)
 	checkEqual(t, []bool{false, false, false, false, false, false, true}, Cast[bool](e).ToSlice())
 	checkEqual(t, []int{1, 2, 3, 4, 0, 0, 0}, Cast[int](e).ToSlice())
 	checkEqual(t, []string{`"\x01"`, `""`, `"\x03"`, `"\x04"`, `"five"`, `""`, `""`}, Cast[string](e).Quotes().ToSlice())

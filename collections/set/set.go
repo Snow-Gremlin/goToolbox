@@ -34,8 +34,11 @@ func With[T comparable](values ...T) collections.Set[T] {
 	return s
 }
 
-// From creates a new dictionary with unsorted keys
-// populated with key/value pairs from the given tuple enumerator.
+// From creates a new set with unsorted values
+// populated with values from the given enumerator.
+//
+// The values will be returned in random order when enumeration
+// and may have different orders per enumeration.
 func From[T comparable](e collections.Enumerator[T], capacity ...int) collections.Set[T] {
 	d := New[T](capacity...)
 	d.AddFrom(e)

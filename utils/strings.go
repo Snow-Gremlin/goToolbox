@@ -42,6 +42,18 @@ func Strings[T any, S ~[]T](s S) []string {
 	return liteUtils.Strings(s)
 }
 
+// LazyRegex is a regular expression which
+// lazy compiles the pattern until the first time it is needed.
+//
+// If the pattern is invalid, this will panic the first time
+// it is called to get the regex. It will panic the same
+// error for any following attempts.
+func LazyRegex(pattern string) func() *regexp.Regexp {
+	return sync.OnceValue(func() *regexp.Regexp {
+		return regexp.MustCompile(pattern)
+	})
+}
+
 // LazyMatcher is a regular expression matcher which
 // lazy compiles the pattern until the first time it is needed.
 //
@@ -58,9 +70,7 @@ func Strings[T any, S ~[]T](s S) []string {
 //		...
 //	}
 func LazyMatcher(pattern string) func(value string) bool {
-	r := sync.OnceValue(func() *regexp.Regexp {
-		return regexp.MustCompile(pattern)
-	})
+	r := LazyRegex(pattern)
 	return func(value string) bool {
 		return r().MatchString(value)
 	}

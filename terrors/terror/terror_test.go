@@ -49,7 +49,7 @@ func Test_TError(t *testing.T) {
 	checkEqual(t, []error{e5}, e6.Unwrap())
 	checkMatch(t, `^Hello: World - unknown error: unknown error$`, e6)
 
-	e8 := fmt.Errorf(`Blue`)
+	e8 := errors.New(`Blue`)
 	_ = e6.WithError(e8)
 	checkEqual(t, []error{e5, e8}, e6.Unwrap())
 	checkMatch(t, `^Hello: \[World - unknown error: unknown error, Blue\]$`, e6)

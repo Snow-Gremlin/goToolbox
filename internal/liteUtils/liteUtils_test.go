@@ -2,7 +2,6 @@ package liteUtils
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"slices"
 	"strconv"
@@ -146,7 +145,7 @@ func Test_LiteUtils_String(t *testing.T) {
 	checkString(t, `0.005612`, 56.12e-4)
 	checkString(t, `<nil>`, (*int)(nil))
 	checkString(t, `Cat`, `Cat`)
-	checkString(t, `Foo`, fmt.Errorf(`Foo`))
+	checkString(t, `Foo`, errors.New(`Foo`))
 	checkString(t, `Panda`, pseudoStringer{text: `Panda`})
 	checkString[any](t, `<nil>`, nil)
 

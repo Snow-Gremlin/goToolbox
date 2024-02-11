@@ -59,8 +59,12 @@ func SplitFunc(value string, separator utils.StringMatcher) collections.Enumerat
 	return New(func() collections.Iterator[string] {
 		start, count := 0, len(value)
 		return iterator.New(func() (string, bool) {
-			if start >= count {
+			if start > count {
 				return utils.Zero[string](), false
+			}
+			if start == count {
+				start = count + 1
+				return ``, true
 			}
 			index, stride := separator(value[start:])
 			if index >= 0 {
@@ -70,7 +74,7 @@ func SplitFunc(value string, separator utils.StringMatcher) collections.Enumerat
 				return result, true
 			}
 			result := value[start:]
-			start = count
+			start = count + 1
 			return result, true
 		})
 	})

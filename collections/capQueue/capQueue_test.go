@@ -292,13 +292,13 @@ func Test_CapQueue_UnstableIteration(t *testing.T) {
 	// some iteration may or may not be at.
 	check.Equal(t, 0).Assert(q.Dequeue())
 	check.Equal(t, []int{9, 8, 6, 5, 4}).Assert(e.ToSlice())
-	check.MatchError(t, `Collection was modified; iteration may not continue`).
+	check.MatchError(t, `^Collection was modified; iteration may not continue$`).
 		Panic(func() { it.Next() })
 
 	// Will panic because the queue is modified inside of foreach.
 	// Queue will still have change for foreach because the iteration
 	// will fail, not the modification.
-	check.MatchError(t, `Collection was modified; iteration may not continue`).
+	check.MatchError(t, `^Collection was modified; iteration may not continue$`).
 		Panic(func() {
 			e.Foreach(func(value int) {
 				if value == 6 {
@@ -319,7 +319,7 @@ func Test_CapQueue_UnstableIteration(t *testing.T) {
 
 	check.Equal(t, []int{2, 3}).Assert(q.Take(2)) // break iterators
 	check.Equal(t, []int{6, 5, 4, 3, 2}).Assert(e.ToSlice())
-	check.MatchError(t, `Collection was modified; iteration may not continue`).
+	check.MatchError(t, `^Collection was modified; iteration may not continue$`).
 		Panic(func() { it.Next() })
 
 	it = e.Iterate()
@@ -328,7 +328,7 @@ func Test_CapQueue_UnstableIteration(t *testing.T) {
 
 	q.Clear() // break iterators
 	check.Empty(t).Assert(e.ToSlice())
-	check.MatchError(t, `Collection was modified; iteration may not continue`).
+	check.MatchError(t, `^Collection was modified; iteration may not continue$`).
 		Panic(func() { it.Next() })
 }
 

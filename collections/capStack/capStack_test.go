@@ -305,13 +305,13 @@ func Test_CapStack_UnstableIteration(t *testing.T) {
 	// some iteration may or may not be at.
 	check.Equal(t, 6).Assert(s.Pop())
 	check.Equal(t, []int{10, 9, 8, 6, 5}).Assert(e.ToSlice())
-	check.MatchError(t, `Collection was modified; iteration may not continue`).
+	check.MatchError(t, `^Collection was modified; iteration may not continue$`).
 		Panic(func() { it.Next() })
 
 	// Will panic because the stack is modified inside of foreach.
 	// Stack will still have change for foreach because the iteration
 	// will fail, not the modification.
-	check.MatchError(t, `Collection was modified; iteration may not continue`).
+	check.MatchError(t, `^Collection was modified; iteration may not continue$`).
 		Panic(func() {
 			e.Foreach(func(value int) {
 				if value == 6 {
@@ -332,7 +332,7 @@ func Test_CapStack_UnstableIteration(t *testing.T) {
 
 	check.Equal(t, []int{7, 8}).Assert(s.Take(2)) // break iterators
 	check.Equal(t, []int{9, 8, 6, 5}).Assert(e.ToSlice())
-	check.MatchError(t, `Collection was modified; iteration may not continue`).
+	check.MatchError(t, `^Collection was modified; iteration may not continue$`).
 		Panic(func() { it.Next() })
 
 	it = e.Iterate()
@@ -341,7 +341,7 @@ func Test_CapStack_UnstableIteration(t *testing.T) {
 
 	s.TrimTo(2) // break iterators
 	check.Equal(t, []int{9, 8}).Assert(e.ToSlice())
-	check.MatchError(t, `Collection was modified; iteration may not continue`).
+	check.MatchError(t, `^Collection was modified; iteration may not continue$`).
 		Panic(func() { it.Next() })
 
 	it = e.Iterate()
@@ -350,7 +350,7 @@ func Test_CapStack_UnstableIteration(t *testing.T) {
 
 	s.Clear() // break iterators
 	check.Empty(t).Assert(e.ToSlice())
-	check.MatchError(t, `Collection was modified; iteration may not continue`).
+	check.MatchError(t, `^Collection was modified; iteration may not continue$`).
 		Panic(func() { it.Next() })
 }
 

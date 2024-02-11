@@ -342,9 +342,9 @@ func Test_LinkedList_StableIteration(t *testing.T) {
 	s.Remove(3, 2)
 	check.String(t, `1, 11, 3, 55, 5`).Assert(s)
 
-	check.MatchError(t, `Collection was modified; iteration may not continue`).
+	check.MatchError(t, `^Collection was modified; iteration may not continue$`).
 		Panic(func() { it1.Next() })
-	check.MatchError(t, `Collection was modified; iteration may not continue`).
+	check.MatchError(t, `^Collection was modified; iteration may not continue$`).
 		Panic(func() { it2.Next() })
 }
 

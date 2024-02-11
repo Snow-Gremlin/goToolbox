@@ -1,7 +1,6 @@
 package diff
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -11,63 +10,63 @@ import (
 )
 
 func runBenchmarks(b *testing.B, data differs.Data, suffix string) {
-	b.Run(fmt.Sprintf(`Hirschberg-NoReduce%s`, suffix),
+	b.Run(`Hirschberg-NoReduce`+suffix,
 		func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				Hirschberg(-1, false).Diff(data)
 			}
 		})
 
-	b.Run(fmt.Sprintf(`Hirschberg-UseReduce%s`, suffix),
+	b.Run(`Hirschberg-UseReduce`+suffix,
 		func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				Hirschberg(-1, true).Diff(data)
 			}
 		})
 
-	b.Run(fmt.Sprintf(`Wagner%s`, suffix),
+	b.Run(`Wagner`+suffix,
 		func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				Wagner(-1).Diff(data)
 			}
 		})
 
-	b.Run(fmt.Sprintf(`Hybrid-NoReduce-100%s`, suffix),
+	b.Run(`Hybrid-NoReduce-100`+suffix,
 		func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				Hybrid(-1, false, 100).Diff(data)
 			}
 		})
 
-	b.Run(fmt.Sprintf(`Hybrid-UesReduce-100%s`, suffix),
+	b.Run(`Hybrid-UesReduce-100`+suffix,
 		func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				Hybrid(-1, true, 100).Diff(data)
 			}
 		})
 
-	b.Run(fmt.Sprintf(`Hybrid-NoReduce-300%s`, suffix),
+	b.Run(`Hybrid-NoReduce-300`+suffix,
 		func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				Hybrid(-1, false, 300).Diff(data)
 			}
 		})
 
-	b.Run(fmt.Sprintf(`Hybrid-UseReduce-300%s`, suffix),
+	b.Run(`Hybrid-UseReduce-300`+suffix,
 		func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				Hybrid(-1, true, 300).Diff(data)
 			}
 		})
 
-	b.Run(fmt.Sprintf(`Hybrid-NoReduce-500%s`, suffix),
+	b.Run(`Hybrid-NoReduce-500`+suffix,
 		func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				Hybrid(-1, false, 500).Diff(data)
 			}
 		})
 
-	b.Run(fmt.Sprintf(`Hybrid-UseReduce-500%s`, suffix),
+	b.Run(`Hybrid-UseReduce-500`+suffix,
 		func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
 				Hybrid(-1, true, 500).Diff(data)

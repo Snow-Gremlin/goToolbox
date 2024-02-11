@@ -165,7 +165,7 @@ func Test_Queue_UnstableIteration(t *testing.T) {
 	check.Equal(t, 3).Assert(it.Current())
 
 	check.Equal(t, 2).Assert(q.Dequeue())
-	check.MatchError(t, `Collection was modified; iteration may not continue`).
+	check.MatchError(t, `^Collection was modified; iteration may not continue$`).
 		Panic(func() { it.Next() })
 }
 
