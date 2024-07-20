@@ -20,6 +20,14 @@ type TError interface {
 	// Returns the receiver for method chaining.
 	With(key string, value any) TError
 
+	// Withf adds more formatted context to this error.
+	// Returns the receiver for method chaining.
+	Withf(key, format string, values ...any) TError
+
+	// WithType adds more type context to this error.
+	// Returns the receiver for method chaining.
+	WithType(key string, value any) TError
+
 	// WithError adds another wrapped error to this error.
 	// Returns the receiver for method chaining.
 	WithError(err error) TError
