@@ -1,6 +1,7 @@
 package terror
 
 import (
+	"fmt"
 	"maps"
 	"slices"
 
@@ -46,6 +47,14 @@ func (e *tErrorImp) With(key string, value any) terrors.TError {
 	}
 	e.context[key] = value
 	return e
+}
+
+func (e *tErrorImp) Withf(key, format string, values ...any) terrors.TError {
+	return e.With(key, fmt.Sprintf(format, values...))
+}
+
+func (e *tErrorImp) WithType(key string, value any) terrors.TError {
+	return e.Withf(key, `%T`, value)
 }
 
 func (e *tErrorImp) WithError(err error) terrors.TError {

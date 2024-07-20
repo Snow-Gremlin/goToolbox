@@ -66,6 +66,15 @@ func Test_TError(t *testing.T) {
 	checkMatch(t, `^Hello: \[World - unknown error: unknown error, Blue\]$`, e6)
 }
 
+func Test_TError_With(t *testing.T) {
+	var value uint32 = 0x13579BDF
+	e1 := New(`Hello`).
+		With(`dec`, value).
+		Withf(`hex`, `0x%X`, value).
+		WithType(`type`, value)
+	checkMatch(t, `^Hello \{dec: 324508639, hex: 0x13579BDF, type: uint32\}$`, e1)
+}
+
 func Test_TError_Equals(t *testing.T) {
 	e1 := New(`hello`)
 	e2 := e1.Clone()
