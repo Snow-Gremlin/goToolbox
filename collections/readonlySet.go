@@ -4,7 +4,7 @@ package collections
 //
 // For sets, the `ToSlice`, `ToList`, and `Enumerate` methods do not guarantee
 // any specific order and must be considered returning values in random order.
-type ReadonlySet[T comparable] interface {
+type ReadonlySet[T any] interface {
 	Collection[T]
 	Sliceable[T]
 	Listable[T]

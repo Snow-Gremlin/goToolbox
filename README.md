@@ -29,6 +29,7 @@ This toolbox contains:
     - [readonlyQueue](./collections/readonlyQueue/)
   - **[Set](./collections/set.go)**
     - [set](./collections/set/)
+    - [sortedSet](./collections/sortedSet/)
     - [readonlySet](./collections/readonlySet/)
   - **[Stacks](./collections/stack.go)**
     - [capStack](./collections/capStack/)

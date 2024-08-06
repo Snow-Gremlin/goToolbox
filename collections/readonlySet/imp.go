@@ -5,7 +5,7 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/events"
 )
 
-type readonlySetImp[T comparable] struct {
+type readonlySetImp[T any] struct {
 	s collections.ReadonlySet[T]
 }
 

@@ -4,7 +4,7 @@ package collections
 //
 // For sets, the `ToSlice`, `ToList`, and `Enumerate` methods do not guarantee
 // any specific order and must be considered returning values in random order.
-type Set[T comparable] interface {
+type Set[T any] interface {
 	ReadonlySet[T]
 
 	// Add inserts the given values into the set.
