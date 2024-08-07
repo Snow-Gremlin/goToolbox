@@ -7,12 +7,11 @@ package utils
 // this should only be used when neither takes long to compute or with functions.
 //
 // For example `value := Ternary(x, 1, -1)` or
-// ```Go
-// 	value := Ternary(x,
-//		func() int { return foo() - 1 },
-//		func() int { return bar()*6 + 2 },
-//	)()
-// ```
+//
+//	   value := Ternary(x,
+//		     func() int { return foo() - 1 },
+//		     func() int { return bar()*6 + 2 },
+//	   )()
 func Ternary[T any](test bool, a, b T) T {
 	if test {
 		return a
