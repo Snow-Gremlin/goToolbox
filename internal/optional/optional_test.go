@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
@@ -94,30 +95,30 @@ func Test_Optional_After(t *testing.T) {
 }
 
 func Test_Optional_Comparer(t *testing.T) {
-	cmp1 := Comparer([]utils.Comparer[int]{})
+	cmp1 := Comparer([]comp.Comparer[int]{})
 	checkEqual(t, -1, cmp1(1, 2))
 	checkEqual(t, 0, cmp1(3, 3))
 	checkEqual(t, 1, cmp1(2, 1))
-	cmp2 := Comparer([]utils.Comparer[string]{})
+	cmp2 := Comparer([]comp.Comparer[string]{})
 	checkEqual(t, -1, cmp2(`apple`, `cat`))
 	checkEqual(t, 0, cmp2(`dog`, `dog`))
 	checkEqual(t, 1, cmp2(`cat`, `apple`))
-	cmp2 = Comparer([]utils.Comparer[string]{utils.Descender(strings.Compare)})
+	cmp2 = Comparer([]comp.Comparer[string]{comp.Descender(strings.Compare)})
 	checkEqual(t, 1, cmp2(`apple`, `cat`))
 	checkEqual(t, 0, cmp2(`dog`, `dog`))
 	checkEqual(t, -1, cmp2(`cat`, `apple`))
-	cmp2 = Comparer([]utils.Comparer[string]{nil})
+	cmp2 = Comparer([]comp.Comparer[string]{nil})
 	checkEqual(t, -1, cmp2(`apple`, `cat`))
 	checkEqual(t, 0, cmp2(`dog`, `dog`))
 	checkEqual(t, 1, cmp2(`cat`, `apple`))
 	checkPanic(t, `invalid number of arguments {count: 2, maximum: 1, usage: comparer}`,
-		func() { Comparer([]utils.Comparer[string]{nil, nil}) })
+		func() { Comparer([]comp.Comparer[string]{nil, nil}) })
 	checkPanic(t, `must provide a comparer to compare this type {type: []int}`,
-		func() { Comparer([]utils.Comparer[[]int]{}) })
+		func() { Comparer([]comp.Comparer[[]int]{}) })
 }
 
 func checkEqual(t *testing.T, expected, actual any) {
-	if !utils.Equal(expected, actual) {
+	if !comp.Equal(expected, actual) {
 		t.Errorf("\n"+
 			"Unexpected value:\n"+
 			"\tExpected: %v (%T)\n"+

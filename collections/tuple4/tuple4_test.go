@@ -3,6 +3,7 @@ package tuple4
 import (
 	"testing"
 
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
@@ -61,7 +62,7 @@ func Test_Tuple4(t *testing.T) {
 
 func checkEqual(t *testing.T, exp, actual any) {
 	t.Helper()
-	if !utils.Equal(exp, actual) {
+	if !comp.Equal(exp, actual) {
 		t.Errorf("\n"+
 			"Expected value didn't match the actual value:\n"+
 			"Actual:   %v (%T)\n"+
@@ -71,7 +72,7 @@ func checkEqual(t *testing.T, exp, actual any) {
 
 func checkNotEqual(t *testing.T, exp, actual any) {
 	t.Helper()
-	if utils.Equal(exp, actual) {
+	if comp.Equal(exp, actual) {
 		t.Errorf("\n"+
 			"Expected value shouldn't have matched the actual value:\n"+
 			"Actual:   %v (%T)\n"+

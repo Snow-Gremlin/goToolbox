@@ -10,9 +10,9 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections"
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/events/listener"
 	"github.com/Snow-Gremlin/goToolbox/testers/check"
-	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 func Test_SortedSet(t *testing.T) {
@@ -103,7 +103,7 @@ func Test_SortedSet_New(t *testing.T) {
 	check.Empty(t).Assert(s)
 
 	check.MatchError(t, `^invalid number of arguments \{count: 2, maximum: 1, usage: comparer\}$`).
-		Panic(func() { From(nil, utils.OrderedComparer[int](), utils.OrderedComparer[int]()) })
+		Panic(func() { From(nil, comp.Ordered[int](), comp.Ordered[int]()) })
 
 	s = With([]int{1, 2, 3})
 	check.Length(t, 3).Assert(s)

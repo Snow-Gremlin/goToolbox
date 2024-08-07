@@ -2,6 +2,7 @@ package tuple2
 
 import (
 	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
@@ -53,6 +54,6 @@ func (t tuple2Imp[T1, T2]) String() string {
 func (t tuple2Imp[T1, T2]) Equals(other any) bool {
 	t2, ok := other.(collections.Tuple)
 	return ok && t.Count() == t2.Count() &&
-		utils.Equal[any](t.value1, t2.Get(0)) &&
-		utils.Equal[any](t.value2, t2.Get(1))
+		comp.Equal[any](t.value1, t2.Get(0)) &&
+		comp.Equal[any](t.value2, t2.Get(1))
 }

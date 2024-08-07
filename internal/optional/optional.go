@@ -1,6 +1,7 @@
 package optional
 
 import (
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
@@ -74,7 +75,7 @@ func After(size []int) int {
 // If nil is passed in for the comparer, this will act like no comparers were given.
 // This will panic if more than one comparer is given, or no comparer was given
 // and their is no default comparer for this type.
-func Comparer[T any](comps []utils.Comparer[T]) utils.Comparer[T] {
+func Comparer[T any](comps []comp.Comparer[T]) comp.Comparer[T] {
 	if count := len(comps); count > 0 {
 		if count > 1 {
 			panic(terror.InvalidArgCount(1, count, `comparer`))
@@ -84,7 +85,7 @@ func Comparer[T any](comps []utils.Comparer[T]) utils.Comparer[T] {
 		}
 	}
 
-	if cmp := utils.DefaultComparer[T](); !utils.IsNil(cmp) {
+	if cmp := comp.Default[T](); !utils.IsNil(cmp) {
 		return cmp
 	}
 

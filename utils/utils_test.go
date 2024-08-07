@@ -6,7 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
+
+	"github.com/Snow-Gremlin/goToolbox/comp"
 )
 
 func checkIsZero[T any](t *testing.T, exp bool, value T) {
@@ -162,7 +163,7 @@ func Test_Utils_Length(t *testing.T) {
 	checkLength[interface{ Count() int }](t, 0, false, nil)
 }
 
-func checkSortedKeys[TKey comparable, TValue any, TMap ~map[TKey]TValue](t *testing.T, value TMap, exp string, cmp ...Comparer[TKey]) {
+func checkSortedKeys[TKey comparable, TValue any, TMap ~map[TKey]TValue](t *testing.T, value TMap, exp string, cmp ...comp.Comparer[TKey]) {
 	keys := SortedKeys(value, cmp...)
 	if result := strings.Join(Strings(keys), `, `); exp != result {
 		t.Errorf("\n"+
@@ -193,27 +194,27 @@ func Test_Utils_SortedKeys(t *testing.T) {
 		`72, 97, 107, 113`)
 
 	checkSortedKeys(t,
-		map[string]float64{"cat": 4.3, "pig": 2.16, "Dog": 333.333, "apple": 12.34},
+		map[string]float64{`cat`: 4.3, `pig`: 2.16, `Dog`: 333.333, `apple`: 12.34},
 		`Dog, apple, cat, pig`)
 
 	checkSortedKeys(t,
 		map[int]float64{3: 4.3, 1: 2.16, 6: 333.333, 5: 12.34},
-		`6, 5, 3, 1`, Descender(OrderedComparer[int]()))
+		`6, 5, 3, 1`, comp.Descender(comp.Ordered[int]()))
 
 	checkSortedKeys(t,
 		map[float64]int{4.3: 3, 2.16: 1, 333.333: 6, 12.34: 5},
-		`333.333, 12.34, 4.3, 2.16`, Descender(OrderedComparer[float64]()))
+		`333.333, 12.34, 4.3, 2.16`, comp.Descender(comp.Ordered[float64]()))
 
 	checkSortedKeys(t,
 		map[rune]float64{'k': 4.3, 'a': 2.16, 'q': 333.333, 'H': 12.34},
-		`113, 107, 97, 72`, Descender(OrderedComparer[rune]()))
+		`113, 107, 97, 72`, comp.Descender(comp.Ordered[rune]()))
 
 	checkSortedKeys(t,
-		map[string]float64{"cat": 4.3, "pig": 2.16, "Dog": 333.333, "apple": 12.34},
-		`pig, cat, apple, Dog`, Descender(OrderedComparer[string]()))
+		map[string]float64{`cat`: 4.3, `pig`: 2.16, `Dog`: 333.333, `apple`: 12.34},
+		`pig, cat, apple, Dog`, comp.Descender(comp.Ordered[string]()))
 
 	errStr := catchPanic(func() {
-		SortedKeys(map[string]float64{"apple": 12.34}, OrderedComparer[string](), OrderedComparer[string]())
+		SortedKeys(map[string]float64{`apple`: 12.34}, comp.Ordered[string](), comp.Ordered[string]())
 	})
 	checkEqual(t, `invalid number of arguments {count: 2, maximum: 1, usage: comparer}`, errStr, true)
 
@@ -221,167 +222,6 @@ func Test_Utils_SortedKeys(t *testing.T) {
 		SortedKeys(map[complex128]float64{}, nil)
 	})
 	checkEqual(t, `must provide a comparer to compare this type {type: complex128}`, errStr, true)
-}
-
-func checkComparer[T any](t *testing.T, cmp Comparer[T], x, y T, exp int) {
-	if actual := cmp(x, y); exp != actual {
-		t.Errorf("\n"+
-			"Unexpected value from Comparer:\n"+
-			"\tKey Type:    %T\n"+
-			"\tLeft Value:  %v\n"+
-			"\tRight Value: %v\n"+
-			"\tActual:      %d\n"+
-			"\tExpected:    %d\n", x, x, y, actual, exp)
-	}
-}
-
-func Test_Utils_OrderedComparer(t *testing.T) {
-	c := OrderedComparer[string]()
-	checkComparer(t, c, `banana`, `cat`, -1)
-	checkComparer(t, c, `cat`, `banana`, 1)
-	checkComparer(t, c, `banana`, `banana`, 0)
-	checkComparer(t, c, `cat`, `cat`, 0)
-}
-
-type pseudoComparable struct {
-	name string
-}
-
-func (c *pseudoComparable) CompareTo(other *pseudoComparable) int {
-	if c == nil {
-		if other == nil {
-			return 0
-		}
-		return -1
-	}
-	if other == nil {
-		return 1
-	}
-	return strings.Compare(c.name, other.name)
-}
-
-func Test_Utils_Comparable(t *testing.T) {
-	c := ComparableComparer[*pseudoComparable]()
-	pc0 := (*pseudoComparable)(nil)
-	pc1 := &pseudoComparable{name: `banana`}
-	pc2 := &pseudoComparable{name: `cat`}
-
-	checkComparer(t, c, pc0, pc0, 0)
-	checkComparer(t, c, pc0, pc1, -1)
-	checkComparer(t, c, pc0, pc2, -1)
-
-	checkComparer(t, c, pc1, pc0, 1)
-	checkComparer(t, c, pc1, pc1, 0)
-	checkComparer(t, c, pc1, pc2, -1)
-
-	checkComparer(t, c, pc2, pc0, 1)
-	checkComparer(t, c, pc2, pc1, 1)
-	checkComparer(t, c, pc2, pc2, 0)
-}
-
-func Test_Utils_ComparerFromLess(t *testing.T) {
-	cmp := ComparerForLess(func(x, y string) bool {
-		return len(x) < len(y)
-	})
-
-	values := []string{`cat`, `dogs`, `doggo`, `apple`, `ox`}
-	exp := `ox, cat, dogs, doggo, apple`
-	c := slices.Clone(values)
-	slices.SortFunc(c, cmp)
-	if result := strings.Join(c, `, `); result != exp {
-		t.Errorf("\n"+
-			"Unexpected value from ComparerFromLess sort:\n"+
-			"\tActual:   %s\n"+
-			"\tExpected: %s\n", result, exp)
-	}
-}
-
-func Test_Utils_EpsilonComparer(t *testing.T) {
-	cmp := EpsilonComparer(0.01)
-	checkComparer(t, cmp, 0.0, 0.0, 0)
-	checkComparer(t, cmp, 1.0, 1.0, 0)
-	checkComparer(t, cmp, -1.0, -1.0, 0)
-
-	checkComparer(t, cmp, 0.0, 0.005, 0)
-	checkComparer(t, cmp, 0.0, 0.01, 0)
-	checkComparer(t, cmp, 0.0, 0.02, -1)
-	checkComparer(t, cmp, 0.0, 1.0, -1)
-	checkComparer(t, cmp, 0.0, -0.005, 0)
-	checkComparer(t, cmp, 0.0, -0.01, 0)
-	checkComparer(t, cmp, 0.0, -0.02, 1)
-	checkComparer(t, cmp, 0.0, -1.0, 1)
-
-	checkComparer(t, cmp, 0.005, 0.0, 0)
-	checkComparer(t, cmp, 0.01, 0.0, 0)
-	checkComparer(t, cmp, 0.02, 0.0, 1)
-	checkComparer(t, cmp, 1.0, 0.0, 1)
-	checkComparer(t, cmp, -0.005, 0.0, 0)
-	checkComparer(t, cmp, -0.01, 0.0, 0)
-	checkComparer(t, cmp, -0.02, 0.0, -1)
-	checkComparer(t, cmp, -1.0, 0.0, -1)
-
-	cmp = EpsilonComparer(-1.0) // defaults to ordered comparer, epsilon = 0
-	checkComparer(t, cmp, 0.0, 0.0, 0)
-	checkComparer(t, cmp, 1.0, 1.0, 0)
-	checkComparer(t, cmp, -1.0, -1.0, 0)
-}
-
-func Test_Utils_DefaultComparer(t *testing.T) {
-	checkComparer(t, DefaultComparer[int](), 1, 3, -1)
-	checkComparer(t, DefaultComparer[int8](), 1, 3, -1)
-	checkComparer(t, DefaultComparer[int16](), 1, 3, -1)
-	checkComparer(t, DefaultComparer[int32](), 1, 3, -1)
-	checkComparer(t, DefaultComparer[int64](), 1, 3, -1)
-
-	checkComparer(t, DefaultComparer[uint](), 1, 3, -1)
-	checkComparer(t, DefaultComparer[uint8](), 1, 3, -1)
-	checkComparer(t, DefaultComparer[uint16](), 1, 3, -1)
-	checkComparer(t, DefaultComparer[uint32](), 1, 3, -1)
-	checkComparer(t, DefaultComparer[uint64](), 1, 3, -1)
-
-	checkComparer(t, DefaultComparer[float32](), 1.0, 3.0, -1)
-	checkComparer(t, DefaultComparer[float64](), 1.0, 3.0, -1)
-
-	checkComparer(t, DefaultComparer[uintptr](), 1, 3, -1)
-	checkComparer(t, DefaultComparer[string](), `apple`, `dog`, -1)
-	checkComparer(t, DefaultComparer[rune](), 'A', 'B', -1)
-	checkComparer(t, DefaultComparer[byte](), 1, 3, -1)
-
-	cc := DefaultComparer[*pseudoComparable]()
-	pc0 := (*pseudoComparable)(nil)
-	pc1 := &pseudoComparable{name: `apple`}
-	pc2 := &pseudoComparable{name: `dog`}
-	checkComparer(t, cc, pc0, pc0, 0)
-	checkComparer(t, cc, pc0, pc1, -1)
-	checkComparer(t, cc, pc0, pc2, -1)
-
-	checkComparer(t, cc, pc1, pc0, 1)
-	checkComparer(t, cc, pc1, pc1, 0)
-	checkComparer(t, cc, pc1, pc2, -1)
-
-	checkComparer(t, cc, pc2, pc0, 1)
-	checkComparer(t, cc, pc2, pc1, 1)
-	checkComparer(t, cc, pc2, pc2, 0)
-
-	checkIsNil(t, true, true, DefaultComparer[[]string]())
-
-	checkComparer(t, DefaultComparer[time.Duration](), time.Second, time.Minute, -1)
-	checkComparer(t, DefaultComparer[time.Duration](), time.Hour, time.Minute, 1)
-	checkComparer(t, DefaultComparer[time.Duration](), time.Second, time.Second, 0)
-	checkComparer(t, DefaultComparer[time.Duration](), time.Hour, time.Hour, 0)
-
-	time1, err := time.Parse(time.RFC822Z, `02 Jan 24 05:30 -0700`)
-	if err != nil {
-		panic(err)
-	}
-	time2, err := time.Parse(time.RFC822Z, `02 Jan 24 05:35 -0700`)
-	if err != nil {
-		panic(err)
-	}
-	checkComparer(t, DefaultComparer[time.Time](), time1, time2, -1)
-	checkComparer(t, DefaultComparer[time.Time](), time1, time1, 0)
-	checkComparer(t, DefaultComparer[time.Time](), time2, time2, 0)
-	checkComparer(t, DefaultComparer[time.Time](), time2, time1, 1)
 }
 
 func Test_Utils_Keys(t *testing.T) {
@@ -599,12 +439,8 @@ func Test_Utils_GetMaxStringLen(t *testing.T) {
 	checkGetMaxStringLen(t, 0, ``)
 }
 
-type pseudoEquatable struct{ success bool }
-
-func (pe *pseudoEquatable) Equals(_ any) bool { return pe.success }
-
 func checkEqual(t *testing.T, a, b any, exp bool) {
-	if Equal(a, b) != exp {
+	if comp.Equal(a, b) != exp {
 		t.Errorf("\n"+
 			"Unexpected value from Equal:\n"+
 			"\tValue 1:  %v (%T)\n"+
@@ -613,75 +449,17 @@ func checkEqual(t *testing.T, a, b any, exp bool) {
 	}
 }
 
-func Test_Utils_Equal(t *testing.T) {
-	checkEqual(t, true, true, true)
-	checkEqual(t, false, true, false)
-	checkEqual(t, true, false, false)
-	checkEqual(t, false, false, true)
+func Test_Utils_Ternary(t *testing.T) {
+	checkEqual(t, Ternary(true, 12, 34), 12, true)
+	checkEqual(t, Ternary(false, 12, 34), 34, true)
+}
 
-	checkEqual(t, 1, 1, true)
-	checkEqual(t, 1, 2, false)
-	checkEqual(t, 2, 1, false)
-	checkEqual(t, 2, 2, true)
+func Test_Utils_Flip(t *testing.T) {
+	a, b := Flip(true, 12, 34)
+	checkEqual(t, a, 34, true)
+	checkEqual(t, b, 12, true)
 
-	e0 := (error)(nil)
-	e1 := errors.New(`fred`)
-	checkEqual(t, nil, nil, true)
-	checkEqual(t, e0, e0, true)
-	checkEqual(t, e1, e0, false)
-	checkEqual(t, e0, e1, false)
-	checkEqual(t, e1, e1, true)
-
-	var v1 int = 0
-	var v2 float64 = 0.0
-	checkEqual(t, nil, v1, false)
-	checkEqual(t, v2, v1, false)
-	checkEqual(t, v1, v2, false)
-
-	e2 := &pseudoEquatable{success: false}
-	checkEqual(t, e2, nil, false)
-	checkEqual(t, nil, e2, false)
-	checkEqual(t, e2, e2, false)
-	checkEqual(t, 4, e2, false)
-	checkEqual(t, e2, 4, false)
-
-	e3 := &pseudoEquatable{success: true}
-	checkEqual(t, e3, nil, false)
-	checkEqual(t, nil, e3, false)
-	checkEqual(t, e3, e3, true)
-	checkEqual(t, 4, e3, true)
-	checkEqual(t, e3, 4, true)
-
-	e4 := (*pseudoEquatable)(nil)
-	checkEqual(t, e4, nil, false)
-	checkEqual(t, nil, e4, false)
-	checkEqual(t, e4, e0, false)
-	checkEqual(t, e0, e4, false)
-	checkEqual(t, e4, e4, true)
-
-	e5 := ([]int)(nil)
-	e6 := []int{}
-	e7 := []int{1, 2, 3}
-	e8 := []int{1, 4, 3}
-	checkEqual(t, e5, nil, false)
-	checkEqual(t, nil, e5, false)
-	checkEqual(t, e5, e5, true)
-	checkEqual(t, e5, e6, false)
-	checkEqual(t, e5, e7, false)
-	checkEqual(t, e5, e8, false)
-	checkEqual(t, e6, e6, true)
-	checkEqual(t, e6, e7, false)
-	checkEqual(t, e6, e8, false)
-	checkEqual(t, e7, e7, true)
-	checkEqual(t, e7, e8, false)
-	checkEqual(t, e8, e8, true)
-
-	e9 := func() { print(`boom`) }
-	var e10 func()
-	checkEqual(t, e9, e9, false)
-	checkEqual(t, e9, e10, false)
-	checkEqual(t, e10, e9, false)
-	checkEqual(t, e10, e10, true)
-	checkEqual(t, e10, nil, false)
-	checkEqual(t, nil, e10, false)
+	a, b = Flip(false, 12, 34)
+	checkEqual(t, a, 12, true)
+	checkEqual(t, b, 34, true)
 }

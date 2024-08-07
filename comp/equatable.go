@@ -1,4 +1,4 @@
-package utils
+package comp
 
 import "github.com/Snow-Gremlin/goToolbox/internal/liteUtils"
 

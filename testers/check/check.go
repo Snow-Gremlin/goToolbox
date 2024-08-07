@@ -12,6 +12,7 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
 	"github.com/Snow-Gremlin/goToolbox/collections/readonlyVariantList"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/internal/optional"
 	"github.com/Snow-Gremlin/goToolbox/testers"
 	"github.com/Snow-Gremlin/goToolbox/utils"
@@ -208,7 +209,7 @@ func NotEqual[T any](t testers.Tester, unexpected T) (c testers.Check[T]) {
 // then a comparer for that type must be provided.
 //
 // Example: check.GreaterThan(t, 14).Assert(actual)
-func GreaterThan[T any](t testers.Tester, expected T, comparer ...utils.Comparer[T]) (c testers.Check[T]) {
+func GreaterThan[T any](t testers.Tester, expected T, comparer ...comp.Comparer[T]) (c testers.Check[T]) {
 	defer handlePanic(t, &c)
 	getHelper(t)()
 	return newPred(t, predicate.GreaterThan(expected, comparer...),
@@ -225,7 +226,7 @@ func GreaterThan[T any](t testers.Tester, expected T, comparer ...utils.Comparer
 // then a comparer for that type must be provided.
 //
 // Example: check.GreaterEq(t, 14).Assert(actual)
-func GreaterEq[T any](t testers.Tester, expected T, comparer ...utils.Comparer[T]) (c testers.Check[T]) {
+func GreaterEq[T any](t testers.Tester, expected T, comparer ...comp.Comparer[T]) (c testers.Check[T]) {
 	defer handlePanic(t, &c)
 	getHelper(t)()
 	return newPred(t, predicate.GreaterEq(expected, comparer...),
@@ -242,7 +243,7 @@ func GreaterEq[T any](t testers.Tester, expected T, comparer ...utils.Comparer[T
 // then a comparer for that type must be provided.
 //
 // Example: check.LessThan(t, 14).Assert(actual)
-func LessThan[T any](t testers.Tester, expected T, comparer ...utils.Comparer[T]) (c testers.Check[T]) {
+func LessThan[T any](t testers.Tester, expected T, comparer ...comp.Comparer[T]) (c testers.Check[T]) {
 	defer handlePanic(t, &c)
 	getHelper(t)()
 	return newPred(t, predicate.LessThan(expected, comparer...),
@@ -259,7 +260,7 @@ func LessThan[T any](t testers.Tester, expected T, comparer ...utils.Comparer[T]
 // then a comparer for that type must be provided.
 //
 // Example: check.LessEq(t, 14).Assert(actual)
-func LessEq[T any](t testers.Tester, expected T, comparer ...utils.Comparer[T]) (c testers.Check[T]) {
+func LessEq[T any](t testers.Tester, expected T, comparer ...comp.Comparer[T]) (c testers.Check[T]) {
 	defer handlePanic(t, &c)
 	getHelper(t)()
 	return newPred(t, predicate.LessEq(expected, comparer...),
@@ -276,7 +277,7 @@ func LessEq[T any](t testers.Tester, expected T, comparer ...utils.Comparer[T]) 
 // then a comparer for that type must be provided.
 //
 // Example: InRange.LessEq(t, 0, 359).Assert(actual)
-func InRange[T any](t testers.Tester, min, max T, comparer ...utils.Comparer[T]) (c testers.Check[T]) {
+func InRange[T any](t testers.Tester, min, max T, comparer ...comp.Comparer[T]) (c testers.Check[T]) {
 	defer handlePanic(t, &c)
 	getHelper(t)()
 	return newPred(t, predicate.InRange(min, max, comparer...),
@@ -353,7 +354,7 @@ func NotEpsilon[T utils.NumConstraint](t testers.Tester, unexpected, epsilon T) 
 // then a comparer for that type must be provided.
 //
 // Example: check.Positive[int](t).Assert(actual)
-func Positive[T any](t testers.Tester, comparer ...utils.Comparer[T]) (c testers.Check[T]) {
+func Positive[T any](t testers.Tester, comparer ...comp.Comparer[T]) (c testers.Check[T]) {
 	defer handlePanic(t, &c)
 	getHelper(t)()
 	return newPred(t, predicate.Pos(comparer...),
@@ -368,7 +369,7 @@ func Positive[T any](t testers.Tester, comparer ...utils.Comparer[T]) (c testers
 // then a comparer for that type must be provided.
 //
 // Example: check.Negative(t).Assert(actual)
-func Negative[T any](t testers.Tester, comparer ...utils.Comparer[T]) (c testers.Check[T]) {
+func Negative[T any](t testers.Tester, comparer ...comp.Comparer[T]) (c testers.Check[T]) {
 	defer handlePanic(t, &c)
 	getHelper(t)()
 	return newPred(t, predicate.Neg(comparer...),
@@ -796,7 +797,7 @@ func Intersects(t testers.Tester, expected any) (c testers.Check[any]) {
 // type of elements in the actual value that are being compared.
 //
 // Example: check.Sorted(t).Assert(actual)
-func Sorted[TElem any](t testers.Tester, comparer ...utils.Comparer[TElem]) (c testers.Check[any]) {
+func Sorted[TElem any](t testers.Tester, comparer ...comp.Comparer[TElem]) (c testers.Check[any]) {
 	defer handlePanic(t, &c)
 	getHelper(t)()
 	return newCheck(t, func(b *testee, actual any) {
@@ -814,7 +815,7 @@ func Sorted[TElem any](t testers.Tester, comparer ...utils.Comparer[TElem]) (c t
 // type of elements in the actual value that are being compared.
 //
 // Example: check.NotSorted(t).Assert(actual)
-func NotSorted[TElem any](t testers.Tester, comparer ...utils.Comparer[TElem]) (c testers.Check[any]) {
+func NotSorted[TElem any](t testers.Tester, comparer ...comp.Comparer[TElem]) (c testers.Check[any]) {
 	defer handlePanic(t, &c)
 	getHelper(t)()
 	return newCheck(t, func(b *testee, actual any) {
@@ -833,10 +834,10 @@ func NotSorted[TElem any](t testers.Tester, comparer ...utils.Comparer[TElem]) (
 // type of elements in the actual value that are being compared.
 //
 // Example: check.DescendingSorted(t).Assert(actual)
-func DescendingSorted[TElem any](t testers.Tester, comparer ...utils.Comparer[TElem]) (c testers.Check[any]) {
+func DescendingSorted[TElem any](t testers.Tester, comparer ...comp.Comparer[TElem]) (c testers.Check[any]) {
 	defer handlePanic(t, &c)
 	getHelper(t)()
-	cmp := utils.Descender(optional.Comparer(comparer))
+	cmp := comp.Descender(optional.Comparer(comparer))
 	return newCheck(t, func(b *testee, actual any) {
 		actV := readonlyVariantList.Cast[TElem](readonlyVariantList.Wrap(actual))
 		if !actV.Enumerate().Sorted(cmp) {
@@ -853,10 +854,10 @@ func DescendingSorted[TElem any](t testers.Tester, comparer ...utils.Comparer[TE
 // type of elements in the actual value that are being compared.
 //
 // Example: check.NotDescendingSorted(t).Assert(actual)
-func NotDescendingSorted[TElem any](t testers.Tester, comparer ...utils.Comparer[TElem]) (c testers.Check[any]) {
+func NotDescendingSorted[TElem any](t testers.Tester, comparer ...comp.Comparer[TElem]) (c testers.Check[any]) {
 	defer handlePanic(t, &c)
 	getHelper(t)()
-	cmp := utils.Descender(optional.Comparer(comparer))
+	cmp := comp.Descender(optional.Comparer(comparer))
 	return newCheck(t, func(b *testee, actual any) {
 		actV := readonlyVariantList.Cast[TElem](readonlyVariantList.Wrap(actual))
 		if actV.Enumerate().Sorted(cmp) {

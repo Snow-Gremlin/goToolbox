@@ -10,6 +10,7 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
 	"github.com/Snow-Gremlin/goToolbox/collections/list"
 	"github.com/Snow-Gremlin/goToolbox/collections/readonlySet"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/events"
 	"github.com/Snow-Gremlin/goToolbox/events/event"
 	"github.com/Snow-Gremlin/goToolbox/utils"
@@ -17,7 +18,7 @@ import (
 
 type sortedSetImp[T any] struct {
 	data     []T
-	comparer utils.Comparer[T]
+	comparer comp.Comparer[T]
 	event    events.Event[collections.ChangeArgs]
 }
 

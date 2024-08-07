@@ -7,6 +7,7 @@ import (
 
 	"github.com/Snow-Gremlin/goToolbox/collections"
 	"github.com/Snow-Gremlin/goToolbox/collections/changeArgs"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/events"
 	"github.com/Snow-Gremlin/goToolbox/events/event"
 	"github.com/Snow-Gremlin/goToolbox/events/listener"
@@ -307,7 +308,7 @@ func Test_ReadonlyVariantList_OnChange(t *testing.T) {
 
 func checkEqual(t *testing.T, exp, actual any, name string) {
 	t.Helper()
-	if !utils.Equal(actual, exp) {
+	if !comp.Equal(actual, exp) {
 		t.Errorf("\nUnexpected result from %q:\n"+
 			"\tActual:   %v (%T)\n"+
 			"\tExpected: %v (%T)", name, actual, actual, exp, exp)

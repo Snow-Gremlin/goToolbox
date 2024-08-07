@@ -1,12 +1,12 @@
 package collections
 
-import "github.com/Snow-Gremlin/goToolbox/utils"
+import "github.com/Snow-Gremlin/goToolbox/comp"
 
 // Enumerator is a tool for walking through a collection of data.
 type Enumerator[T any] interface {
 	Countable
 	Sliceable[T]
-	utils.Equatable
+	comp.Equatable
 
 	// Iterate creates a new iterator
 	Iterate() Iterator[T]
@@ -120,19 +120,19 @@ type Enumerator[T any] interface {
 	// If the two enumerators are sorted, this will effectively merge sort the values.
 	// This can take an optional comparer to override the default comparer
 	// or to give a comparer if there is no default comparer for this type.
-	SortInterweave(other Enumerator[T], comparer ...utils.Comparer[T]) Enumerator[T]
+	SortInterweave(other Enumerator[T], comparer ...comp.Comparer[T]) Enumerator[T]
 
 	// Sorted determines if the values in the enumerator are already sorted.
 	//
 	// This can take an optional comparer to override the default comparer
 	// or to give a comparer if there is no default comparer for this type.
-	Sorted(comparer ...utils.Comparer[T]) bool
+	Sorted(comparer ...comp.Comparer[T]) bool
 
 	// Sort enumerates the values in sorted order.
 	//
 	// This can take an optional comparer to override the default comparer
 	// or to give a comparer if there is no default comparer for this type.
-	Sort(comparer ...utils.Comparer[T]) Enumerator[T]
+	Sort(comparer ...comp.Comparer[T]) Enumerator[T]
 
 	// Merge preforms a merge of the values in the given enumerator.
 	//
@@ -146,13 +146,13 @@ type Enumerator[T any] interface {
 	//
 	// This can take an optional comparer to override the default comparer
 	// or to give a comparer if there is no default comparer for this type.
-	Max(comparer ...utils.Comparer[T]) T
+	Max(comparer ...comp.Comparer[T]) T
 
 	// Min gets the minimum value from all the values.
 	//
 	// This can take an optional comparer to override the default comparer
 	// or to give a comparer if there is no default comparer for this type.
-	Min(comparer ...utils.Comparer[T]) T
+	Min(comparer ...comp.Comparer[T]) T
 
 	// Buffered stores the result of an enumeration and repeats it back
 	// in the returned enumerator. Uses memory to reduce calculations.

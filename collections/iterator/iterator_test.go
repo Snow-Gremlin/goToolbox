@@ -7,6 +7,7 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections"
 	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
 	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
@@ -658,7 +659,7 @@ func Test_Iterator_Interweave(t *testing.T) {
 func Test_Iterator_SortInterweave(t *testing.T) {
 	it1 := Iterate(1, 6, 2, 5, 3, 4)
 	it2 := Iterate(4, 3, 5, 2, 6, 1)
-	it3 := SortInterweave(it1, it2, utils.OrderedComparer[int]())
+	it3 := SortInterweave(it1, it2, comp.Ordered[int]())
 	checkIt(t, it3, 1, 4, 3, 5, 2, 6, 2, 5, 3, 4, 6, 1)
 }
 
@@ -684,16 +685,16 @@ func Test_Iterator_Sort(t *testing.T) {
 	checkIt(t, it2, ``, `apple`, `cat`, `evil`, `is`, `sneaky`)
 
 	checkPanic(t, `invalid number of arguments {count: 2, maximum: 1, usage: comparer}`,
-		func() { Sort(it1, utils.OrderedComparer[string](), utils.OrderedComparer[string]()) })
+		func() { Sort(it1, comp.Ordered[string](), comp.Ordered[string]()) })
 }
 
 func Test_Iterator_Sorted(t *testing.T) {
 	it := Iterate(1, 2, 3, 4, 5)
-	checkEqual(t, true, Sorted(it, utils.OrderedComparer[int]()))
+	checkEqual(t, true, Sorted(it, comp.Ordered[int]()))
 	checkIt(t, it) // Remainder
 
 	it = Iterate(1, 2, 5, 4, 3)
-	checkEqual(t, false, Sorted(it, utils.OrderedComparer[int]()))
+	checkEqual(t, false, Sorted(it, comp.Ordered[int]()))
 	checkIt(t, it, 3) // Remainder
 }
 
@@ -716,7 +717,7 @@ func checkIt[T any](t *testing.T, it collections.Iterator[T], exp ...T) {
 
 func checkEqual(t testing.TB, exp, actual any) {
 	t.Helper()
-	if !utils.Equal(exp, actual) {
+	if !comp.Equal(exp, actual) {
 		t.Errorf("\n"+
 			"Expected value didn't match the actual value:\n"+
 			"Actual:   %v (%T)\n"+

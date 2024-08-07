@@ -7,6 +7,7 @@ import (
 
 	"github.com/Snow-Gremlin/goToolbox/collections"
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/events"
 	"github.com/Snow-Gremlin/goToolbox/events/event"
 	"github.com/Snow-Gremlin/goToolbox/internal/optional"
@@ -50,7 +51,7 @@ func (p *pseudoList[T]) Contains(value T) bool {
 
 func (p *pseudoList[T]) IndexOf(value T, after ...int) int {
 	for i, count := optional.After(after)+1, len(p.list); i < count; i++ {
-		if utils.Equal(p.list[i], value) {
+		if comp.Equal(p.list[i], value) {
 			return i
 		}
 	}
@@ -103,7 +104,7 @@ func (p *pseudoList[T]) Equals(other any) bool {
 	}
 
 	for i, v := range p.list {
-		if !utils.Equal(v, s.Get(i)) {
+		if !comp.Equal(v, s.Get(i)) {
 			return false
 		}
 	}

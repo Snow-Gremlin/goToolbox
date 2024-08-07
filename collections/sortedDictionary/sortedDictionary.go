@@ -4,19 +4,20 @@ import (
 	"maps"
 
 	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/internal/optional"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
 // New creates a new dictionary with sorted keys by the
 // optional given comparer function or the default comparer.
-func New[TKey comparable, TValue any](comparer ...utils.Comparer[TKey]) collections.Dictionary[TKey, TValue] {
+func New[TKey comparable, TValue any](comparer ...comp.Comparer[TKey]) collections.Dictionary[TKey, TValue] {
 	return CapNew[TKey, TValue](0, comparer...)
 }
 
 // CapNew creates a new dictionary with sorted keys and initial capacity
 // by the optional given comparer function or the default comparer.
-func CapNew[TKey comparable, TValue any](capacity int, comparer ...utils.Comparer[TKey]) collections.Dictionary[TKey, TValue] {
+func CapNew[TKey comparable, TValue any](capacity int, comparer ...comp.Comparer[TKey]) collections.Dictionary[TKey, TValue] {
 	cmp := optional.Comparer(comparer)
 	capacity = max(capacity, 0)
 	return &sortedDictionaryImp[TKey, TValue]{
@@ -32,7 +33,7 @@ func CapNew[TKey comparable, TValue any](capacity int, comparer ...utils.Compare
 //
 // The keys are sorted with the optional given comparer function
 // or the default comparer if no comparer was given.
-func With[TKey comparable, TValue any, M ~map[TKey]TValue](m M, comparer ...utils.Comparer[TKey]) collections.Dictionary[TKey, TValue] {
+func With[TKey comparable, TValue any, M ~map[TKey]TValue](m M, comparer ...comp.Comparer[TKey]) collections.Dictionary[TKey, TValue] {
 	cmp := optional.Comparer(comparer)
 	data := maps.Clone(m)
 	if data == nil {
@@ -51,7 +52,7 @@ func With[TKey comparable, TValue any, M ~map[TKey]TValue](m M, comparer ...util
 //
 // The keys are sorted with the optional given comparer function
 // or the default comparer if no comparer was given.
-func From[TKey comparable, TValue any](e collections.Enumerator[collections.Tuple2[TKey, TValue]], comparer ...utils.Comparer[TKey]) collections.Dictionary[TKey, TValue] {
+func From[TKey comparable, TValue any](e collections.Enumerator[collections.Tuple2[TKey, TValue]], comparer ...comp.Comparer[TKey]) collections.Dictionary[TKey, TValue] {
 	d := CapNew[TKey, TValue](0, comparer...)
 	d.AddFrom(e)
 	return d
@@ -62,7 +63,7 @@ func From[TKey comparable, TValue any](e collections.Enumerator[collections.Tupl
 //
 // The keys are sorted with the optional given comparer function
 // or the default comparer if no comparer was given.
-func CapFrom[TKey comparable, TValue any](e collections.Enumerator[collections.Tuple2[TKey, TValue]], capacity int, comparer ...utils.Comparer[TKey]) collections.Dictionary[TKey, TValue] {
+func CapFrom[TKey comparable, TValue any](e collections.Enumerator[collections.Tuple2[TKey, TValue]], capacity int, comparer ...comp.Comparer[TKey]) collections.Dictionary[TKey, TValue] {
 	d := CapNew[TKey, TValue](capacity, comparer...)
 	d.AddFrom(e)
 	return d

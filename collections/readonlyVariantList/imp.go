@@ -4,6 +4,7 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections"
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/events"
 	"github.com/Snow-Gremlin/goToolbox/events/event"
 	"github.com/Snow-Gremlin/goToolbox/internal/optional"
@@ -69,7 +70,7 @@ func (list *readonlyVariantListImp[T]) Contains(value T) bool {
 
 func (list *readonlyVariantListImp[T]) IndexOf(value T, after ...int) int {
 	for i, count := optional.After(after)+1, list.Count(); i < count; i++ {
-		if utils.Equal(list.liteGet(i), value) {
+		if comp.Equal(list.liteGet(i), value) {
 			return i
 		}
 	}

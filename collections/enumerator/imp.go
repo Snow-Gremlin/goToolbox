@@ -7,6 +7,7 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections"
 	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
 	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/internal/optional"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
@@ -166,19 +167,19 @@ func (e enumeratorImp[T]) Concat(tails ...collections.Enumerator[T]) collections
 	})
 }
 
-func (e enumeratorImp[T]) SortInterweave(other collections.Enumerator[T], comparer ...utils.Comparer[T]) collections.Enumerator[T] {
+func (e enumeratorImp[T]) SortInterweave(other collections.Enumerator[T], comparer ...comp.Comparer[T]) collections.Enumerator[T] {
 	cmp := optional.Comparer(comparer)
 	return New(func() collections.Iterator[T] {
 		return iterator.SortInterweave(e.Iterate(), other.Iterate(), cmp)
 	})
 }
 
-func (e enumeratorImp[T]) Sorted(comparer ...utils.Comparer[T]) bool {
+func (e enumeratorImp[T]) Sorted(comparer ...comp.Comparer[T]) bool {
 	cmp := optional.Comparer(comparer)
 	return iterator.Sorted(e.Iterate(), cmp)
 }
 
-func (e enumeratorImp[T]) Sort(comparer ...utils.Comparer[T]) collections.Enumerator[T] {
+func (e enumeratorImp[T]) Sort(comparer ...comp.Comparer[T]) collections.Enumerator[T] {
 	cmp := optional.Comparer(comparer)
 	return New(func() collections.Iterator[T] {
 		return iterator.Sort(e.Iterate(), cmp)
@@ -189,7 +190,7 @@ func (e enumeratorImp[T]) Merge(merger collections.Reducer[T, T]) T {
 	return iterator.Merge(e.Iterate(), merger)
 }
 
-func (e enumeratorImp[T]) Max(comparer ...utils.Comparer[T]) T {
+func (e enumeratorImp[T]) Max(comparer ...comp.Comparer[T]) T {
 	cmp := optional.Comparer(comparer)
 	return e.Merge(func(value, prior T) T {
 		if cmp(value, prior) > 0 {
@@ -199,7 +200,7 @@ func (e enumeratorImp[T]) Max(comparer ...utils.Comparer[T]) T {
 	})
 }
 
-func (e enumeratorImp[T]) Min(comparer ...utils.Comparer[T]) T {
+func (e enumeratorImp[T]) Min(comparer ...comp.Comparer[T]) T {
 	cmp := optional.Comparer(comparer)
 	return e.Merge(func(value, prior T) T {
 		if cmp(value, prior) < 0 {

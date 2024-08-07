@@ -12,6 +12,7 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
 	"github.com/Snow-Gremlin/goToolbox/collections/readonlyDictionary"
 	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/events"
 	"github.com/Snow-Gremlin/goToolbox/events/event"
 	"github.com/Snow-Gremlin/goToolbox/utils"
@@ -47,7 +48,7 @@ func (d *dictionaryImp[TKey, TValue]) onChanged(cf changeFlag) bool {
 
 func (d *dictionaryImp[TKey, TValue]) addOne(key TKey, val TValue) changeFlag {
 	if v2, exists := d.m[key]; exists {
-		if utils.Equal(val, v2) {
+		if comp.Equal(val, v2) {
 			return noChange
 		}
 
@@ -267,7 +268,7 @@ func (d *dictionaryImp[TKey, TValue]) Equals(other any) bool {
 	for it.Next() {
 		key, value := it.Current().Values()
 		v2, ok := d.TryGet(key)
-		if !ok || !utils.Equal(v2, value) {
+		if !ok || !comp.Equal(v2, value) {
 			return false
 		}
 	}

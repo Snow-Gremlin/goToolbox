@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
@@ -311,7 +312,7 @@ func Test_Predicate_OnlyOne(t *testing.T) {
 func checkPred[T any](t *testing.T, p collections.Predicate[T], input T, exp bool) {
 	t.Helper()
 	actual := p(input)
-	if !utils.Equal(actual, exp) {
+	if !comp.Equal(actual, exp) {
 		t.Errorf("\nUnexpected result from predicate:\n"+
 			"\tInput:    %v\n"+
 			"\tActual:   %t\n"+
@@ -327,7 +328,7 @@ func checkPanic(t *testing.T, handle func(), exp string) {
 		return ``
 	}()
 
-	if !utils.Equal(actual, exp) {
+	if !comp.Equal(actual, exp) {
 		t.Errorf("\nUnexpected panic string from predicate creation:\n"+
 			"\tActual:   %s\n"+
 			"\tExpected: %s", actual, exp)

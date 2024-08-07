@@ -9,6 +9,7 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
 	"github.com/Snow-Gremlin/goToolbox/collections/readonlyList"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/events"
 	"github.com/Snow-Gremlin/goToolbox/events/event"
 	"github.com/Snow-Gremlin/goToolbox/internal/optional"
@@ -90,7 +91,7 @@ func (list *listImp[T]) Contains(value T) bool {
 
 func (list *listImp[T]) IndexOf(value T, after ...int) int {
 	for i, count := optional.After(after)+1, len(list.s); i < count; i++ {
-		if utils.Equal(list.s[i], value) {
+		if comp.Equal(list.s[i], value) {
 			return i
 		}
 	}

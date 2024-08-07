@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"slices"
 
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/differs"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
@@ -81,7 +82,7 @@ func RuneSlice(a, b [][]rune) differs.Data {
 // slower than more specific data comparisons.
 func Any[T any, S ~[]T](a, b S) differs.Data {
 	return New(len(a), len(b), func(aIndex, bIndex int) bool {
-		return utils.Equal(a[aIndex], b[bIndex])
+		return comp.Equal(a[aIndex], b[bIndex])
 	})
 }
 

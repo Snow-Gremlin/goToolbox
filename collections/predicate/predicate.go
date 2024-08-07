@@ -4,6 +4,7 @@ import (
 	"regexp"
 
 	"github.com/Snow-Gremlin/goToolbox/collections"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/internal/optional"
 	"github.com/Snow-Gremlin/goToolbox/internal/simpleSet"
 	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
@@ -103,7 +104,7 @@ func AsString(p collections.Predicate[string]) collections.Predicate[any] {
 // is equal to the value passed into the predicate.
 func Eq[T any](value T) collections.Predicate[T] {
 	return func(query T) bool {
-		return utils.Equal(query, value)
+		return comp.Equal(query, value)
 	}
 }
 
@@ -115,7 +116,7 @@ func NotEq[T any](value T) collections.Predicate[T] {
 
 // GreaterThan is a predicate which returns true if the value
 // passed into the predicate is greater than the given value.
-func GreaterThan[T any](value T, comparer ...utils.Comparer[T]) collections.Predicate[T] {
+func GreaterThan[T any](value T, comparer ...comp.Comparer[T]) collections.Predicate[T] {
 	cmp := optional.Comparer(comparer)
 	return func(query T) bool {
 		return cmp(query, value) > 0
@@ -124,7 +125,7 @@ func GreaterThan[T any](value T, comparer ...utils.Comparer[T]) collections.Pred
 
 // GreaterEq is a predicate which returns true if the value
 // passed into the predicate is greater than or equal to the given value.
-func GreaterEq[T any](value T, comparer ...utils.Comparer[T]) collections.Predicate[T] {
+func GreaterEq[T any](value T, comparer ...comp.Comparer[T]) collections.Predicate[T] {
 	cmp := optional.Comparer(comparer)
 	return func(query T) bool {
 		return cmp(query, value) >= 0
@@ -133,7 +134,7 @@ func GreaterEq[T any](value T, comparer ...utils.Comparer[T]) collections.Predic
 
 // LessThan is a predicate which returns true if the value
 // passed into the predicate is less than the given value.
-func LessThan[T any](value T, comparer ...utils.Comparer[T]) collections.Predicate[T] {
+func LessThan[T any](value T, comparer ...comp.Comparer[T]) collections.Predicate[T] {
 	cmp := optional.Comparer(comparer)
 	return func(query T) bool {
 		return cmp(query, value) < 0
@@ -142,7 +143,7 @@ func LessThan[T any](value T, comparer ...utils.Comparer[T]) collections.Predica
 
 // LessEq is a predicate which returns true if the value
 // passed into the predicate is less than or equal to the given value.
-func LessEq[T any](value T, comparer ...utils.Comparer[T]) collections.Predicate[T] {
+func LessEq[T any](value T, comparer ...comp.Comparer[T]) collections.Predicate[T] {
 	cmp := optional.Comparer(comparer)
 	return func(query T) bool {
 		return cmp(query, value) <= 0
@@ -151,7 +152,7 @@ func LessEq[T any](value T, comparer ...utils.Comparer[T]) collections.Predicate
 
 // InRange is a predicate which returns true if the value passed
 // into the predicate is between the given min and maximum inclusively.
-func InRange[T any](min, max T, comparer ...utils.Comparer[T]) collections.Predicate[T] {
+func InRange[T any](min, max T, comparer ...comp.Comparer[T]) collections.Predicate[T] {
 	cmp := optional.Comparer(comparer)
 	return func(query T) bool {
 		return cmp(min, query) <= 0 && cmp(query, max) <= 0
@@ -164,7 +165,7 @@ func InRange[T any](min, max T, comparer ...utils.Comparer[T]) collections.Predi
 // This is useful for finding floating-point values which have lost precision
 // via calculations and will not be equal a literal, but will be very close to it.
 func EpsilonEq[T utils.NumConstraint](value, epsilon T) collections.Predicate[T] {
-	cmp := utils.EpsilonComparer(epsilon)
+	cmp := comp.Epsilon(epsilon)
 	return func(query T) bool {
 		return cmp(query, value) == 0
 	}
@@ -176,7 +177,7 @@ func EpsilonEq[T utils.NumConstraint](value, epsilon T) collections.Predicate[T]
 // This is useful for finding floating-point values which have lost precision
 // via calculations and will not be equal a literal, but will be very close to it.
 func EpsilonNotEq[T utils.NumConstraint](value, epsilon T) collections.Predicate[T] {
-	cmp := utils.EpsilonComparer(epsilon)
+	cmp := comp.Epsilon(epsilon)
 	return func(query T) bool {
 		return cmp(query, value) != 0
 	}
@@ -184,7 +185,7 @@ func EpsilonNotEq[T utils.NumConstraint](value, epsilon T) collections.Predicate
 
 // Pos is a predicate which returns true if the value
 // passed into the predicate is greater than zero, i.e. positive.
-func Pos[T any](comparer ...utils.Comparer[T]) collections.Predicate[T] {
+func Pos[T any](comparer ...comp.Comparer[T]) collections.Predicate[T] {
 	cmp, zero := optional.Comparer(comparer), utils.Zero[T]()
 	return func(query T) bool {
 		return cmp(query, zero) > 0
@@ -193,7 +194,7 @@ func Pos[T any](comparer ...utils.Comparer[T]) collections.Predicate[T] {
 
 // Neg is a predicate which returns true if the value
 // passed into the predicate is less than zero, i.e. negative,
-func Neg[T any](comparer ...utils.Comparer[T]) collections.Predicate[T] {
+func Neg[T any](comparer ...comp.Comparer[T]) collections.Predicate[T] {
 	cmp, zero := optional.Comparer(comparer), utils.Zero[T]()
 	return func(query T) bool {
 		return cmp(query, zero) < 0

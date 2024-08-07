@@ -9,6 +9,7 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
 	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/events/listener"
 	"github.com/Snow-Gremlin/goToolbox/testers/check"
 	"github.com/Snow-Gremlin/goToolbox/utils"
@@ -146,7 +147,7 @@ func Test_SortedDictionary_New(t *testing.T) {
 	check.Equal(t, 5).Assert(cap(d1.keys))
 
 	check.MatchError(t, `^invalid number of arguments \{count: 2, maximum: 1, usage: comparer\}$`).
-		Panic(func() { New[int, string](utils.OrderedComparer[int](), utils.OrderedComparer[int]()) })
+		Panic(func() { New[int, string](comp.Ordered[int](), comp.Ordered[int]()) })
 
 	d2 := CapNew[*pseudoComparable, int](7).(*sortedDictionaryImp[*pseudoComparable, int])
 	check.Empty(t).Assert(d2.keys)

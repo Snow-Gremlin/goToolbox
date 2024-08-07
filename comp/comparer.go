@@ -1,8 +1,10 @@
-package utils
+package comp
 
 import (
 	"cmp"
 	"time"
+
+	"github.com/Snow-Gremlin/goToolbox/internal/liteUtils"
 )
 
 // Comparer returns the comparison result between the two given values.
@@ -13,62 +15,85 @@ import (
 // `> 0` if x is greater than y.
 type Comparer[T any] func(x, y T) int
 
-// DefaultComparer tries to create a comparer for the given type.
+// Default tries to create a comparer for the given type.
 // If a comparer isn't able to be created, this will return nil.
-func DefaultComparer[T any]() Comparer[T] {
-	zero := Zero[T]()
+func Default[T any]() Comparer[T] {
+	zero := liteUtils.Zero[T]()
 	var c any
 	switch any(zero).(type) {
+	case bool:
+		c = Bool()
 	case int:
-		c = OrderedComparer[int]()
+		c = Ordered[int]()
 	case int8:
-		c = OrderedComparer[int8]()
+		c = Ordered[int8]()
 	case int16:
-		c = OrderedComparer[int16]()
+		c = Ordered[int16]()
 	case int32:
-		c = OrderedComparer[int32]()
+		c = Ordered[int32]()
 	case int64:
-		c = OrderedComparer[int64]()
+		c = Ordered[int64]()
 	case uint:
-		c = OrderedComparer[uint]()
+		c = Ordered[uint]()
 	case uint8:
-		c = OrderedComparer[uint8]()
+		c = Ordered[uint8]()
 	case uint16:
-		c = OrderedComparer[uint16]()
+		c = Ordered[uint16]()
 	case uint32:
-		c = OrderedComparer[uint32]()
+		c = Ordered[uint32]()
 	case uint64:
-		c = OrderedComparer[uint64]()
+		c = Ordered[uint64]()
 	case uintptr:
-		c = OrderedComparer[uintptr]()
+		c = Ordered[uintptr]()
 	case float32:
-		c = OrderedComparer[float32]()
+		c = Ordered[float32]()
 	case float64:
-		c = OrderedComparer[float64]()
+		c = Ordered[float64]()
 	case string:
-		c = OrderedComparer[string]()
+		c = Ordered[string]()
 	case Comparable[T]:
 		return flexForComparable[T]()
 	case time.Duration:
-		c = DurationComparer()
+		c = Duration()
 	case time.Time:
-		c = TimeComparer()
+		c = Time()
 	default:
 		return nil
 	}
 	return c.(Comparer[T])
 }
 
+// Bool is a comparer that compares the given boolean values.
+//
+// |  x  |  y  | result |
+// |:---:|:---:|:------:|
+// |  F  |  F  |    0   |
+// |  F  |  T  |   -1   |
+// |  T  |  F  |    1   |
+// |  T  |  T  |    0   |
+func Bool() Comparer[bool] {
+	return func(x, y bool) int {
+		result := 0
+		if x {
+			result++
+		}
+		if y {
+			result--
+		}
+		return result
+	}
+}
+
 // flexForComparable returns a comparer which compares the given comparable type.
-// This is designed to handle how Go performs type checking in generics for `For`.
+// This is designed to handle how Go performs type checking when switching on type.
 func flexForComparable[T any]() Comparer[T] {
 	return func(x, y T) int {
-		if !IsNil(x) {
+		if !liteUtils.IsNil(x) {
 			if c, ok := any(x).(Comparable[T]); ok {
 				return c.CompareTo(y)
 			}
 		}
-		if !IsNil(y) {
+		if !liteUtils.IsNil(y) {
 			if c, ok := any(y).(Comparable[T]); ok {
 				return -c.CompareTo(x)
 			}
@@ -77,16 +102,16 @@ func flexForComparable[T any]() Comparer[T] {
 	}
 }
 
-// OrderedComparer returns a comparer which compares the given ordered type.
-func OrderedComparer[T cmp.Ordered]() Comparer[T] {
+// Ordered returns a comparer which compares the given ordered type.
+func Ordered[T cmp.Ordered]() Comparer[T] {
 	return cmp.Compare[T]
 }
 
 // ComparableComparer returns a comparer which compares the given comparable type.
 func ComparableComparer[T Comparable[T]]() Comparer[T] {
 	return func(x, y T) int {
-		if IsNil(x) {
-			if IsNil(y) {
+		if liteUtils.IsNil(x) {
+			if liteUtils.IsNil(y) {
 				return 0
 			}
 			return -y.CompareTo(x)
@@ -95,21 +120,28 @@ func ComparableComparer[T Comparable[T]]() Comparer[T] {
 	}
 }
 
-// DurationComparer returns a comparer which compares the given time duration.
-func DurationComparer() Comparer[time.Duration] {
+// Duration returns a comparer which compares the given time duration.
+func Duration() Comparer[time.Duration] {
 	return func(x, y time.Duration) int {
 		return cmp.Compare[int64](int64(x), int64(y))
 	}
 }
 
-// TimeComparer returns a comparer which compares the given time duration.
-func TimeComparer() Comparer[time.Time] {
+// Time returns a comparer which compares the given time duration.
+func Time() Comparer[time.Time] {
 	return func(x, y time.Time) int {
 		return x.Compare(y)
 	}
 }
 
-// EpsilonComparer returns an epsilon comparer which compares the given floating point types.
+// Num is any number value type.
+type Num interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
+		~uintptr | ~float32 | ~float64
+}
+
+// Epsilon returns an epsilon comparer which compares the given floating point types.
 //
 // An epsilon comparator should be used
 // when comparing calculated floating point numbers since calculations may accrue small
@@ -119,9 +151,9 @@ func TimeComparer() Comparer[time.Time] {
 //
 // The given epsilon must be greater than zero. If the epsilon is
 // less than or equal to zero, this will fallback to an ordered comparer.
-func EpsilonComparer[T NumConstraint](epsilon T) Comparer[T] {
+func Epsilon[T Num](epsilon T) Comparer[T] {
 	if epsilon <= 0 {
-		return OrderedComparer[T]()
+		return Ordered[T]()
 	}
 	return func(a, b T) int {
 		if a < b {
@@ -146,9 +178,9 @@ func Descender[T any](cmp Comparer[T]) Comparer[T] {
 	}
 }
 
-// LessComparer returns a comparer which compares two values using
+// FromLess returns a comparer which compares two values using
 // a IsLessThan function to perform the comparison.
-func ComparerForLess[T any](less IsLessThan[T]) Comparer[T] {
+func FromLess[T any](less IsLessThan[T]) Comparer[T] {
 	return func(x, y T) int {
 		switch {
 		case less(x, y):
@@ -159,4 +191,32 @@ func ComparerForLess[T any](less IsLessThan[T]) Comparer[T] {
 			return 0
 		}
 	}
+}
+
+// Slice compares two slices with the given element comparer.
+func Slice[S ~[]T, T any](elemCmp Comparer[T]) Comparer[S] {
+	return func(a, b S) int {
+		ca, cb := len(a), len(b)
+		cMin := min(ca, cb)
+		for i := 0; i < cMin; i++ {
+			if cmp := elemCmp(a[i], b[i]); cmp != 0 {
+				return cmp
+			}
+		}
+		return cmp.Compare(ca, cb)
+	}
+}
+
+// Or will return the first non-zero value returned
+// by a comparison or it will return zero.
+//
+// The given functions will only be evaluated if all
+// prior tests have returned zero.
+func Or(comps ...func() int) int {
+	for _, cmp := range comps {
+		if c := cmp(); c != 0 {
+			return c
+		}
+	}
+	return 0
 }

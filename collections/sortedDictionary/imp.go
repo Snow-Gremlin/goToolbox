@@ -13,6 +13,7 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
 	"github.com/Snow-Gremlin/goToolbox/collections/readonlyDictionary"
 	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/events"
 	"github.com/Snow-Gremlin/goToolbox/events/event"
 	"github.com/Snow-Gremlin/goToolbox/internal/simpleSet"
@@ -31,7 +32,7 @@ const (
 type sortedDictionaryImp[TKey comparable, TValue any] struct {
 	data     map[TKey]TValue
 	keys     []TKey
-	comparer utils.Comparer[TKey]
+	comparer comp.Comparer[TKey]
 	event    events.Event[collections.ChangeArgs]
 }
 
@@ -66,7 +67,7 @@ func (d *sortedDictionaryImp[TKey, TValue]) removeKeys(keyToRemove simpleSet.Set
 
 func (d *sortedDictionaryImp[TKey, TValue]) addOne(key TKey, val TValue) changeFlag {
 	if v2, exists := d.data[key]; exists {
-		if utils.Equal(val, v2) {
+		if comp.Equal(val, v2) {
 			return noChange
 		}
 
@@ -293,7 +294,7 @@ func (d *sortedDictionaryImp[TKey, TValue]) Equals(other any) bool {
 	for it.Next() {
 		key, value := it.Current().Values()
 		v2, ok := d.TryGet(key)
-		if !ok || !utils.Equal(v2, value) {
+		if !ok || !comp.Equal(v2, value) {
 			return false
 		}
 	}

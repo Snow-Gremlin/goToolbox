@@ -13,6 +13,7 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections"
 	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
 	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
@@ -26,7 +27,7 @@ func pc[T cmp.Ordered](value T) *pseudoComparable[T] {
 }
 
 func (p *pseudoComparable[T]) CompareTo(other *pseudoComparable[T]) int {
-	return utils.OrderedComparer[T]()(p.value, other.value)
+	return comp.Ordered[T]()(p.value, other.value)
 }
 
 func (p *pseudoComparable[T]) String() string {
@@ -270,11 +271,11 @@ func Test_Enumerator_Max(t *testing.T) {
 	e1 := Enumerate(pc(`horse`), pc(`wolf`), pc(`cat`), pc(`mouse`))
 	checkEqual(t, pc(`wolf`), e1.Max())
 
-	checkEqual(t, 76, Enumerate(45, 76, 2, 56, 45, 5).Max(utils.DefaultComparer[int]()))
-	checkEqual(t, 2, Enumerate(45, 76, 2, 56, 45, 5).Max(utils.Descender(utils.DefaultComparer[int]())))
+	checkEqual(t, 76, Enumerate(45, 76, 2, 56, 45, 5).Max(comp.Default[int]()))
+	checkEqual(t, 2, Enumerate(45, 76, 2, 56, 45, 5).Max(comp.Descender(comp.Default[int]())))
 
 	checkPanic(t, `invalid number of arguments {count: 2, maximum: 1, usage: comparer}`, func() {
-		Enumerate(45, 76, 2, 56, 45, 5).Max(utils.DefaultComparer[int](), utils.DefaultComparer[int]())
+		Enumerate(45, 76, 2, 56, 45, 5).Max(comp.Default[int](), comp.Default[int]())
 	})
 }
 
@@ -287,11 +288,11 @@ func Test_Enumerator_Min(t *testing.T) {
 	e1 := Enumerate(pc(`horse`), pc(`wolf`), pc(`cat`), pc(`mouse`))
 	checkEqual(t, pc(`cat`), e1.Min())
 
-	checkEqual(t, 2, Enumerate(45, 76, 2, 56, 45, 5).Min(utils.DefaultComparer[int]()))
-	checkEqual(t, 76, Enumerate(45, 76, 2, 56, 45, 5).Min(utils.Descender(utils.DefaultComparer[int]())))
+	checkEqual(t, 2, Enumerate(45, 76, 2, 56, 45, 5).Min(comp.Default[int]()))
+	checkEqual(t, 76, Enumerate(45, 76, 2, 56, 45, 5).Min(comp.Descender(comp.Default[int]())))
 
 	checkPanic(t, `invalid number of arguments {count: 2, maximum: 1, usage: comparer}`, func() {
-		Enumerate(45, 76, 2, 56, 45, 5).Min(utils.DefaultComparer[int](), utils.DefaultComparer[int]())
+		Enumerate(45, 76, 2, 56, 45, 5).Min(comp.Default[int](), comp.Default[int]())
 	})
 }
 
@@ -394,11 +395,11 @@ func Test_Enumerator_SortInterweave(t *testing.T) {
 		pc(5), pc(6), pc(7), pc(8), pc(9),
 	}, e3.SortInterweave(e4).ToSlice())
 
-	checkEqual(t, []int{2, 4, 5, 3, 1, 6}, e1.SortInterweave(e2, utils.DefaultComparer[int]()).ToSlice())
-	checkEqual(t, []int{5, 3, 2, 4, 6, 1}, e1.SortInterweave(e2, utils.Descender(utils.DefaultComparer[int]())).ToSlice())
+	checkEqual(t, []int{2, 4, 5, 3, 1, 6}, e1.SortInterweave(e2, comp.Default[int]()).ToSlice())
+	checkEqual(t, []int{5, 3, 2, 4, 6, 1}, e1.SortInterweave(e2, comp.Descender(comp.Default[int]())).ToSlice())
 
 	checkPanic(t, `invalid number of arguments {count: 2, maximum: 1, usage: comparer}`, func() {
-		e1.SortInterweave(e2, utils.DefaultComparer[int](), utils.DefaultComparer[int]())
+		e1.SortInterweave(e2, comp.Default[int](), comp.Default[int]())
 	})
 }
 
@@ -430,11 +431,11 @@ func Test_Enumerator_Sorted(t *testing.T) {
 
 	e1 = Enumerate(`bat`, `cat`, `dog`, `hat`, `mouse`, `wolf`)
 	checkEqual(t, true, e1.Sorted(strings.Compare))
-	checkEqual(t, false, e1.Sorted(utils.Descender(strings.Compare)))
+	checkEqual(t, false, e1.Sorted(comp.Descender(strings.Compare)))
 
 	e1 = Enumerate(`wolf`, `mouse`, `hat`, `dog`, `cat`, `bat`)
 	checkEqual(t, false, e1.Sorted(strings.Compare))
-	checkEqual(t, true, e1.Sorted(utils.Descender(strings.Compare)))
+	checkEqual(t, true, e1.Sorted(comp.Descender(strings.Compare)))
 
 	checkPanic(t, `invalid number of arguments {count: 2, maximum: 1, usage: comparer}`, func() {
 		e1.Sorted(strings.Compare, strings.Compare)
@@ -805,7 +806,7 @@ func Test_Enumerator_Equal(t *testing.T) {
 
 func checkEqual(t testing.TB, exp, actual any) {
 	t.Helper()
-	if !utils.Equal(exp, actual) {
+	if !comp.Equal(exp, actual) {
 		t.Errorf("\n"+
 			"Expected value didn't match the actual value:\n"+
 			"Actual:   %v (%T)\n"+
@@ -815,7 +816,7 @@ func checkEqual(t testing.TB, exp, actual any) {
 
 func checkNotEqual(t testing.TB, exp, actual any) {
 	t.Helper()
-	if utils.Equal(exp, actual) {
+	if comp.Equal(exp, actual) {
 		t.Errorf("\n"+
 			"Expected value shouldn't have matched the actual value:\n"+
 			"Actual:   %v (%T)\n"+

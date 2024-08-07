@@ -1,4 +1,4 @@
-package utils
+package comp
 
 // Comparable is an object which can be compared against another object.
 //

@@ -1,6 +1,9 @@
 package collections
 
-import "github.com/Snow-Gremlin/goToolbox/utils"
+import (
+	"github.com/Snow-Gremlin/goToolbox/comp"
+	"github.com/Snow-Gremlin/goToolbox/utils"
+)
 
 // Tuple is an object containing several values.
 type Tuple interface {
@@ -8,5 +11,5 @@ type Tuple interface {
 	Getter[int, any]
 	Sliceable[any]
 	utils.Stringer
-	utils.Equatable
+	comp.Equatable
 }

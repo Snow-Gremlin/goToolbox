@@ -7,6 +7,7 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections"
 	"github.com/Snow-Gremlin/goToolbox/collections/predicate"
 	"github.com/Snow-Gremlin/goToolbox/collections/tuple2"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/internal/optional"
 	"github.com/Snow-Gremlin/goToolbox/internal/simpleSet"
 	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
@@ -186,7 +187,7 @@ func StartsWith[T any](it, prefix collections.Iterator[T]) bool {
 		if !n2 {
 			return true
 		}
-		if !utils.Equal(it.Current(), prefix.Current()) {
+		if !comp.Equal(it.Current(), prefix.Current()) {
 			return false
 		}
 	}
@@ -199,7 +200,7 @@ func Equal[T any](it1, it2 collections.Iterator[T]) bool {
 		if !next1 {
 			return !next2
 		}
-		if !next2 || !utils.Equal(it1.Current(), it2.Current()) {
+		if !next2 || !comp.Equal(it1.Current(), it2.Current()) {
 			return false
 		}
 	}
@@ -724,7 +725,7 @@ func Interweave[T any](its []collections.Iterator[T]) collections.Iterator[T] {
 // If the two iterators are sorted, this will effectively merge sort the values.
 // This can take an optional comparer to override the default or
 // if this type doesn't have a default comparer.
-func SortInterweave[T any](left, right collections.Iterator[T], comparer ...utils.Comparer[T]) collections.Iterator[T] {
+func SortInterweave[T any](left, right collections.Iterator[T], comparer ...comp.Comparer[T]) collections.Iterator[T] {
 	cmp := optional.Comparer(comparer)
 	hasLeft, hasRight := false, false
 	var leftValue, rightValue T
@@ -761,7 +762,7 @@ func SortInterweave[T any](left, right collections.Iterator[T], comparer ...util
 // The values are sorted by the given comparer function or the default comparer.
 // This can take an optional comparer to override the default or
 // if this type doesn't have a default comparer.
-func Sort[T any](it collections.Iterator[T], comparer ...utils.Comparer[T]) collections.Iterator[T] {
+func Sort[T any](it collections.Iterator[T], comparer ...comp.Comparer[T]) collections.Iterator[T] {
 	cmp := optional.Comparer(comparer)
 	var index, count int
 	var sortedValues []T
@@ -788,7 +789,7 @@ func Sort[T any](it collections.Iterator[T], comparer ...utils.Comparer[T]) coll
 // based on the given comparer or the default comparer.
 // This can take an optional comparer to override the default or
 // if this type doesn't have a default comparer.
-func Sorted[T any](it collections.Iterator[T], comparer ...utils.Comparer[T]) bool {
+func Sorted[T any](it collections.Iterator[T], comparer ...comp.Comparer[T]) bool {
 	cmp := optional.Comparer(comparer)
 	if it.Next() {
 		prev := it.Current()

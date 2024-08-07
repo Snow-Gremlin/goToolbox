@@ -8,6 +8,7 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections"
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/list"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/events"
 	"github.com/Snow-Gremlin/goToolbox/testers/check"
 	"github.com/Snow-Gremlin/goToolbox/utils"
@@ -36,7 +37,7 @@ func (q *pseudoQueueImp[T]) String() string {
 
 func (q *pseudoQueueImp[T]) Equals(other any) bool {
 	v, ok := other.(collections.Sliceable[T])
-	return ok && utils.Equal(q.ToSlice(), v.ToSlice())
+	return ok && comp.Equal(q.ToSlice(), v.ToSlice())
 }
 
 func (q *pseudoQueueImp[T]) ToSlice() []T {

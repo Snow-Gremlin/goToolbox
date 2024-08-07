@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Snow-Gremlin/goToolbox/collections/changeType"
-	"github.com/Snow-Gremlin/goToolbox/utils"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 )
 
 func Test_ChangeArg(t *testing.T) {
@@ -14,7 +14,7 @@ func Test_ChangeArg(t *testing.T) {
 }
 
 func check(t *testing.T, exp, actual any) {
-	if !utils.Equal(actual, exp) {
+	if !comp.Equal(actual, exp) {
 		t.Errorf("Unexpected value:\n\tActual: %v\n\tExpected: %v\n",
 			actual, exp)
 	}
