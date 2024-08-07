@@ -1,20 +1,32 @@
-name: Go
-on: [push]
+name: CI
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "*" ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GO_VERSION: '^1.22'
 
 jobs:
   test:
     name: test
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: [ '1.21.x', 'stable' ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version: ${{ env.GO_VERSION }}
       - name: Add Cover Tool
         run: go get golang.org/x/tools/cmd/cover
       - name: Install dependencies
@@ -22,14 +34,15 @@ jobs:
       - name: Run Tests
         timeout-minutes: 1
         run: go test -cover ./...
+
   lint:
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
-          go-version: '1.21.x'
+          go-version: ${{ env.GO_VERSION }}
           cache: false
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
