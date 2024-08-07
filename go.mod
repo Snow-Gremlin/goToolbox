@@ -1,3 +1,3 @@
 module github.com/Snow-Gremlin/goToolbox
 
-go 1.21
+go 1.22
