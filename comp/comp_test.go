@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -79,6 +80,18 @@ func Test_Comp_FromLess(t *testing.T) {
 	if result := strings.Join(c, `, `); result != exp {
 		t.Errorf("\n"+
 			"Unexpected value from FromLess sort:\n"+
+			"\tActual:   %s\n"+
+			"\tExpected: %s\n", result, exp)
+	}
+
+	c = slices.Clone(values)
+	less := cmp.ToLess()
+	sort.Slice(c, func(i, j int) bool {
+		return less(c[i], c[j])
+	})
+	if result := strings.Join(c, `, `); result != exp {
+		t.Errorf("\n"+
+			"Unexpected value from ToLess sort:\n"+
 			"\tActual:   %s\n"+
 			"\tExpected: %s\n", result, exp)
 	}
@@ -295,19 +308,19 @@ func Test_Comp_Sorting(t *testing.T) {
 		[]string{`cat`, `pig`, `Dog`, `apple`},
 		`Dog, apple, cat, pig`)
 
-	checkSort(t, Descender(Ordered[int]()),
+	checkSort(t, Ordered[int]().Reverse(),
 		[]int{3, 1, 6, 5},
 		`6, 5, 3, 1`)
 
-	checkSort(t, Descender(Ordered[float64]()),
+	checkSort(t, Ordered[float64]().Reverse(),
 		[]float64{4.3, 2.16, 333.333, 12.34},
 		`333.333, 12.34, 4.3, 2.16`)
 
-	checkSort(t, Descender(Ordered[rune]()),
+	checkSort(t, Ordered[rune]().Reverse(),
 		[]rune{'k', 'a', 'q', 'H'},
 		`113, 107, 97, 72`)
 
-	checkSort(t, Descender(Ordered[string]()),
+	checkSort(t, Ordered[string]().Reverse(),
 		[]string{`cat`, `pig`, `Dog`, `apple`},
 		`pig, cat, apple, Dog`)
 
@@ -367,9 +380,9 @@ func Test_Comp_Or(t *testing.T) {
 
 	check(func(a, b person) int {
 		return Or(
-			func() int { return Default[string]()(a.first, b.first) },
-			func() int { return Default[string]()(a.last, b.last) },
-			func() int { return Default[int]()(a.age, b.age) },
+			Default[string]().Pend(a.first, b.first),
+			Default[string]().Pend(a.last, b.last),
+			Default[int]().Pend(a.age, b.age),
 		)
 	}, `Bob Hicks 23`,
 		`Bob Smith 23`,
@@ -383,9 +396,9 @@ func Test_Comp_Or(t *testing.T) {
 
 	check(func(a, b person) int {
 		return Or(
-			func() int { return Default[string]()(a.last, b.last) },
-			func() int { return Default[string]()(a.first, b.first) },
-			func() int { return Default[int]()(a.age, b.age) },
+			Default[string]().Pend(a.last, b.last),
+			Default[string]().Pend(a.first, b.first),
+			Default[int]().Pend(a.age, b.age),
 		)
 	}, `Sal Atoms 13`,
 		`Bob Hicks 23`,
@@ -399,9 +412,9 @@ func Test_Comp_Or(t *testing.T) {
 
 	check(func(a, b person) int {
 		return Or(
-			func() int { return Default[int]()(a.age, b.age) },
-			func() int { return Default[string]()(a.first, b.first) },
-			func() int { return Default[string]()(a.last, b.last) },
+			Default[int]().Pend(a.age, b.age),
+			Default[string]().Pend(a.first, b.first),
+			Default[string]().Pend(a.last, b.last),
 		)
 	}, `Sal Atoms 13`,
 		`Tim Smith 13`,
