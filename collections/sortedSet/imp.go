@@ -9,10 +9,11 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections/enumerator"
 	"github.com/Snow-Gremlin/goToolbox/collections/iterator"
 	"github.com/Snow-Gremlin/goToolbox/collections/list"
-	"github.com/Snow-Gremlin/goToolbox/collections/readonlySet"
+	"github.com/Snow-Gremlin/goToolbox/collections/readonlySortedSet"
 	"github.com/Snow-Gremlin/goToolbox/comp"
 	"github.com/Snow-Gremlin/goToolbox/events"
 	"github.com/Snow-Gremlin/goToolbox/events/event"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
@@ -30,12 +31,17 @@ func (s *sortedSetImp[T]) grow(newLength int) {
 	s.data = slices.Grow(s.data, newLength)
 }
 
-func (s *sortedSetImp[T]) addOne(value T) bool {
-	if index, found := s.find(value); !found {
-		s.data = slices.Insert(s.data, index, value)
-		return true
+func (s *sortedSetImp[T]) addOne(value T, force bool) (T, bool) {
+	index, found := s.find(value)
+	if found {
+		if force {
+			s.data[index] = value
+			return value, false
+		}
+		return s.data[index], false
 	}
-	return false
+	s.data = slices.Insert(s.data, index, value)
+	return value, true
 }
 
 func (s *sortedSetImp[T]) onAdded() {
@@ -59,6 +65,20 @@ func (s *sortedSetImp[T]) Enumerate() collections.Enumerator[T] {
 		return iterator.New(func() (T, bool) {
 			if index < len(s.data)-1 {
 				index++
+				return s.data[index], true
+			}
+			return utils.Zero[T](), false
+		})
+	})
+}
+
+func (s *sortedSetImp[T]) Backwards() collections.Enumerator[T] {
+	// See comment in Enumerate
+	return enumerator.New(func() collections.Iterator[T] {
+		index := len(s.data)
+		return iterator.New(func() (T, bool) {
+			if index = min(index, len(s.data)); index > 0 {
+				index--
 				return s.data[index], true
 			}
 			return utils.Zero[T](), false
@@ -124,12 +144,72 @@ func (s *sortedSetImp[T]) OnChange() events.Event[collections.ChangeArgs] {
 	return s.event
 }
 
-func (s *sortedSetImp[T]) Add(values ...T) bool {
+func (s *sortedSetImp[T]) Get(index int) T {
+	if count := len(s.data); index < 0 || index >= count {
+		panic(terror.OutOfBounds(index, count))
+	}
+	return s.data[index]
+}
+
+func (s *sortedSetImp[T]) TryGet(index int) (T, bool) {
+	if index < 0 || index >= len(s.data) {
+		return utils.Zero[T](), false
+	}
+	return s.data[index], true
+}
+
+func (s *sortedSetImp[T]) First() T {
+	if len(s.data) <= 0 {
+		panic(terror.EmptyCollection(`First`))
+	}
+	return s.data[0]
+}
+
+func (s *sortedSetImp[T]) Last() T {
+	count := len(s.data)
+	if count <= 0 {
+		panic(terror.EmptyCollection(`Last`))
+	}
+	return s.data[count-1]
+}
+
+func (s *sortedSetImp[T]) IndexOf(value T) int {
+	if index, found := s.find(value); found {
+		return index
+	}
+	return -1
+}
+
+func (s *sortedSetImp[T]) add(values []T, force bool) bool {
 	added := false
 	s.grow(len(s.data) + len(values))
-	// TODO: Could improve by presorting values and zipping values together.
 	for _, value := range values {
-		added = s.addOne(value) || added
+		_, oneAdded := s.addOne(value, force)
+		added = oneAdded || added
+	}
+	if added {
+		s.onAdded()
+	}
+	return added
+}
+
+func (s *sortedSetImp[T]) Add(values ...T) bool {
+	return s.add(values, false)
+}
+
+func (s *sortedSetImp[T]) Overwrite(values ...T) bool {
+	return s.add(values, true)
+}
+
+func (s *sortedSetImp[T]) addFrom(e collections.Enumerator[T], force bool) bool {
+	if utils.IsNil(e) {
+		return false
+	}
+	added := false
+	it := e.Iterate()
+	for it.Next() {
+		_, oneAdded := s.addOne(it.Current(), force)
+		added = oneAdded || added
 	}
 	if added {
 		s.onAdded()
@@ -138,18 +218,73 @@ func (s *sortedSetImp[T]) Add(values ...T) bool {
 }
 
 func (s *sortedSetImp[T]) AddFrom(e collections.Enumerator[T]) bool {
-	if utils.IsNil(e) {
-		return false
-	}
-	added := false
-	it := e.Iterate()
-	for it.Next() {
-		added = s.addOne(it.Current()) || added
-	}
+	return s.addFrom(e, false)
+}
+
+func (s *sortedSetImp[T]) OverwriteFrom(e collections.Enumerator[T]) bool {
+	return s.addFrom(e, true)
+}
+
+func (s *sortedSetImp[T]) TryAdd(value T) (T, bool) {
+	value, added := s.addOne(value, false)
 	if added {
 		s.onAdded()
 	}
-	return added
+	return value, added
+}
+
+func (s *sortedSetImp[T]) TakeFirst() T {
+	max := len(s.data) - 1
+	if max < 0 {
+		panic(terror.EmptyCollection(`TakeFirst`))
+	}
+	result := s.data[0]
+	copy(s.data, s.data[1:])
+	s.data[max] = utils.Zero[T]()
+	s.data = s.data[:max]
+	s.onRemoved()
+	return result
+}
+
+func (s *sortedSetImp[T]) TakeFront(count int) collections.List[T] {
+	fullCount := len(s.data)
+	count = min(count, fullCount)
+	if count <= 0 {
+		return list.New[T]()
+	}
+	end := fullCount - count
+	result := list.With(s.data[:count]...)
+	copy(s.data, s.data[count:])
+	utils.SetToZero(s.data, end, fullCount)
+	s.data = s.data[:end]
+	s.onRemoved()
+	return result
+}
+
+func (s *sortedSetImp[T]) TakeLast() T {
+	max := len(s.data) - 1
+	if max < 0 {
+		panic(terror.EmptyCollection(`TakeLast`))
+	}
+	result := s.data[max]
+	s.data[max] = utils.Zero[T]()
+	s.data = s.data[:max]
+	s.onRemoved()
+	return result
+}
+
+func (s *sortedSetImp[T]) TakeBack(count int) collections.List[T] {
+	fullCount := len(s.data)
+	count = min(count, fullCount)
+	if count <= 0 {
+		return list.New[T]()
+	}
+	end := fullCount - count
+	result := list.With(s.data[end:]...)
+	utils.SetToZero(s.data, end, fullCount)
+	s.data = s.data[:end]
+	s.onRemoved()
+	return result
 }
 
 func (s *sortedSetImp[T]) Remove(values ...T) bool {
@@ -179,6 +314,13 @@ func (s *sortedSetImp[T]) RemoveIf(predicate collections.Predicate[T]) bool {
 	return false
 }
 
+func (s *sortedSetImp[T]) RemoveRange(index, count int) {
+	if count > 0 {
+		s.data = slices.Delete(s.data, index, index+count)
+		s.onRemoved()
+	}
+}
+
 func (s *sortedSetImp[T]) Clear() {
 	if len(s.data) > 0 {
 		utils.SetToZero(s.data, 0, len(s.data)-1)
@@ -187,7 +329,7 @@ func (s *sortedSetImp[T]) Clear() {
 	}
 }
 
-func (s *sortedSetImp[T]) Clone() collections.Set[T] {
+func (s *sortedSetImp[T]) Clone() collections.SortedSet[T] {
 	return &sortedSetImp[T]{
 		data:     slices.Clone(s.data),
 		comparer: s.comparer,
@@ -195,6 +337,6 @@ func (s *sortedSetImp[T]) Clone() collections.Set[T] {
 	}
 }
 
-func (s *sortedSetImp[T]) Readonly() collections.ReadonlySet[T] {
-	return readonlySet.New(s)
+func (s *sortedSetImp[T]) Readonly() collections.ReadonlySortedSet[T] {
+	return readonlySortedSet.New(s)
 }

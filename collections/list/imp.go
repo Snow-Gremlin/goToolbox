@@ -255,9 +255,7 @@ func (list *listImp[T]) InsertFrom(index int, e collections.Enumerator[T]) {
 
 func (list *listImp[T]) Remove(index, count int) {
 	if count > 0 {
-		s := slices.Delete(list.s, index, index+count)
-		utils.SetToZero(list.s, len(s)+1, len(list.s))
-		list.s = s
+		list.s = slices.Delete(list.s, index, index+count)
 		list.onRemoved()
 	}
 }

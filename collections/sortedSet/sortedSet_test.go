@@ -57,12 +57,17 @@ func Test_SortedSet(t *testing.T) {
 	check.True(t).Assert(s2.Empty())
 	check.String(t, ``).Assert(s2)
 	check.NotEqual(t, s2).Assert(s)
+	check.MatchError(t, `^collection contains no values \{action: First\}$`).Panic(func() { s2.First() })
+	check.MatchError(t, `^collection contains no values \{action: Last\}$`).Panic(func() { s2.Last() })
+	check.MatchError(t, `^collection contains no values \{action: TakeFirst\}$`).Panic(func() { s2.TakeFirst() })
+	check.MatchError(t, `^collection contains no values \{action: TakeLast\}$`).Panic(func() { s2.TakeLast() })
 
 	check.True(t).Assert(s.Remove(4, 5))
 	check.False(t).Assert(s.Remove(4, 5))
 	check.String(t, `1, 2, 3`).Assert(s)
 
 	check.True(t).Assert(s.Add(4, 5, 6, 7, 8))
+	check.False(t).Assert(s.RemoveIf(nil)) // no effect
 	check.False(t).Assert(s.RemoveIf(predicate.IsZero[int]()))
 	check.True(t).Assert(s.RemoveIf(predicate.LessThan(5)))
 	check.String(t, `5, 6, 7, 8`).Assert(s)
@@ -71,6 +76,52 @@ func Test_SortedSet(t *testing.T) {
 	check.False(t).Assert(s.AddFrom(enumerator.Range(5, 3)))
 	check.True(t).Assert(s.AddFrom(enumerator.Range(9, 3)))
 	check.String(t, `5, 6, 7, 8, 9, 10, 11`).Assert(s)
+	s.RemoveRange(3, 0) // no effect
+	s.RemoveRange(3, 2)
+	check.String(t, `5, 6, 7, 10, 11`).Assert(s)
+
+	check.Equal(t, 5).Assert(s.Get(0))
+	check.Equal(t, 6).Assert(s.Get(1))
+	check.Equal(t, 7).Assert(s.Get(2))
+	check.Equal(t, 10).Assert(s.Get(3))
+	check.Equal(t, 11).Assert(s.Get(4))
+	check.MatchError(t, `^index out of bounds \{count: 5, index: -1\}$`).Panic(func() { s.Get(-1) })
+	check.MatchError(t, `^index out of bounds \{count: 5, index: 5\}$`).Panic(func() { s.Get(5) })
+
+	v, ok := s.TryGet(2)
+	check.True(t).Assert(ok)
+	check.Equal(t, 7).Assert(v)
+
+	v, ok = s.TryGet(-1)
+	check.False(t).Assert(ok)
+	check.Zero(t).Assert(v)
+
+	check.Equal(t, 5).Assert(s.First())
+	check.Equal(t, 11).Assert(s.Last())
+
+	check.Equal(t, -1).Assert(s.IndexOf(4))
+	check.Equal(t, 0).Assert(s.IndexOf(5))
+	check.Equal(t, 1).Assert(s.IndexOf(6))
+	check.Equal(t, 2).Assert(s.IndexOf(7))
+	check.Equal(t, -1).Assert(s.IndexOf(8))
+	check.Equal(t, -1).Assert(s.IndexOf(9))
+	check.Equal(t, 3).Assert(s.IndexOf(10))
+	check.Equal(t, 4).Assert(s.IndexOf(11))
+	check.Equal(t, -1).Assert(s.IndexOf(12))
+
+	s3 := s.Clone()
+	check.Equal(t, 5).Assert(s3.TakeFirst())
+	check.String(t, `6, 7, 10, 11`).Assert(s3)
+	check.Equal(t, 11).Assert(s3.TakeLast())
+	check.String(t, `6, 7, 10`).Assert(s3)
+
+	s3 = s.Clone()
+	check.String(t, ``).Assert(s3.TakeFront(0))
+	check.String(t, `5, 6`).Assert(s3.TakeFront(2))
+	check.String(t, `7, 10, 11`).Assert(s3)
+	check.String(t, ``).Assert(s3.TakeBack(0))
+	check.String(t, `10, 11`).Assert(s3.TakeBack(2))
+	check.String(t, `7`).Assert(s3)
 }
 
 func Test_SortedSet_CustomCompare(t *testing.T) {
@@ -120,6 +171,54 @@ func Test_SortedSet_New(t *testing.T) {
 	check.String(t, `1, 2, 3, 4, 5`).Assert(s)
 }
 
+func Test_SortedSet_TryAddAndOverwrite(t *testing.T) {
+	type person struct {
+		first, last string
+	}
+
+	compareOnlyLast := func(p, q person) int {
+		return strings.Compare(p.last, q.last)
+	}
+
+	s := New(compareOnlyLast)
+	v, ok := s.TryAdd(person{first: `Jill`, last: `Smith`})
+	check.True(t).Assert(ok)
+	check.String(t, `{Jill Smith}`).Assert(v)
+	check.String(t, `{Jill Smith}`).Assert(s)
+
+	v, ok = s.TryAdd(person{first: `Jill`, last: `Johnson`})
+	check.True(t).Assert(ok)
+	check.String(t, `{Jill Johnson}`).Assert(v)
+	check.String(t, `{Jill Johnson}, {Jill Smith}`).Assert(s)
+
+	// "Smith" already exists so don't overwrite and return.
+	v, ok = s.TryAdd(person{first: `Tom`, last: `Smith`})
+	check.False(t).Assert(ok)
+	check.String(t, `{Jill Smith}`).Assert(v)
+	check.String(t, `{Jill Johnson}, {Jill Smith}`).Assert(s)
+
+	// Try to add but don't replace the original.
+	ok = s.Add(person{first: `Tom`, last: `Smith`})
+	check.False(t).Assert(ok)
+	check.String(t, `{Jill Johnson}, {Jill Smith}`).Assert(s)
+
+	// Try again but overwrite this time.
+	ok = s.Overwrite(person{first: `Tom`, last: `Smith`})
+	check.False(t).Assert(ok)
+	check.String(t, `{Jill Johnson}, {Tom Smith}`).Assert(s)
+
+	ok = s.Overwrite(person{first: `Bill`, last: `Wolf`})
+	check.True(t).Assert(ok)
+	check.String(t, `{Jill Johnson}, {Tom Smith}, {Bill Wolf}`).Assert(s)
+
+	ok = s.OverwriteFrom(enumerator.Enumerate(
+		person{first: `Mark`, last: `Wolf`},
+		person{first: `Mark`, last: `Smith`},
+		person{first: `Mark`, last: `Gram`}))
+	check.True(t).Assert(ok)
+	check.String(t, `{Mark Gram}, {Jill Johnson}, {Mark Smith}, {Mark Wolf}`).Assert(s)
+}
+
 func Test_SortedSet_UnstableIteration(t *testing.T) {
 	s := With([]int{2, 4, 6})
 	it := s.Enumerate().Iterate()
@@ -133,6 +232,25 @@ func Test_SortedSet_UnstableIteration(t *testing.T) {
 	check.True(t).Assert(s.Add(3))
 	check.True(t).Assert(it.Next()) // repeat 4 since 3 inserted before it
 	check.Equal(t, 4).Assert(it.Current())
+
+	check.True(t).Assert(s.Remove(2, 3, 4)) // removes everything but 6
+	check.False(t).Assert(it.Next())
+	check.Zero(t).Assert(it.Current())
+}
+
+func Test_SortedSet_UnstableIteration_Backwards(t *testing.T) {
+	s := With([]int{2, 4, 6})
+	it := s.Backwards().Iterate()
+
+	check.True(t).Assert(it.Next())
+	check.Equal(t, 6).Assert(it.Current())
+
+	check.True(t).Assert(it.Next())
+	check.Equal(t, 4).Assert(it.Current())
+
+	check.True(t).Assert(s.Add(3))
+	check.True(t).Assert(it.Next()) // skip 3 and goto 2 since 3 inserted where 4 was
+	check.Equal(t, 2).Assert(it.Current())
 
 	check.True(t).Assert(s.Remove(2, 3, 4)) // removes everything but 6
 	check.False(t).Assert(it.Next())
