@@ -55,6 +55,12 @@ func Default[T any]() Comparer[T] {
 	return c.(Comparer[T])
 }
 
+// DefaultPend creates a default comparison and pends comparing
+// the two given values until the returned method is called.
+func DefaultPend[T any](x, y T) func() int {
+	return Default[T]().Pend(x, y)
+}
+
 // Bool is a comparer that compares the given boolean values.
 //
 // |  x  |  y  | result |

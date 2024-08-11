@@ -380,9 +380,9 @@ func Test_Comp_Or(t *testing.T) {
 
 	check(func(a, b person) int {
 		return Or(
-			Default[string]().Pend(a.first, b.first),
-			Default[string]().Pend(a.last, b.last),
-			Default[int]().Pend(a.age, b.age),
+			DefaultPend(a.first, b.first),
+			DefaultPend(a.last, b.last),
+			DefaultPend(a.age, b.age),
 		)
 	}, `Bob Hicks 23`,
 		`Bob Smith 23`,
@@ -396,9 +396,9 @@ func Test_Comp_Or(t *testing.T) {
 
 	check(func(a, b person) int {
 		return Or(
-			Default[string]().Pend(a.last, b.last),
-			Default[string]().Pend(a.first, b.first),
-			Default[int]().Pend(a.age, b.age),
+			DefaultPend(a.last, b.last),
+			DefaultPend(a.first, b.first),
+			DefaultPend(a.age, b.age),
 		)
 	}, `Sal Atoms 13`,
 		`Bob Hicks 23`,
@@ -412,9 +412,9 @@ func Test_Comp_Or(t *testing.T) {
 
 	check(func(a, b person) int {
 		return Or(
-			Default[int]().Pend(a.age, b.age),
-			Default[string]().Pend(a.first, b.first),
-			Default[string]().Pend(a.last, b.last),
+			DefaultPend(a.age, b.age),
+			DefaultPend(a.first, b.first),
+			DefaultPend(a.last, b.last),
 		)
 	}, `Sal Atoms 13`,
 		`Tim Smith 13`,
