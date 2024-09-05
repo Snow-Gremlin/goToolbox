@@ -68,6 +68,32 @@ func Test_Comp_Comparable(t *testing.T) {
 	checkComparer(t, c, pc2, pc2, 0)
 }
 
+func checkPanic(t *testing.T, exp string, h func()) {
+	defer func() {
+		result := `no panic`
+		if r := recover(); r != nil {
+			result = fmt.Sprintf(`%v`, r)
+		}
+		if result != exp {
+			t.Errorf("\n"+
+				"Unexpected recover from panic:\n"+
+				"\tActual:   %s\n"+
+				"\tExpected: %s\n", result, exp)
+		}
+	}()
+	h()
+}
+
+func Test_Comp_Comparable_Panics(t *testing.T) {
+	c := Comparer[int](nil)
+	checkPanic(t, `may not reverse a nil comparer`,
+		func() { c.Reverse() })
+	checkPanic(t, `may not pend a comparison on a nil comparer`,
+		func() { c.Pend(3, 4) })
+	checkPanic(t, `may not convert a nil comparer to a less than`,
+		func() { c.ToLess() })
+}
+
 func Test_Comp_FromLess(t *testing.T) {
 	cmp := FromLess(func(x, y string) bool {
 		return len(x) < len(y)
