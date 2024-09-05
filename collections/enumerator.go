@@ -53,11 +53,11 @@ type Enumerator[T any] interface {
 
 	// AtLeast determines if there are at least the given number of values.
 	// This is faster than using count so use when an exact count isn't needed.
-	AtLeast(min int) bool
+	AtLeast(minValue int) bool
 
 	// AtMost determines if there are at most the given number of values.
 	// This is faster than using count so use when an exact count isn't needed.
-	AtMost(max int) bool
+	AtMost(maxValue int) bool
 
 	// First returns the first value in the enumerator with true,
 	// or zero value with false if the enumerator is empty.

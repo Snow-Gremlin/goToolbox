@@ -203,12 +203,12 @@ func (imp *readerImp) Struct(target any) argers.Reader {
 	s := v.Elem()
 	st := s.Type()
 	for i, count := 0, s.NumField(); i < count; i++ {
-		imp.structField(i, s.Field(i), st.Field(i))
+		imp.structField(s.Field(i), st.Field(i))
 	}
 	return imp
 }
 
-func (imp *readerImp) structField(i int, f reflect.Value, ft reflect.StructField) {
+func (imp *readerImp) structField(f reflect.Value, ft reflect.StructField) {
 	if !ft.IsExported() {
 		return
 	}
@@ -293,7 +293,7 @@ func addStructField[T utils.ParsableConstraint](imp *readerImp, target any, name
 		return
 	}
 
-	if hasNames, isFlag, short, long, defVal := parseFieldTag[T](name, tag); hasNames {
+	if hasNames, isFlag, short, long, defVal := parseFieldTag[T](tag); hasNames {
 		if isFlag {
 			Flag[T](imp, target.(*T), defVal, short, long)
 			return
@@ -305,7 +305,7 @@ func addStructField[T utils.ParsableConstraint](imp *readerImp, target any, name
 	Pos[T](imp, target.(*T))
 }
 
-func parseFieldTag[T utils.ParsableConstraint](name, tag string) (hasNames, isFlag bool, short, long string, defVal T) {
+func parseFieldTag[T utils.ParsableConstraint](tag string) (hasNames, isFlag bool, short, long string, defVal T) {
 	var tags []string
 	if len(tag) > 0 {
 		tags = enumerator.Split(tag, `,`).Trim().ToSlice()
@@ -381,8 +381,8 @@ func (imp *readerImp) consumeNamedInput(argList collections.List[string]) error 
 }
 
 func (imp *readerImp) consumeShortNamedInput(argList collections.List[string], index int, arg string) error {
-	max := len(arg) - 1
-	for i := 1; i <= max; i++ {
+	maxIndex := len(arg) - 1
+	for i := 1; i <= maxIndex; i++ {
 		short := string(arg[i])
 
 		if handle, has := imp.shortFlags[short]; has {
@@ -397,7 +397,7 @@ func (imp *readerImp) consumeShortNamedInput(argList collections.List[string], i
 		}
 
 		if named, has := imp.shortNamed[short]; has {
-			if i != max {
+			if i != maxIndex {
 				return terror.New(`may not have a short named value anywhere but the end of a flag group`).
 					With(`name`, short).
 					With(`name index`, i-1).

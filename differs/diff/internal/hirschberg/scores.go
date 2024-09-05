@@ -76,11 +76,11 @@ func (s *scores) calculate(cont internal.Container) {
 // The pivot is the index of the maximum sum of each element in the two scores.
 func (s *scores) findPivot(bLength int) int {
 	index := 0
-	min := s.other[0] + s.back[bLength]
+	minValue := s.other[0] + s.back[bLength]
 	for j := 1; j <= bLength; j++ {
 		value := s.other[j] + s.back[bLength-j]
-		if value < min {
-			min = value
+		if value < minValue {
+			minValue = value
 			index = j
 		}
 	}

@@ -224,11 +224,11 @@ func Count[T any](it collections.Iterator[T]) int {
 
 // AtLeast reads only enough values from the given iterator to determine
 // if there is at least the given number of values exists.
-func AtLeast[T any](it collections.Iterator[T], min int) bool {
+func AtLeast[T any](it collections.Iterator[T], minValue int) bool {
 	count := 0
 	for it.Next() {
 		count++
-		if count >= min {
+		if count >= minValue {
 			return true
 		}
 	}
@@ -237,11 +237,11 @@ func AtLeast[T any](it collections.Iterator[T], min int) bool {
 
 // AtMost reads all the values from the given iterator to determine
 // if there is at most the given number of values exists.
-func AtMost[T any](it collections.Iterator[T], max int) bool {
+func AtMost[T any](it collections.Iterator[T], maxValue int) bool {
 	count := 0
 	for it.Next() {
 		count++
-		if count > max {
+		if count > maxValue {
 			return false
 		}
 	}

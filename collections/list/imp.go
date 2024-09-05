@@ -187,14 +187,14 @@ func (list *listImp[T]) AppendFrom(e collections.Enumerator[T]) {
 }
 
 func (list *listImp[T]) TakeFirst() T {
-	max := len(list.s) - 1
-	if max < 0 {
+	maxIndex := len(list.s) - 1
+	if maxIndex < 0 {
 		panic(terror.EmptyCollection(`TakeFirst`))
 	}
 	result := list.s[0]
 	copy(list.s, list.s[1:])
-	list.s[max] = utils.Zero[T]()
-	list.s = list.s[:max]
+	list.s[maxIndex] = utils.Zero[T]()
+	list.s = list.s[:maxIndex]
 	list.onRemoved()
 	return result
 }
@@ -215,13 +215,13 @@ func (list *listImp[T]) TakeFront(count int) collections.List[T] {
 }
 
 func (list *listImp[T]) TakeLast() T {
-	max := len(list.s) - 1
-	if max < 0 {
+	maxIndex := len(list.s) - 1
+	if maxIndex < 0 {
 		panic(terror.EmptyCollection(`TakeLast`))
 	}
-	result := list.s[max]
-	list.s[max] = utils.Zero[T]()
-	list.s = list.s[:max]
+	result := list.s[maxIndex]
+	list.s[maxIndex] = utils.Zero[T]()
+	list.s = list.s[:maxIndex]
 	list.onRemoved()
 	return result
 }

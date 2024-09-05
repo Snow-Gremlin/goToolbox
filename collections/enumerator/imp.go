@@ -76,12 +76,12 @@ func (e enumeratorImp[T]) Count() int {
 	return iterator.Count(e.Iterate())
 }
 
-func (e enumeratorImp[T]) AtLeast(min int) bool {
-	return iterator.AtLeast(e.Iterate(), min)
+func (e enumeratorImp[T]) AtLeast(minValue int) bool {
+	return iterator.AtLeast(e.Iterate(), minValue)
 }
 
-func (e enumeratorImp[T]) AtMost(max int) bool {
-	return iterator.AtMost(e.Iterate(), max)
+func (e enumeratorImp[T]) AtMost(maxValue int) bool {
+	return iterator.AtMost(e.Iterate(), maxValue)
 }
 
 func (e enumeratorImp[T]) First() (T, bool) {
