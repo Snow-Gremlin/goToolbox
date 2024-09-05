@@ -55,9 +55,9 @@ func EmptyCollection(action string) terrors.TError {
 }
 
 // InvalidArgCount creates an invalid number of arguments error.
-func InvalidArgCount(max, count int, usage string) terrors.TError {
+func InvalidArgCount(maxCount, count int, usage string) terrors.TError {
 	return New(`invalid number of arguments`).
-		With(`maximum`, max).
+		With(`maximum`, maxCount).
 		With(`count`, count).
 		With(`usage`, usage)
 }

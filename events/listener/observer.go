@@ -44,10 +44,10 @@ func (lob *listenerObserver[T]) Joined(event events.Event[T]) {
 func (lob *listenerObserver[T]) Unjoined(event events.Event[T]) {
 	if lob != nil {
 		if index := slices.Index(lob.events, event); index >= 0 {
-			max := len(lob.events) - 1
+			maxIndex := len(lob.events) - 1
 			copy(lob.events[index:], lob.events[index+1:])
-			lob.events[max] = nil
-			lob.events = lob.events[:max]
+			lob.events[maxIndex] = nil
+			lob.events = lob.events[:maxIndex]
 		}
 	}
 }

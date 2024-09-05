@@ -234,14 +234,14 @@ func (s *sortedSetImp[T]) TryAdd(value T) (T, bool) {
 }
 
 func (s *sortedSetImp[T]) TakeFirst() T {
-	max := len(s.data) - 1
-	if max < 0 {
+	maxIndex := len(s.data) - 1
+	if maxIndex < 0 {
 		panic(terror.EmptyCollection(`TakeFirst`))
 	}
 	result := s.data[0]
 	copy(s.data, s.data[1:])
-	s.data[max] = utils.Zero[T]()
-	s.data = s.data[:max]
+	s.data[maxIndex] = utils.Zero[T]()
+	s.data = s.data[:maxIndex]
 	s.onRemoved()
 	return result
 }

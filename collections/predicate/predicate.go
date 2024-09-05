@@ -152,10 +152,10 @@ func LessEq[T any](value T, comparer ...comp.Comparer[T]) collections.Predicate[
 
 // InRange is a predicate which returns true if the value passed
 // into the predicate is between the given min and maximum inclusively.
-func InRange[T any](min, max T, comparer ...comp.Comparer[T]) collections.Predicate[T] {
+func InRange[T any](minValue, maxValue T, comparer ...comp.Comparer[T]) collections.Predicate[T] {
 	cmp := optional.Comparer(comparer)
 	return func(query T) bool {
-		return cmp(min, query) <= 0 && cmp(query, max) <= 0
+		return cmp(minValue, query) <= 0 && cmp(query, maxValue) <= 0
 	}
 }
 

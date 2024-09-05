@@ -277,14 +277,14 @@ func LessEq[T any](t testers.Tester, expected T, comparer ...comp.Comparer[T]) (
 // then a comparer for that type must be provided.
 //
 // Example: InRange.LessEq(t, 0, 359).Assert(actual)
-func InRange[T any](t testers.Tester, min, max T, comparer ...comp.Comparer[T]) (c testers.Check[T]) {
+func InRange[T any](t testers.Tester, minValue, maxValue T, comparer ...comp.Comparer[T]) (c testers.Check[T]) {
 	defer handlePanic(t, &c)
 	getHelper(t)()
-	return newPred(t, predicate.InRange(min, max, comparer...),
+	return newPred(t, predicate.InRange(minValue, maxValue, comparer...),
 		`be between or equal to the given maximum and minimum`).
-		WithValue(`Minimum Value`, min).
-		WithValue(`Maximum Value`, max).
-		WithType(`Range Type`, max)
+		WithValue(`Minimum Value`, minValue).
+		WithValue(`Maximum Value`, maxValue).
+		WithType(`Range Type`, maxValue)
 }
 
 // Epsilon creates a check that the actual value is equal to the given expected value
