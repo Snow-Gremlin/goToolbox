@@ -31,10 +31,10 @@ func (e *eventImp[T]) Remove(observer events.Observer[T]) bool {
 		return false
 	}
 
-	max := len(e.obs) - 1
+	maxIndex := len(e.obs) - 1
 	copy(e.obs[index:], e.obs[index+1:])
-	e.obs[max] = nil
-	e.obs = e.obs[:max]
+	e.obs[maxIndex] = nil
+	e.obs = e.obs[:maxIndex]
 	if jobs, ok := observer.(events.Unjoinable[T]); ok {
 		jobs.Unjoined(e)
 	}

@@ -262,13 +262,13 @@ func (s *sortedSetImp[T]) TakeFront(count int) collections.List[T] {
 }
 
 func (s *sortedSetImp[T]) TakeLast() T {
-	max := len(s.data) - 1
-	if max < 0 {
+	maxIndex := len(s.data) - 1
+	if maxIndex < 0 {
 		panic(terror.EmptyCollection(`TakeLast`))
 	}
-	result := s.data[max]
-	s.data[max] = utils.Zero[T]()
-	s.data = s.data[:max]
+	result := s.data[maxIndex]
+	s.data[maxIndex] = utils.Zero[T]()
+	s.data = s.data[:maxIndex]
 	s.onRemoved()
 	return result
 }
