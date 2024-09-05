@@ -1,7 +1,6 @@
 package examples
 
 import (
-	"cmp"
 	_ "embed"
 	"fmt"
 	"strconv"
@@ -11,6 +10,7 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/collections/set"
 	"github.com/Snow-Gremlin/goToolbox/collections/sortedDictionary"
 	"github.com/Snow-Gremlin/goToolbox/collections/tuple4"
+	"github.com/Snow-Gremlin/goToolbox/comp"
 )
 
 //go:embed scientists_data.md
@@ -46,25 +46,19 @@ func getEntryEnumerator() collections.Enumerator[entry] {
 }
 
 func sortByYear(a, b entry) int {
-	c := cmp.Compare(a.Value3(), b.Value3()) // by year
-	if c == 0 {
-		c = cmp.Compare(a.Value2(), b.Value2()) // then by last name
-		if c == 0 {
-			c = cmp.Compare(a.Value1(), b.Value1()) // then by first name
-		}
-	}
-	return c
+	return comp.Or(
+		comp.DefaultPend(a.Value3(), b.Value3()), // by year
+		comp.DefaultPend(a.Value2(), b.Value2()), // then by last name
+		comp.DefaultPend(a.Value1(), b.Value1()), // then by first name
+	)
 }
 
 func sortByLastName(a, b entry) int {
-	c := cmp.Compare(a.Value2(), b.Value2()) // by last name
-	if c == 0 {
-		c = cmp.Compare(a.Value1(), b.Value1()) // then by first name
-		if c == 0 {
-			c = cmp.Compare(a.Value3(), b.Value3()) // then by year
-		}
-	}
-	return c
+	return comp.Or(
+		comp.DefaultPend(a.Value2(), b.Value2()), // by last name
+		comp.DefaultPend(a.Value1(), b.Value1()), // then by first name
+		comp.DefaultPend(a.Value3(), b.Value3()), // then by year
+	)
 }
 
 func isPhysicists(a entry) bool {
@@ -132,12 +126,15 @@ func Example_inMedicine_sortByLastName() {
 
 func getFocusCounts() collections.Dictionary[string, int] {
 	focuses := sortedDictionary.New[string, int]()
-	enumerator.Expand(getEntryEnumerator(), func(e entry) collections.Iterable[string] {
-		return e.Value4().Enumerate().Iterate
-	}).Foreach(func(focus string) {
-		count, _ := focuses.TryGet(focus)
-		focuses.Add(focus, count+1)
-	})
+	enumerator.Expand(
+		getEntryEnumerator(),
+		func(e entry) collections.Iterable[string] {
+			return e.Value4().Enumerate().Iterate
+		}).
+		Foreach(func(focus string) {
+			count, _ := focuses.TryGet(focus)
+			focuses.Add(focus, count+1)
+		})
 	return focuses
 }
 

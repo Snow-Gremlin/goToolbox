@@ -15,6 +15,16 @@ type Set[T any] interface {
 	// Returns true if any value was added, false if all values already existed.
 	AddFrom(e Enumerator[T]) bool
 
+	// TakeAny removes one value from the set and returns it.
+	// The set is in random order so this will be a random value.
+	// If the set is empty, this will panic.
+	TakeAny() T
+
+	// TakeMany removes the given number of values from the set.
+	// The values be in random order.
+	// It will return less values if the set is shorter than the count.
+	TakeMany(count int) []T
+
 	// Remove removes all the given values from the set.
 	// Returns true if any values were removed.
 	Remove(values ...T) bool

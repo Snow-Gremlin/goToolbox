@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"slices"
 	"strconv"
 	"strings"
@@ -279,6 +281,33 @@ func Test_Utils_TypeOf(t *testing.T) {
 	checkTypeOf[error](t, `error`)
 	checkTypeOf[any](t, `interface {}`)
 	checkTypeOf[interface{ foo() float64 }](t, `interface { utils.foo() float64 }`)
+}
+
+func checkIs[T any](t *testing.T, v any, exp string) {
+	var out T
+	got := `false`
+	if Is(v, &out) {
+		got = fmt.Sprintf(`true: %v`, out)
+	}
+	if got != exp {
+		t.Errorf("\n"+
+			"Unexpected value from As:\n"+
+			"\tIn Type:  %T\n"+
+			"\tOut Type: %T\n"+
+			"\tInput:    %v\n"+
+			"\tActual:   %s\n"+
+			"\tExpected: %s\n", v, out, v, got, exp)
+	}
+}
+
+func Test_Utils_Is(t *testing.T) {
+	checkIs[float64](t, int(42), `false`) // doesn't convert
+
+	v1 := &bytes.Buffer{}
+	v1.WriteString(`Hello`)
+	checkIs[error](t, v1, `false`)
+	checkIs[Stringer](t, v1, `true: Hello`)
+	checkIs[*bytes.Buffer](t, Stringer(v1), `true: Hello`)
 }
 
 func checkString[T any](t *testing.T, exp string, value T) {

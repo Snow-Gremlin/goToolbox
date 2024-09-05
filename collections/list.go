@@ -28,11 +28,11 @@ type List[T any] interface {
 	// If the list is empty, this will panic.
 	TakeLast() T
 
-	// TakeFront remove the given number of values from the front of list.
+	// TakeFront removes the given number of values from the front of list.
 	// It will return less values if the list is shorter than the count.
 	TakeFront(count int) List[T]
 
-	// TakeBack remove the given number of values from the back of list.
+	// TakeBack removes the given number of values from the back of list.
 	// It will return less values if the list is shorter than the count.
 	TakeBack(count int) List[T]
 

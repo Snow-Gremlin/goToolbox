@@ -99,6 +99,37 @@ func Test_Set_New(t *testing.T) {
 	check.String(t, `1, 2, 3, 4, 5`).Assert(s)
 }
 
+func Test_Set_Take(t *testing.T) {
+	all := []int{1, 2, 3, 4, 5, 6}
+	s := With(all...)
+	v1 := s.TakeAny()
+	check.OneOf(t, all).Assert(v1)
+	check.False(t).Assert(s.Contains(v1))
+	check.Length(t, 5).Assert(s)
+
+	v234 := s.TakeMany(3)
+	check.Length(t, 3).Assert(v234)
+	check.OneOf(t, all).AssertAll(v234)
+	check.False(t).
+		Assert(s.Contains(v234[0])).
+		Assert(s.Contains(v234[1])).
+		Assert(s.Contains(v234[2]))
+	check.Length(t, 2).Assert(s)
+
+	v56 := s.TakeMany(3)
+	check.Length(t, 2).Assert(v56)
+	check.OneOf(t, all).AssertAll(v56)
+	check.Length(t, 0).Assert(s)
+
+	v0 := s.TakeMany(3)
+	check.Length(t, 0).Assert(v0)
+	check.Length(t, 0).Assert(s)
+
+	check.MatchError(t, `^collection contains no values \{action: TakeAny\}$`).Panic(func() {
+		s.TakeAny()
+	})
+}
+
 func Test_Set_UnstableIteration(t *testing.T) {
 	s := With(1, 2, 3)
 	it := s.Enumerate().Iterate()

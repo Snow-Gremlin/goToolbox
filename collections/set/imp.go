@@ -13,6 +13,7 @@ import (
 	"github.com/Snow-Gremlin/goToolbox/events"
 	"github.com/Snow-Gremlin/goToolbox/events/event"
 	"github.com/Snow-Gremlin/goToolbox/internal/simpleSet"
+	"github.com/Snow-Gremlin/goToolbox/terrors/terror"
 	"github.com/Snow-Gremlin/goToolbox/utils"
 )
 
@@ -136,6 +137,34 @@ func (s *setImp[T]) AddFrom(e collections.Enumerator[T]) bool {
 		s.onAdded()
 	}
 	return added
+}
+
+func (s *setImp[T]) TakeAny() T {
+	for value := range s.m {
+		delete(s.m, value)
+		s.onRemoved()
+		return value
+	}
+	panic(terror.EmptyCollection(`TakeAny`))
+}
+
+func (s *setImp[T]) TakeMany(count int) []T {
+	count = min(count, s.Count())
+	if count <= 0 {
+		return []T{}
+	}
+	index := 0
+	results := make([]T, count)
+	for value := range s.m {
+		if index >= count {
+			break
+		}
+		results[index] = value
+		index++
+		delete(s.m, value)
+	}
+	s.onRemoved()
+	return results
 }
 
 func (s *setImp[T]) Remove(values ...T) bool {
