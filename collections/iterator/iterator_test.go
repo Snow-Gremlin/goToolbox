@@ -1,6 +1,7 @@
 package iterator
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -471,10 +472,10 @@ func Test_Iterator_Expand(t *testing.T) {
 	it1 := Iterate(`a`, ``, `cat`, `dog`, `apple`)
 	it2 := Expand(it1, func(s string) collections.Iterable[rune] {
 		return func() collections.Iterator[rune] {
-			return Iterate[rune]([]rune(s)...)
+			return Iterate([]rune(s)...)
 		}
 	})
-	checkIt[rune](t, it2, 'a', 'c', 'a', 't', 'd', 'o', 'g', 'a', 'p', 'p', 'l', 'e')
+	checkIt(t, it2, 'a', 'c', 'a', 't', 'd', 'o', 'g', 'a', 'p', 'p', 'l', 'e')
 
 	it1 = Iterate(`one`)
 	it2 = Expand(it1, func(s string) collections.Iterable[rune] {
@@ -697,6 +698,28 @@ func Test_Iterator_Sorted(t *testing.T) {
 	checkEqual(t, false, Sorted(it, comp.Ordered[int]()))
 	checkIt(t, it, 3) // Remainder
 }
+
+func Test_Iterator_Seq(t *testing.T) {
+	it := Iterate(1, 2, 3, 4, 5)
+
+	values := []int{}
+	for v := range Seq(it) {
+		values = append(values, v)
+	}
+	checkEqual(t, []int{1, 2, 3, 4, 5}, values)
+}
+
+func Test_Iterator_Seq2(t *testing.T) {
+	it := Iterate(321, 432, 543, 654, 765)
+
+	values := []string{}
+	for i, v := range Seq2(Indexed(it)) {
+		values = append(values, fmt.Sprintf(`%d:%d`, i, v))
+	}
+	checkEqual(t, []string{`0:321`, `1:432`, `2:543`, `3:654`, `4:765`}, values)
+}
+
+//==============================================================================
 
 func watcher[T any](count *int, it collections.Iterator[T]) collections.Iterator[T] {
 	return New(func() (T, bool) {

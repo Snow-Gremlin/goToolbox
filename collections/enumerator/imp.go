@@ -1,6 +1,7 @@
 package enumerator
 
 import (
+	"iter"
 	"strconv"
 	"strings"
 
@@ -18,6 +19,11 @@ type enumeratorImp[T any] struct {
 
 func (e enumeratorImp[T]) Iterate() collections.Iterator[T] {
 	return e.iterable()
+}
+
+// Gets the sequence function iterator.
+func (e enumeratorImp[T]) Seq() iter.Seq[T] {
+	return iterator.Seq(e.Iterate())
 }
 
 func (e enumeratorImp[T]) Where(p collections.Predicate[T]) collections.Enumerator[T] {
@@ -52,7 +58,7 @@ func (e enumeratorImp[T]) Foreach(m func(value T)) {
 	iterator.Foreach(e.Iterate(), m)
 }
 
-func (e enumeratorImp[T]) DoUntilError(m func(value T) error) error {
+func (e enumeratorImp[T]) DoUntilError(m collections.Selector[T, error]) error {
 	return iterator.DoUntilError(e.Iterate(), m)
 }
 
@@ -133,11 +139,11 @@ func (e enumeratorImp[T]) Reverse() collections.Enumerator[T] {
 }
 
 func (e enumeratorImp[T]) Strings() collections.Enumerator[string] {
-	return Select[T, string](e, utils.String)
+	return Select(e, utils.String)
 }
 
 func (e enumeratorImp[T]) Quotes() collections.Enumerator[string] {
-	return Select[T, string](e, func(value T) string {
+	return Select(e, func(value T) string {
 		return strconv.Quote(utils.String(value))
 	})
 }

@@ -1,6 +1,10 @@
 package collections
 
-import "github.com/Snow-Gremlin/goToolbox/comp"
+import (
+	"iter"
+
+	"github.com/Snow-Gremlin/goToolbox/comp"
+)
 
 // Enumerator is a tool for walking through a collection of data.
 type Enumerator[T any] interface {
@@ -10,6 +14,9 @@ type Enumerator[T any] interface {
 
 	// Iterate creates a new iterator
 	Iterate() Iterator[T]
+
+	// Gets the sequence function iterator.
+	Seq() iter.Seq[T]
 
 	// Where filters the enumeration to only values which satisfy the predicate.
 	Where(p Predicate[T]) Enumerator[T]
@@ -38,7 +45,7 @@ type Enumerator[T any] interface {
 	// DoUntilError runs the given function for each value from the given enumerator.
 	// If any error occurs, the error will be returned right away,
 	// if no error occurs, then nil is returned.
-	DoUntilError(m func(value T) error) error
+	DoUntilError(p Selector[T, error]) error
 
 	// StepsUntil determines the number of values in the enumerator are read until
 	// a value satisfies the given predicate.

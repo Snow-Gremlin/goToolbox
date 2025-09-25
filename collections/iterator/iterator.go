@@ -1,6 +1,7 @@
 package iterator
 
 import (
+	"iter"
 	"reflect"
 	"slices"
 
@@ -375,7 +376,7 @@ func Reverse[T any](it collections.Iterator[T]) collections.Iterator[T] {
 	return New(func() (T, bool) {
 		if first {
 			first = false
-			values = ToSlice[T](it)
+			values = ToSlice(it)
 			index = len(values)
 		}
 		index--
@@ -808,11 +809,31 @@ func Sorted[T any](it collections.Iterator[T], comparer ...comp.Comparer[T]) boo
 // from the given iterator and an index of the value starting with zero.
 func Indexed[T any](it collections.Iterator[T]) collections.Iterator[collections.Tuple2[int, T]] {
 	index := -1
-	return New[collections.Tuple2[int, T]](func() (collections.Tuple2[int, T], bool) {
+	return New(func() (collections.Tuple2[int, T], bool) {
 		if it.Next() {
 			index++
 			return tuple2.New(index, it.Current()), true
 		}
 		return utils.Zero[collections.Tuple2[int, T]](), false
 	})
+}
+
+func Seq[T any](it collections.Iterator[T]) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		for it.Next() {
+			if !yield(it.Current()) {
+				return
+			}
+		}
+	}
+}
+
+func Seq2[T1, T2 any, T collections.Tuple2[T1, T2]](it collections.Iterator[T]) iter.Seq2[T1, T2] {
+	return func(yield func(T1, T2) bool) {
+		for it.Next() {
+			if !yield(it.Current().Values()) {
+				return
+			}
+		}
+	}
 }
