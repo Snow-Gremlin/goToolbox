@@ -1205,8 +1205,8 @@ func Test_Check_ConvertibleTo(t *testing.T) {
 
 func Test_Check_SameType(t *testing.T) {
 	pt := newTester(t)
-	var v1 float64 = 3.14
-	var v2 float64 = 4.5
+	v1 := 3.14
+	v2 := 4.5
 	SameType(pt, v1).Assert(v2)
 	pt.Check()
 
@@ -1236,8 +1236,8 @@ func Test_Check_SameType(t *testing.T) {
 
 func Test_Check_NotSameType(t *testing.T) {
 	pt := newTester(t)
-	var v1 float64 = 3.14
-	var v2 float64 = 4.5
+	v1 := 3.14
+	v2 := 4.5
 	NotSameType(pt, v1).Assert(v2)
 	pt.Check(`Should not be the unexpected type:`,
 		`\tActual Type:      float64`,
