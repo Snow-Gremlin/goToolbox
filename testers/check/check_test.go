@@ -1182,15 +1182,15 @@ func Test_Check_Implements(t *testing.T) {
 
 func Test_Check_ConvertibleTo(t *testing.T) {
 	pt := newTester(t)
-	var v1 float64 = 3.14
+	v1 := 3.14
 	ConvertibleTo[float64](pt).Assert(v1)
 	pt.Check()
 
-	var v2 int = 13
+	v2 := 13
 	ConvertibleTo[float64](pt).Assert(v2)
 	pt.Check()
 
-	var v3 string = `Hello`
+	v3 := `Hello`
 	ConvertibleTo[float64](pt).Assert(v3)
 	pt.Check(`Should be convertible to the target type:`,
 		`\tActual Type:  string`,
@@ -1666,7 +1666,7 @@ func newTester(t *testing.T) *pseudoTester {
 }
 
 func (p pseudoTester) Error(msg ...any) {
-	if _, err := p.buf.WriteString(fmt.Sprint(msg...)); err != nil {
+	if _, err := fmt.Fprint(p.buf, msg...); err != nil {
 		panic(err)
 	}
 }

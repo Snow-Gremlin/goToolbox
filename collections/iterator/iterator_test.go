@@ -719,8 +719,6 @@ func Test_Iterator_Seq2(t *testing.T) {
 	checkEqual(t, []string{`0:321`, `1:432`, `2:543`, `3:654`, `4:765`}, values)
 }
 
-//==============================================================================
-
 func watcher[T any](count *int, it collections.Iterator[T]) collections.Iterator[T] {
 	return New(func() (T, bool) {
 		*count++

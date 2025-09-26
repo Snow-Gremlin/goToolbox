@@ -278,7 +278,7 @@ func (d *sortedDictionaryImp[TKey, TValue]) String() string {
 		}
 		value := utils.String(d.data[key])
 		value = strings.ReplaceAll(value, newline, padding)
-		_, _ = buf.WriteString(fmt.Sprintf(`%-*s`, maxWidth, keyStr[i]+`: `))
+		_, _ = fmt.Fprintf(buf, `%-*s`, maxWidth, keyStr[i]+`: `)
 		_, _ = buf.WriteString(value)
 	}
 	return buf.String()

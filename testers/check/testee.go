@@ -130,7 +130,7 @@ func (b *testee) formatContext() string {
 		value := strings.ReplaceAll(context[key], newLine, padding)
 		_, _ = buf.WriteString(newLine)
 		_, _ = buf.WriteString(indent)
-		_, _ = buf.WriteString(fmt.Sprintf(`%-*s`, maxWidth, key+`: `))
+		_, _ = fmt.Fprintf(buf, `%-*s`, maxWidth, key+`: `)
 		_, _ = buf.WriteString(value)
 	}
 	return buf.String()

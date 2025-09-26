@@ -199,8 +199,8 @@ func Test_LiteUtils_Equal(t *testing.T) {
 	checkEqual(t, e0, e1, false)
 	checkEqual(t, e1, e1, true)
 
-	var v1 int = 0
-	var v2 float64 = 0.0
+	var v1 int
+	var v2 float64
 	checkEqual(t, nil, v1, false)
 	checkEqual(t, v2, v1, false)
 	checkEqual(t, v1, v2, false)
