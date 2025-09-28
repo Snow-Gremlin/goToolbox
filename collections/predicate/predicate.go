@@ -111,7 +111,7 @@ func Eq[T any](value T) collections.Predicate[T] {
 // NotEq is a predicate which returns true if the given value
 // is not equal to the value passed into the predicate.
 func NotEq[T any](value T) collections.Predicate[T] {
-	return Not(Eq[T](value))
+	return Not(Eq(value))
 }
 
 // GreaterThan is a predicate which returns true if the value

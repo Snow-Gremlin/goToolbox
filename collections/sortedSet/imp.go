@@ -321,6 +321,36 @@ func (s *sortedSetImp[T]) RemoveRange(index, count int) {
 	}
 }
 
+func (s *sortedSetImp[T]) needsRefreshing() bool {
+	if len(s.data) < 2 {
+		return false
+	}
+
+	prev := s.data[0]
+	for _, c := range s.data[1:] {
+		if s.comparer(prev, c) >= 0 {
+			return true
+		}
+		prev = c
+	}
+	return false
+}
+
+func (s *sortedSetImp[T]) Refresh() {
+	if !s.needsRefreshing() {
+		return
+	}
+
+	values := s.data
+	s.data = make([]T, 0, len(values)-1)
+	for _, value := range values {
+		s.addOne(value, false)
+	}
+	if len(s.data) != len(values) {
+		s.onRemoved()
+	}
+}
+
 func (s *sortedSetImp[T]) Clear() {
 	if len(s.data) > 0 {
 		utils.SetToZero(s.data, 0, len(s.data)-1)

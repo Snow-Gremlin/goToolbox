@@ -153,15 +153,15 @@ func Test_SortedDictionary_New(t *testing.T) {
 	check.Empty(t).Assert(d2.keys)
 	check.Equal(t, 7).Assert(cap(d2.keys))
 
-	d2 = With[*pseudoComparable, int]((map[*pseudoComparable]int)(nil)).(*sortedDictionaryImp[*pseudoComparable, int])
+	d2 = With((map[*pseudoComparable]int)(nil)).(*sortedDictionaryImp[*pseudoComparable, int])
 	check.Empty(t).Assert(d2.keys)
 	check.Zero(t).Assert(cap(d2.keys))
 
-	d3 := From[*pseudoComparable, int](d2.Enumerate()).(*sortedDictionaryImp[*pseudoComparable, int])
+	d3 := From(d2.Enumerate()).(*sortedDictionaryImp[*pseudoComparable, int])
 	check.Empty(t).Assert(d3.keys)
 	check.Zero(t).Assert(cap(d3.keys))
 
-	d3 = CapFrom[*pseudoComparable, int](d2.Enumerate(), 6).(*sortedDictionaryImp[*pseudoComparable, int])
+	d3 = CapFrom(d2.Enumerate(), 6).(*sortedDictionaryImp[*pseudoComparable, int])
 	check.Empty(t).Assert(d3.keys)
 	check.Equal(t, 6).Assert(cap(d3.keys))
 }
@@ -256,6 +256,57 @@ func Test_SortedDictionary_OnChange(t *testing.T) {
 	check.StringAndReset(t, `Removed`).Assert(buf)
 	d.Clear()
 	check.StringAndReset(t, ``).Assert(buf)
+}
+
+func Test_SortedDictionary_Refresh(t *testing.T) {
+	type Person struct {
+		First string
+	}
+	pComp := func(x, y *Person) int {
+		return int(x.First[0]) - int(y.First[0])
+	}
+	s := New[*Person, int](pComp)
+	p1 := &Person{First: `Bob`}
+	p2 := &Person{First: `Jill`}
+
+	buf := &bytes.Buffer{}
+	lis := listener.New(func(args collections.ChangeArgs) {
+		_, _ = buf.WriteString(args.Type().String())
+	})
+	defer lis.Cancel()
+	check.True(t).Assert(lis.Subscribe(s.OnChange()))
+
+	s.Refresh()
+	check.StringAndReset(t, ``).Assert(buf)
+	check.String(t, ``).Assert(s.String())
+
+	check.True(t).Assert(s.Add(p1, 12345))
+	check.StringAndReset(t, `Added`).Assert(buf)
+	check.String(t, `&{Bob}: 12345`).Assert(s.String())
+	s.Refresh()
+	check.StringAndReset(t, ``).Assert(buf)
+	check.String(t, `&{Bob}: 12345`).Assert(s.String())
+
+	check.True(t).Assert(s.Add(p2, 56712))
+	check.StringAndReset(t, `Added`).Assert(buf)
+	check.String(t, "&{Bob}:  12345\n&{Jill}: 56712").Assert(s.String())
+	s.Refresh()
+	check.StringAndReset(t, ``).Assert(buf)
+	check.String(t, "&{Bob}:  12345\n&{Jill}: 56712").Assert(s.String())
+
+	p1.First = `Tim`
+	check.StringAndReset(t, ``).Assert(buf)
+	check.String(t, "&{Tim}:  12345\n&{Jill}: 56712").Assert(s.String())
+	s.Refresh()
+	check.StringAndReset(t, ``).Assert(buf)
+	check.String(t, "&{Jill}: 56712\n&{Tim}:  12345").Assert(s.String())
+
+	p2.First = `Tod`
+	check.StringAndReset(t, ``).Assert(buf)
+	check.String(t, "&{Tod}: 56712\n&{Tim}: 12345").Assert(s.String())
+	s.Refresh()
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.String(t, "&{Tod}: 56712").Assert(s.String())
 }
 
 type pseudoComparable struct {

@@ -302,3 +302,47 @@ func Test_SortedSet_OnChange(t *testing.T) {
 	s.Clear()
 	check.StringAndReset(t, ``).Assert(buf)
 }
+
+func Test_SortedSet_Refresh(t *testing.T) {
+	type Person struct {
+		First string
+	}
+	pComp := func(x, y *Person) int {
+		return int(x.First[0]) - int(y.First[0])
+	}
+	s := New(pComp)
+	p1 := &Person{First: `Bob`}
+	p2 := &Person{First: `Jill`}
+
+	buf := &bytes.Buffer{}
+	lis := listener.New(func(args collections.ChangeArgs) {
+		_, _ = buf.WriteString(args.Type().String())
+	})
+	defer lis.Cancel()
+	check.True(t).Assert(lis.Subscribe(s.OnChange()))
+
+	s.Refresh()
+	check.StringAndReset(t, ``).Assert(buf)
+	check.String(t, ``).Assert(s.String())
+
+	check.True(t).Assert(s.Add(p1, p2))
+	check.StringAndReset(t, `Added`).Assert(buf)
+	check.String(t, `&{Bob}, &{Jill}`).Assert(s.String())
+	s.Refresh()
+	check.StringAndReset(t, ``).Assert(buf)
+	check.String(t, `&{Bob}, &{Jill}`).Assert(s.String())
+
+	p1.First = `Tim`
+	check.StringAndReset(t, ``).Assert(buf)
+	check.String(t, `&{Tim}, &{Jill}`).Assert(s.String())
+	s.Refresh()
+	check.StringAndReset(t, ``).Assert(buf)
+	check.String(t, `&{Jill}, &{Tim}`).Assert(s.String())
+
+	p2.First = `Tod`
+	check.StringAndReset(t, ``).Assert(buf)
+	check.String(t, `&{Tod}, &{Tim}`).Assert(s.String())
+	s.Refresh()
+	check.StringAndReset(t, `Removed`).Assert(buf)
+	check.String(t, `&{Tod}`).Assert(s.String())
+}

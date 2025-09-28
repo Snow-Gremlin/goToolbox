@@ -69,6 +69,9 @@ func Test_Set(t *testing.T) {
 	check.False(t).Assert(s.AddFrom(enumerator.Range(5, 3)))
 	check.True(t).Assert(s.AddFrom(enumerator.Range(9, 3)))
 	check.String(t, `10, 11, 5, 6, 7, 8, 9`).Assert(s)
+
+	s.Refresh() // No effect
+	check.String(t, `10, 11, 5, 6, 7, 8, 9`).Assert(s)
 }
 
 func Test_Set_New(t *testing.T) {

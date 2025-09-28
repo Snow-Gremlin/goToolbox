@@ -1,9 +1,9 @@
 package collections
 
-// Set is a collection of values in random order which has no repeat values.
+// SortedSet is a collection of values in sorted order which has no repeat values.
 //
 // For sets, the `ToSlice`, `ToList`, and `Enumerate` methods do not guarantee
-// any specific order and must be considered returning values in random order.
+// any specific order and must be considered returning values in sorted order.
 type SortedSet[T any] interface {
 	ReadonlySortedSet[T]
 
@@ -58,6 +58,11 @@ type SortedSet[T any] interface {
 
 	// RemoveRange removes the given number of values from the given index.
 	RemoveRange(index, count int)
+
+	// Refresh will resort and remove duplicates from the set.
+	// This only needs to be called if the values in the set are modified
+	// in a way that the comparison of values may have changed.
+	Refresh()
 
 	// Clear removes all the values from the set.
 	Clear()

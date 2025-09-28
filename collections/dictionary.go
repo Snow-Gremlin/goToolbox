@@ -49,7 +49,16 @@ type Dictionary[TKey comparable, TValue any] interface {
 	// Returns true if any key was removed, false if nothing was removed.
 	RemoveIf(p Predicate[TKey]) bool
 
-	// Clear removes all the values from the dictionary.
+	// Refresh will remove duplicate keys from the set and randomly pick
+	// the value from duplicate keys.
+	// If the implementation uses a `comparable` type for the keys,
+	// then this will have no effect.
+	// If the dictionary has sorted keys, the keys will be resorted.
+	// This only needs to be called if the keys in the set are modified
+	// in a way that the comparison of keys may have changed.
+	Refresh()
+
+	// Clear removes all the entries from the dictionary.
 	Clear()
 
 	// Clones this dictionary.

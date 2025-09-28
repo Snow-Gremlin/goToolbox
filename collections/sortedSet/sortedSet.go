@@ -15,7 +15,7 @@ import (
 // provided it will specify a different capacity from the length.
 // The capacity will never be smaller than the list's length.
 func New[T any](comparer ...comp.Comparer[T]) collections.SortedSet[T] {
-	return CapNew[T](0, comparer...)
+	return CapNew(0, comparer...)
 }
 
 // CapNew creates a new dictionary with sorted keys and initial capacity
@@ -32,7 +32,7 @@ func CapNew[T any](capacity int, comparer ...comp.Comparer[T]) collections.Sorte
 
 // With creates a new list with the given values.
 func With[T any](s []T, comparer ...comp.Comparer[T]) collections.SortedSet[T] {
-	return CapFrom[T](enumerator.Enumerate(s...), len(s), comparer...)
+	return CapFrom(enumerator.Enumerate(s...), len(s), comparer...)
 }
 
 // From creates a new list from the given enumerator.

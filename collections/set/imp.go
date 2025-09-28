@@ -186,6 +186,11 @@ func (s *setImp[T]) RemoveIf(predicate collections.Predicate[T]) bool {
 	return false
 }
 
+func (s *setImp[T]) Refresh() {
+	// No effect. Since T is a comparable and the data is stored in a map,
+	// it is not possible to change the comparability of the map's keys.
+}
+
 func (s *setImp[T]) Clear() {
 	if len(s.m) > 0 {
 		s.m = simpleSet.New[T]()

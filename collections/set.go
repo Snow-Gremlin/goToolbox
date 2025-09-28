@@ -33,6 +33,12 @@ type Set[T any] interface {
 	// Returns true if any values were removed.
 	RemoveIf(handle Predicate[T]) bool
 
+	// Refresh will remove duplicates from the set.
+	// If the implementation uses a `comparable` type, then this will have no effect.
+	// This only needs to be called if the values in the set are modified
+	// in a way that the comparison of values may have changed.
+	Refresh()
+
 	// Clear removes all the values from the set.
 	Clear()
 

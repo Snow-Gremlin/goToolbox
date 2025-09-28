@@ -151,6 +151,11 @@ func (d *dictionaryImp[TKey, TValue]) RemoveIf(p collections.Predicate[TKey]) bo
 	return d.onChanged(result)
 }
 
+func (d *dictionaryImp[TKey, TValue]) Refresh() {
+	// No effect. Since T is a comparable and the data is stored in a map,
+	// it is not possible to change the comparability of the map's keys.
+}
+
 func (d *dictionaryImp[TKey, TValue]) Clear() {
 	if len(d.m) > 0 {
 		d.m = make(map[TKey]TValue)

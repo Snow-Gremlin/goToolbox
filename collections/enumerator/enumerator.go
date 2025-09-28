@@ -130,7 +130,7 @@ func Errors(err error) collections.Enumerator[error] {
 // When a non-zero value is returned by the selector, the enumeration ends and
 // returns that non-zero value. If no non-zero value is hit, a zero value is returned.
 func DoUntilNotZero[TIn, TOut any](it collections.Enumerator[TIn], s collections.Selector[TIn, TOut]) TOut {
-	return iterator.DoUntilNotZero[TIn, TOut](it.Iterate(), s)
+	return iterator.DoUntilNotZero(it.Iterate(), s)
 }
 
 // Select changes one enumerator type into another by converting each value.

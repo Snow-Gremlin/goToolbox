@@ -73,6 +73,9 @@ func Test_Dictionary(t *testing.T) {
 	check.String(t, "123: 456\n222: 333").Assert(d2)
 	check.True(t).Assert(d2.RemoveIf(predicate.GreaterThan(200)))
 	check.String(t, "123: 456").Assert(d2)
+
+	d2.Refresh() // No effect
+	check.String(t, "123: 456").Assert(d2)
 }
 
 func Test_Dictionary_FromAndMap(t *testing.T) {

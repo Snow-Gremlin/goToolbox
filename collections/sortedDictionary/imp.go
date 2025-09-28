@@ -257,6 +257,38 @@ func (d *sortedDictionaryImp[TKey, TValue]) Empty() bool {
 	return len(d.data) <= 0
 }
 
+func (d *sortedDictionaryImp[TKey, TValue]) needsRefreshing() bool {
+	if len(d.keys) < 2 {
+		return false
+	}
+
+	prev := d.keys[0]
+	for _, c := range d.keys[1:] {
+		if d.comparer.Pend(prev, c)() >= 0 {
+			return true
+		}
+		prev = c
+	}
+	return false
+}
+
+func (d *sortedDictionaryImp[TKey, TValue]) Refresh() {
+	if !d.needsRefreshing() {
+		return
+	}
+
+	keys := d.keys
+	values := d.data
+	d.keys = make([]TKey, 0, len(keys)-1)
+	d.data = make(map[TKey]TValue, len(values)-1)
+	for _, key := range keys {
+		d.addOneIfNotSet(key, values[key])
+	}
+	if len(d.keys) != len(keys) {
+		d.onChanged(removeChange)
+	}
+}
+
 func (d *sortedDictionaryImp[TKey, TValue]) Count() int {
 	return len(d.data)
 }
