@@ -95,7 +95,7 @@ func (s *sortedSetImp[T]) Count() int {
 }
 
 func (s *sortedSetImp[T]) ToSlice() []T {
-	return slices.Clip(s.data)
+	return slices.Clone(s.data)
 }
 
 func (s *sortedSetImp[T]) CopyToSlice(s2 []T) {

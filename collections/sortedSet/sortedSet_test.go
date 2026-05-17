@@ -23,6 +23,10 @@ func Test_SortedSet(t *testing.T) {
 
 	p := s.ToSlice()
 	check.Equal(t, []int{1, 2, 3}).Assert(p)
+	s.Remove(2)
+	s.Add(4)
+	check.Equal(t, []int{1, 2, 3}).Assert(p)
+	s = With([]int{1, 2, 3})
 	check.Length(t, 3).Assert(s.ToList())
 
 	p = make([]int, 1)
